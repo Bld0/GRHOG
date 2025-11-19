@@ -1,0 +1,18 @@
+{
+  "pages": {
+    "/favicon.ico/route": [
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_2e58429c._.js",
+      "static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js",
+      "static/chunks/node_modules_next_dist_compiled_next-devtools_index_d575f738.js",
+      "static/chunks/node_modules_next_dist_compiled_0f1b9fd4._.js",
+      "static/chunks/node_modules_next_dist_client_20b209c9._.js",
+      "static/chunks/node_modules_next_dist_445d8acf._.js",
+      "static/chunks/node_modules_@sentry_core_build_esm_33083702._.js",
+      "static/chunks/node_modules_@sentry-internal_browser-utils_build_esm_fea977bb._.js",
+      "static/chunks/node_modules_941909f5._.js",
+      "static/chunks/src_instrumentation-client_ts_4aba9a11._.js",
+      "static/chunks/_e69f0d32._.js",
+      "static/chunks/_3d42ffad._.js"
+    ]
+  }
+}

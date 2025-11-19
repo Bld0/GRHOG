@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 5, "column": 0}, "map": {"version":3,"sources":["file:///home/ab/dev/grhog/GRHOG/src/app/dashboard/overview/page.tsx"],"sourcesContent":["import React from 'react';\n\n// Minimal page to ensure /dashboard/overview route resolves and the\n// `layout.tsx` in this folder is applied. The layout uses parallel route\n// slots (bar_stats, area_stats, pie_stats, sales) which are provided by\n// sibling folders (for example `@bar_stats`). Returning an empty fragment\n// is enough because the visuals come from the layout and parallel route\n// slots.\nexport default function Page() {\n  return <></>;\n}\n"],"names":[],"mappings":";;;;;AAQe,SAAS;IACtB,qBAAO;AACT","debugId":null}}]
+}

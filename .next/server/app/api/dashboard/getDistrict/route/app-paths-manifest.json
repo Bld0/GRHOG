@@ -1,0 +1,3 @@
+{
+  "/api/dashboard/getDistrict/route": "app/api/dashboard/getDistrict/route.js"
+}
