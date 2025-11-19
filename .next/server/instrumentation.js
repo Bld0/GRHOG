@@ -1,17 +1,15 @@
-const CHUNK_PUBLIC_PATH = "server/instrumentation.js";
-const runtime = require("./chunks/[turbopack]_runtime.js");
-runtime.loadChunk("server/chunks/[externals]_node:inspector_1230e574._.js");
-runtime.loadChunk("server/chunks/node_modules_@sentry_core_build_cjs_b5ac35f2._.js");
-runtime.loadChunk("server/chunks/node_modules_@sentry_node_build_cjs_67f92bbe._.js");
-runtime.loadChunk("server/chunks/node_modules_@opentelemetry_api_build_esm_b1db0c13._.js");
-runtime.loadChunk("server/chunks/node_modules_@opentelemetry_core_build_esm_5278fd5f._.js");
-runtime.loadChunk("server/chunks/996e2_@opentelemetry_semantic-conventions_build_esm_65581ec9._.js");
-runtime.loadChunk("server/chunks/node_modules_@opentelemetry_semantic-conventions_build_esm_05b3d850._.js");
-runtime.loadChunk("server/chunks/node_modules_@opentelemetry_bbd2b1f3._.js");
-runtime.loadChunk("server/chunks/node_modules_@opentelemetry_sdk-trace-base_build_esm_f015b30e._.js");
-runtime.loadChunk("server/chunks/node_modules_@opentelemetry_resources_build_esm_5994052a._.js");
-runtime.loadChunk("server/chunks/node_modules_@sentry_nextjs_build_cjs_fe776d43._.js");
-runtime.loadChunk("server/chunks/node_modules_f27e9de8._.js");
-runtime.loadChunk("server/chunks/[root-of-the-server]__3c23310a._.js");
-runtime.getOrInstantiateRuntimeModule("[project]/src/instrumentation.ts [instrumentation] (ecmascript)", CHUNK_PUBLIC_PATH);
-module.exports = runtime.getOrInstantiateRuntimeModule("[project]/src/instrumentation.ts [instrumentation] (ecmascript)", CHUNK_PUBLIC_PATH).exports;
+var R=require("./chunks/[turbopack]_runtime.js")("server/instrumentation.js")
+R.c("server/chunks/[externals]_node:inspector_dc347386._.js")
+R.c("server/chunks/node_modules_@sentry_core_build_cjs_bfb8c066._.js")
+R.c("server/chunks/node_modules_@opentelemetry_api_build_esm_e96249e4._.js")
+R.c("server/chunks/node_modules_@opentelemetry_core_build_esm_2c35a527._.js")
+R.c("server/chunks/node_modules_@opentelemetry_14e95011._.js")
+R.c("server/chunks/node_modules_@sentry_node-core_build_cjs_63cb8a5a._.js")
+R.c("server/chunks/node_modules_@opentelemetry_sdk-trace-base_build_esm_449c5049._.js")
+R.c("server/chunks/node_modules_@opentelemetry_resources_build_esm_c027ca22._.js")
+R.c("server/chunks/node_modules_@sentry_node_build_cjs_3b8846c6._.js")
+R.c("server/chunks/node_modules_@sentry_nextjs_build_cjs_189b60c7._.js")
+R.c("server/chunks/node_modules_1671960c._.js")
+R.c("server/chunks/[root-of-the-server]__50f6a75e._.js")
+R.m("[project]/src/instrumentation.ts [instrumentation] (ecmascript)")
+module.exports=R.m("[project]/src/instrumentation.ts [instrumentation] (ecmascript)").exports

@@ -9,7 +9,7 @@ export const API_CONFIG = {
       return '/api';
     }
     // Server-side: use direct backend URL
-    return process.env.BACKEND_URL || 'http://system.grhog.mn';
+    return process.env.BACKEND_URL || 'http://device.grhog.mn';
   })(),
 
   // API endpoints

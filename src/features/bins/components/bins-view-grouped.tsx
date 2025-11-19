@@ -445,7 +445,7 @@ export function BinsViewGrouped() {
                 </CardTitle>
                 <CardDescription>
                   {pagination.totalElements} бүлэг • {totalActiveBins} идэвхтэй
-                  сав • Хуудас {currentPage + 1}/{pagination.totalPages}
+                  сав • Хуудаслалт {currentPage + 1}/{pagination.totalPages}
                 </CardDescription>
               </div>
               <div className='flex items-center gap-2'>

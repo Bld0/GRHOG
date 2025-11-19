@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 6, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
-    {"offset": {"line": 58, "column": 0}, "map": {"version":3,"sources":["file:///home/ab/dev/grhog/GRHOG/src/app/api/dashboard/client-type-counts/route.ts"],"sourcesContent":["import { NextResponse } from 'next/server';\n\nexport async function GET(req: Request) {\n  const url = new URL(req.url);\n  const params = url.search;\n  const backendUrl = `${process.env.BACKEND_URL || 'http://device.grhog.mn'}/dashboard/client-type-counts${params}`;\n\n  const headers: Record<string, string> = {};\n  const auth = req.headers.get('authorization');\n  if (auth) headers['authorization'] = auth;\n\n  const res = await fetch(backendUrl, { headers });\n  const text = await res.text();\n  return new NextResponse(text, { status: res.status, headers: { 'content-type': res.headers.get('content-type') || 'application/json' } });\n}\n"],"names":[],"mappings":";;;AAAA;;AAEO,eAAe,IAAI,GAAY;IACpC,MAAM,MAAM,IAAI,IAAI,IAAI,GAAG;IAC3B,MAAM,SAAS,IAAI,MAAM;IACzB,MAAM,aAAa,GAAG,QAAQ,GAAG,CAAC,WAAW,IAAI,yBAAyB,6BAA6B,EAAE,QAAQ;IAEjH,MAAM,UAAkC,CAAC;IACzC,MAAM,OAAO,IAAI,OAAO,CAAC,GAAG,CAAC;IAC7B,IAAI,MAAM,OAAO,CAAC,gBAAgB,GAAG;IAErC,MAAM,MAAM,MAAM,MAAM,YAAY;QAAE;IAAQ;IAC9C,MAAM,OAAO,MAAM,IAAI,IAAI;IAC3B,OAAO,IAAI,gIAAA,CAAA,eAAY,CAAC,MAAM;QAAE,QAAQ,IAAI,MAAM;QAAE,SAAS;YAAE,gBAAgB,IAAI,OAAO,CAAC,GAAG,CAAC,mBAAmB;QAAmB;IAAE;AACzI","debugId":null}}]
-}
