@@ -1,6 +1,7 @@
 import {
   DashboardActiveBins,
-  DashboardActiveCards,
+  DashboardTotalCards,
+  TotalHouseholdsData,
   DashboardCurrentUsage,
   DashboardAverageFilling,
   CollectionTrends,
@@ -236,15 +237,15 @@ export const getDashboardActiveBins =
     );
   };
 
-export const getTotalHouseHolds = async (): Promise<DashboardActiveCards> => {
-  return apiClient.get<DashboardActiveCards>(
+export const getTotalHouseHolds = async (): Promise<TotalHouseholdsData> => {
+  return apiClient.get<TotalHouseholdsData>(
     API_ENDPOINTS.DASHBOARD_TOTAL_HOUSEHOLDS
   );
 };
 
-export const getDashboardActiveCards =
-  async (): Promise<DashboardActiveCards> => {
-    return apiClient.get<DashboardActiveCards>(
+export const getDashboardTotalCards =
+  async (): Promise<DashboardTotalCards> => {
+    return apiClient.get<DashboardTotalCards>(
       API_ENDPOINTS.DASHBOARD_ACTIVE_CARDS
     );
   };
