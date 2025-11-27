@@ -7,8 +7,8 @@ export async function GET(request: NextRequest) {
 
     const qs = params.toString();
     const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
-  // Backend expects /dashboard/khoroo-usage
-  const target = `${backendUrl}/dashboard/khoroo-usage${qs ? `?${qs}` : ''}`;
+    // Backend expects /dashboard/khoroo-usage
+    const target = `${backendUrl}/dashboard/khoroo-usage${qs ? `?${qs}` : ''}`;
 
     const response = await fetch(target, {
       method: 'GET',
@@ -21,14 +21,20 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       // Return backend status to client for easier debugging
       const text = await response.text().catch(() => '');
-    // proxy error logged for debugging
-      return NextResponse.json({ error: 'Failed to fetch khoroo usage', details: text }, { status: response.status });
+      // proxy error logged for debugging
+      return NextResponse.json(
+        { error: 'Failed to fetch khoroo usage', details: text },
+        { status: response.status }
+      );
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-  // internal proxy error logged for debugging
-    return NextResponse.json({ error: 'Internal proxy error' }, { status: 500 });
+    // internal proxy error logged for debugging
+    return NextResponse.json(
+      { error: 'Internal proxy error' },
+      { status: 500 }
+    );
   }
 }

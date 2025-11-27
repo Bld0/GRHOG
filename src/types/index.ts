@@ -276,9 +276,9 @@ export interface DashboardActiveBins {
   total: number;
 }
 
-export interface DashboardActiveCards {
-  active: number;
-  total: number;
+export interface DashboardTotalCards {
+  type: string;
+  count: number;
 }
 
 export interface DashboardCurrentUsage {
@@ -340,4 +340,13 @@ export interface LocationStats {
 export interface LocationStatsData {
   locationStats: LocationStats[];
   totalLocations: number;
+}
+
+export interface TotalHouseholdsData {
+  totalHouseholds: number;
+  ailHouseholds: number;
+  sokhHouseholds: number;
+  aanbHouseholds: number;
+  ajiltanHouseholds: number;
+  nullTypeHouseholds: number;
 }

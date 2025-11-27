@@ -17,7 +17,9 @@ import {
   useClients,
   useBinUsages,
   useDashboardActiveBins,
+  useTotalHouseHoldsCount,
   useDashboardActiveCards,
+  useDashboardTotalCards,
   useDashboardCurrentUsage,
   useDashboardAverageFilling
 } from '@/hooks/use-api-data';
@@ -25,6 +27,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
 import { normalizeStorageLevel } from '@/lib/utils';
 import AllBinsMap from '@/features/overview/components/all-bins-map';
+import { number } from 'zod';
 
 export default function OverViewLayout({
   bar_stats,
@@ -49,6 +52,11 @@ export default function OverViewLayout({
     error: activeCardsError
   } = useDashboardActiveCards();
   const {
+    data: totalCards,
+    loading: totalCardsLoading,
+    error: totalCardsError
+  } = useDashboardTotalCards();
+  const {
     data: currentUsage,
     loading: currentUsageLoading,
     error: currentUsageError
@@ -58,13 +66,20 @@ export default function OverViewLayout({
     loading: averageFillingLoading,
     error: averageFillingError
   } = useDashboardAverageFilling();
+  const {
+    data: TotalHouseholdsData,
+    loading: householdLoading,
+    error: houseHoldError
+  } = useTotalHouseHoldsCount();
 
   // Check if dashboard data failed and trigger fallbacks
   const dashboardFailed =
     activeBinsError ||
     activeCardsError ||
+    totalCardsError ||
     currentUsageError ||
-    averageFillingError;
+    averageFillingError ||
+    houseHoldError;
 
   useEffect(() => {
     if (dashboardFailed && !useFallbacks) {
@@ -95,14 +110,17 @@ export default function OverViewLayout({
   const dashboardLoading =
     activeBinsLoading ||
     activeCardsLoading ||
+    totalCardsLoading ||
     currentUsageLoading ||
-    averageFillingLoading;
+    averageFillingLoading ||
+    householdLoading;
 
   const isLoading = authLoading || dashboardLoading || fallbackLoading;
   const hasError =
     authError || (useFallbacks && (binsError || clientsError || usagesError));
 
   // Use dashboard data when available, fallback to calculated data only when needed
+  const totalHouseHoldsNum = TotalHouseholdsData || (useFallbacks ?? 0);
   const totalBins = activeBins?.total || (useFallbacks ? bins.length : 0);
   const onlineBins =
     activeBins?.active ||
@@ -118,9 +136,11 @@ export default function OverViewLayout({
         )
       : 0;
 
-  const totalClients =
-    activeCards?.total || (useFallbacks ? clients.length : 0);
-  // activeClients not currently used on this layout
+  const totalCardNum = totalCards
+    ? totalCards.reduce((sum, item) => sum + item.count, 0)
+    : useFallbacks
+      ? clients.length
+      : 0;
 
   // Use dashboard usage data when available, fallback only when needed
   const todayUsages = currentUsage
@@ -249,32 +269,6 @@ export default function OverViewLayout({
 
           <Card className='@container/card'>
             <CardHeader>
-              <CardDescription>Дундаж дүүргэлт</CardDescription>
-              <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                {averageFillLevel} %
-              </CardTitle>
-              <CardAction>
-                <Badge
-                  variant={averageFillLevel > 60 ? 'destructive' : 'outline'}
-                >
-                  {averageFillLevel > 60 ? (
-                    <IconTrendingUp />
-                  ) : (
-                    <IconTrendingDown />
-                  )}
-                  {fillPercentageChange}
-                </Badge>
-              </CardAction>
-            </CardHeader>
-            <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-              <div className='line-clamp-1 flex gap-2 font-medium'>
-                Сүүлийн долоо хоногт дүүргэлт
-              </div>
-            </CardFooter>
-          </Card>
-
-          <Card className='@container/card'>
-            <CardHeader>
               <CardDescription>Өнөөдрийн хэрэглээ</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
                 {todayUsages}
@@ -299,31 +293,85 @@ export default function OverViewLayout({
 
           <Card className='@container/card'>
             <CardHeader>
-              <CardDescription>Идэвхтэй карт</CardDescription>
+              <CardDescription>Нийт хэрэглэгч</CardDescription>
+
+              <CardTitle className='text-3xl font-semibold tabular-nums @[250px]/card:text-4xl'>
+                {TotalHouseholdsData?.totalHouseholds ?? 0}
+              </CardTitle>
+            </CardHeader>
+
+            <CardFooter className='w-full flex-col items-start gap-2 pt-2 text-sm'>
+              <div className='grid w-full grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4'>
+                {(TotalHouseholdsData?.ailHouseholds ?? 0) !== 0 && (
+                  <div className='text-muted-foreground text-xs'>
+                    АЙЛ {TotalHouseholdsData?.ailHouseholds ?? 0}
+                  </div>
+                )}
+
+                {(TotalHouseholdsData?.sokhHouseholds ?? 0) !== 0 && (
+                  <div className='text-muted-foreground text-xs'>
+                    СӨХ {TotalHouseholdsData?.sokhHouseholds ?? 0}
+                  </div>
+                )}
+
+                {(TotalHouseholdsData?.aanbHouseholds ?? 0) !== 0 && (
+                  <div className='text-muted-foreground text-xs'>
+                    ААНБ {TotalHouseholdsData?.aanbHouseholds ?? 0}
+                  </div>
+                )}
+
+                {(TotalHouseholdsData?.ajiltanHouseholds ?? 0) !== 0 && (
+                  <div className='text-muted-foreground text-xs'>
+                    Ажилтан {TotalHouseholdsData?.ajiltanHouseholds ?? 0}
+                  </div>
+                )}
+
+                {(TotalHouseholdsData?.nullTypeHouseholds ?? 0) !== 0 && (
+                  <div className='text-muted-foreground text-xs'>
+                    Тодорхойгүй {TotalHouseholdsData?.nullTypeHouseholds ?? 0}
+                  </div>
+                )}
+              </div>
+            </CardFooter>
+          </Card>
+
+          <Card className='@container/card'>
+            <CardHeader>
+              <CardDescription>Нийт карт</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                {totalClients}
+                {totalCardNum}
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
                   <IconTrendingUp />
-                  {totalClients} бүртгэлтэй
+                  {activeCards} Идэвхтэй
                 </Badge>
               </CardAction>
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-              <div className='text-muted-foreground'>Системийн хэрэглээ</div>
+              <div className='grid w-full grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4'>
+                {totalCards &&
+                  totalCards.map((item, index) => (
+                    <div key={index} className='text-muted-foreground text-xs'>
+                      {item.count} {item.type ?? 'тодорхойгүй'}
+                    </div>
+                  ))}
+              </div>
             </CardFooter>
           </Card>
         </div>
         {/* Dashboard chart slots (provided by nested route outlets) */}
         <div className='flex-1'>
           {/* Stack vertically on small screens, side-by-side on md+ */}
-          <div className='flex flex-col md:flex-row items-start gap-4'>
+          <div className='flex flex-col items-start gap-4 md:flex-row'>
             <div className='w-full md:w-7/12'>
               <div>{bar_stats}</div>
               {/* All bins map - use responsive height classes for mobile */}
               <div className='mt-4'>
-                <AllBinsMap height='480px' className='h-56 sm:h-72 md:h-[480px]' />
+                <AllBinsMap
+                  height='480px'
+                  className='h-56 sm:h-72 md:h-[480px]'
+                />
               </div>
             </div>
             <div className='w-full md:w-5/12'>{pie_stats}</div>

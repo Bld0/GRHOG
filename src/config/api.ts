@@ -9,7 +9,7 @@ export const API_CONFIG = {
       return '/api';
     }
     // Server-side: use direct backend URL
-    return process.env.BACKEND_URL || 'http://device.grhog.mn';
+    return process.env.BACKEND_URL || 'www.grhog.mn';
   })(),
 
   // API endpoints
@@ -28,7 +28,9 @@ export const API_CONFIG = {
     DASHBOARD: {
       ACTIVE_BINS: '/dashboard/active-bins',
       ACTIVE_CARDS: '/dashboard/active-cards',
+      TOTAL_CARDS: '/dashboard/total-cards',
       CURRENT_USAGE: '/dashboard/current-usage',
+      TOTAL_HOUSEHOLDS: '/dashboard/total-household',
       AVERAGE_BIN_FILLING: '/dashboard/average-bin-filling',
       COLLECTION_TRENDS: '/dashboard/collection-trends',
       BIN_STATUS_DISTRIBUTION: '/dashboard/bin-status-distribution',

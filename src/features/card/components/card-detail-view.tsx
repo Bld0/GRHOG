@@ -15,8 +15,21 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
-import { ResponsiveTable as Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  ResponsiveTable as Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Pagination,
@@ -25,13 +38,13 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-  PaginationEllipsis,
+  PaginationEllipsis
 } from '@/components/ui/pagination';
 import PageContainer from '@/components/layout/page-container';
-import { 
-  IconUser, 
-  IconCreditCard, 
-  IconActivity, 
+import {
+  IconUser,
+  IconCreditCard,
+  IconActivity,
   IconCalendar,
   IconPhone,
   IconMail,
@@ -54,7 +67,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from '@/components/ui/dialog';
 import { authUtils } from '@/lib/auth';
 import { normalizeStorageLevel } from '@/lib/utils';
@@ -130,7 +143,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
       try {
         // Fetch client activity and stats from backend
         const response = await fetch(`/api/clients/${cardId}/activity`, {
-          headers: authUtils.getAuthHeader(),
+          headers: authUtils.getAuthHeader()
         });
         if (!response.ok) {
           if (response.status === 404) {
@@ -152,14 +165,23 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
           uniqueBins: activityData.uniqueBins,
           accessesPerDay: activityData.accessesPerDay || 0,
           recentAccess: activityData.recentAccess,
-          lastAccess: activityData.lastAccess ? new Date(activityData.lastAccess) : null,
+          lastAccess: activityData.lastAccess
+            ? new Date(activityData.lastAccess)
+            : null,
           averageAccessPerWeek: (activityData.accessesPerDay || 0) * 7,
           monthlyAccess: (activityData.accessesPerDay || 0) * 30,
-          activityScore: Math.min(((activityData.accessesPerDay || 0) / 2) * 100, 100),
+          activityScore: Math.min(
+            ((activityData.accessesPerDay || 0) / 2) * 100,
+            100
+          ),
           email: activityData.clientEmail,
           phone: activityData.clientPhone,
-          createdAt: activityData.clientCreatedAt ? new Date(activityData.clientCreatedAt) : undefined,
-          updatedAt: activityData.clientUpdatedAt ? new Date(activityData.clientUpdatedAt) : undefined,
+          createdAt: activityData.clientCreatedAt
+            ? new Date(activityData.clientCreatedAt)
+            : undefined,
+          updatedAt: activityData.clientUpdatedAt
+            ? new Date(activityData.clientUpdatedAt)
+            : undefined,
           mostUsedBin: activityData.mostUsedBin,
           district: activityData.clientDistrict || null,
           khoroo: activityData.clientKhoroo || null,
@@ -216,12 +238,14 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
   // Filter access history based on date range
   const getFilteredHistory = () => {
     if (dateFilter === 'all') return accessHistory;
-    
+
     const days = parseInt(dateFilter);
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
-    
-    return accessHistory.filter(access => new Date(access.createdAt) >= cutoffDate);
+
+    return accessHistory.filter(
+      (access) => new Date(access.createdAt) >= cutoffDate
+    );
   };
 
   // Get paginated data
@@ -239,7 +263,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -267,7 +291,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
@@ -285,22 +309,30 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
           district: editUser.district || null,
           khoroo: editUser.khoroo ? parseInt(editUser.khoroo) : null,
           streetBuilding: editUser.streetBuilding || null,
-          apartmentNumber: editUser.apartmentNumber ? parseInt(editUser.apartmentNumber) : null,
+          apartmentNumber: editUser.apartmentNumber
+            ? parseInt(editUser.apartmentNumber)
+            : null,
           type: editUser.type || null
-        }),
+        })
       });
       if (response.ok) {
-        setCardData(prev => prev ? {
-          ...prev,
-          name: editUser.name,
-          email: editUser.email,
-          phone: editUser.phone,
-          district: editUser.district,
-          khoroo: editUser.khoroo ? parseInt(editUser.khoroo) : null,
-          streetBuilding: editUser.streetBuilding,
-          apartmentNumber: editUser.apartmentNumber ? parseInt(editUser.apartmentNumber) : null,
-          type: editUser.type as 'ААНБ' | 'СӨХ' | 'Айл' | 'Ажилтан' | null
-        } : null);
+        setCardData((prev) =>
+          prev
+            ? {
+                ...prev,
+                name: editUser.name,
+                email: editUser.email,
+                phone: editUser.phone,
+                district: editUser.district,
+                khoroo: editUser.khoroo ? parseInt(editUser.khoroo) : null,
+                streetBuilding: editUser.streetBuilding,
+                apartmentNumber: editUser.apartmentNumber
+                  ? parseInt(editUser.apartmentNumber)
+                  : null,
+                type: editUser.type as 'ААНБ' | 'СӨХ' | 'Айл' | 'Ажилтан' | null
+              }
+            : null
+        );
         setIsEditDialogOpen(false);
       } else {
         const errorData = await response.json();
@@ -308,7 +340,10 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
       }
     } catch (error) {
       console.error('Error updating client:', error);
-      alert('Карт засахад алдаа гарлаа: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      alert(
+        'Карт засахад алдаа гарлаа: ' +
+          (error instanceof Error ? error.message : 'Unknown error')
+      );
     } finally {
       setIsEditing(false);
     }
@@ -317,24 +352,24 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
   if (loading) {
     return (
       <PageContainer>
-        <div className="flex flex-1 flex-col space-y-6">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => router.back()}>
-              <IconArrowLeft className="h-4 w-4 mr-2" />
+        <div className='flex flex-1 flex-col space-y-6'>
+          <div className='flex items-center gap-4'>
+            <Button variant='ghost' onClick={() => router.back()}>
+              <IconArrowLeft className='mr-2 h-4 w-4' />
             </Button>
             <div>
-              <div className="h-8 w-48 bg-muted animate-pulse rounded" />
+              <div className='bg-muted h-8 w-48 animate-pulse rounded' />
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card key={i}>
                 <CardHeader>
-                  <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                  <div className='bg-muted h-4 w-24 animate-pulse rounded' />
                 </CardHeader>
                 <CardContent>
-                  <div className="h-8 w-16 bg-muted animate-pulse rounded mb-2" />
-                  <div className="h-3 w-32 bg-muted animate-pulse rounded" />
+                  <div className='bg-muted mb-2 h-8 w-16 animate-pulse rounded' />
+                  <div className='bg-muted h-3 w-32 animate-pulse rounded' />
                 </CardContent>
               </Card>
             ))}
@@ -347,13 +382,13 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
   if (error || !cardData) {
     return (
       <PageContainer>
-        <div className="flex flex-1 flex-col items-center justify-center space-y-4">
-          <IconAlertTriangle className="h-12 w-12 text-muted-foreground" />
-          <div className="text-center">
-            <h2 className="text-lg font-semibold">Алдаа гарлаа</h2>
-            <p className="text-muted-foreground">{error}</p>
-            <Button onClick={() => router.back()} className="mt-4">
-              <IconArrowLeft className="h-4 w-4 mr-2" />
+        <div className='flex flex-1 flex-col items-center justify-center space-y-4'>
+          <IconAlertTriangle className='text-muted-foreground h-12 w-12' />
+          <div className='text-center'>
+            <h2 className='text-lg font-semibold'>Алдаа гарлаа</h2>
+            <p className='text-muted-foreground'>{error}</p>
+            <Button onClick={() => router.back()} className='mt-4'>
+              <IconArrowLeft className='mr-2 h-4 w-4' />
               Буцах
             </Button>
           </div>
@@ -364,44 +399,54 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
 
   return (
     <PageContainer>
-      <div className="flex flex-1 flex-col space-y-6">
+      <div className='flex flex-1 flex-col space-y-6'>
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => router.back()}>
-              <IconArrowLeft className="h-4 w-4 mr-2" />
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-4'>
+            <Button variant='ghost' onClick={() => router.back()}>
+              <IconArrowLeft className='mr-2 h-4 w-4' />
             </Button>
-            <div className="flex items-center gap-4">
-              <Avatar className="h-12 w-12">
-                <AvatarFallback className="text-lg">
-                  {cardData.name === 'Unknown' ? `ХЗ` : cardData.name.split(' ').map((n: string) => n[0]).join('')}
+            <div className='flex items-center gap-4'>
+              <Avatar className='h-12 w-12'>
+                <AvatarFallback className='text-lg'>
+                  {cardData.name === 'Unknown'
+                    ? `ХЗ`
+                    : cardData.name
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">
-                  <span 
-                    className="cursor-pointer hover:bg-muted/30 px-2 py-1 rounded transition-colors"
+                <h1 className='text-3xl font-bold tracking-tight'>
+                  <span
+                    className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 transition-colors'
                     onClick={() => {
-                      const displayName = cardData.name === 'Unknown' ? `Хэрэглэгч ${cardData.id}` : cardData.name;
+                      const displayName =
+                        cardData.name === 'Unknown'
+                          ? `Хэрэглэгч ${cardData.id}`
+                          : cardData.name;
                       navigator.clipboard.writeText(displayName);
                       toast.success('Нэр хуулагдлаа');
                     }}
-                    title="Хуулахын тулд дарна уу"
+                    title='Хуулахын тулд дарна уу'
                   >
-                    {cardData.name === 'Unknown' ? `Хэрэглэгч ${cardData.id}` : cardData.name}
+                    {cardData.name === 'Unknown'
+                      ? `Хэрэглэгч ${cardData.id}`
+                      : cardData.name}
                   </span>
                 </h1>
-                <p className="text-muted-foreground">
-                  Card ID: 
-                  <span 
-                    className="cursor-pointer hover:bg-muted/30 px-2 py-1 rounded transition-colors font-mono"
+                <p className='text-muted-foreground'>
+                  Card ID:
+                  <span
+                    className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 font-mono transition-colors'
                     onClick={() => {
                       if (cardData.cardIdDec) {
                         navigator.clipboard.writeText(cardData.cardIdDec);
                         toast.success('Карт ID хуулагдлаа');
                       }
                     }}
-                    title="Хуулахын тулд дарна уу"
+                    title='Хуулахын тулд дарна уу'
                   >
                     {cardData.cardIdDec}
                   </span>
@@ -410,168 +455,201 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant={cardData.status === 'active' ? 'default' : 'secondary'} className='p-[7px]'>
-              <div className={`h-2 w-2 rounded-full mr-2 ${cardData.status === 'active' ? 'bg-green-500' : 'bg-gray-500'}`} />
-              {cardData.status === 'active' ? 'Идэвхтэй' : 'Хориглосон'}
+          <div className='flex items-center gap-2'>
+            <Badge
+              variant={cardData.status === 'active' ? 'default' : 'secondary'}
+              className='p-[7px]'
+            >
+              <div
+                className={`mr-2 h-2 w-2 rounded-full ${cardData.status === 'active' ? 'bg-green-500' : 'bg-gray-500'}`}
+              />
+              {cardData.status === 'active' ? 'Идэвхтэй' : 'Идэвхгүй'}
             </Badge>
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" onClick={() => setIsEditDialogOpen(true)}>
-                  <IconEdit className="h-4 w-4 mr-2" />
+                <Button size='sm' onClick={() => setIsEditDialogOpen(true)}>
+                  <IconEdit className='mr-2 h-4 w-4' />
                   Засах
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[525px]">
+              <DialogContent className='sm:max-w-[525px]'>
                 <DialogHeader>
                   <DialogTitle>Карт засварлах</DialogTitle>
                   <DialogDescription>
-                    {cardData.name} ({cardData.cardId}) картын мэдээллийг засварлах
+                    {cardData.name} ({cardData.cardId}) картын мэдээллийг
+                    засварлах
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-name" className="text-right">
+                <div className='grid gap-4 py-4'>
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='edit-name' className='text-right'>
                       Нэр *
                     </Label>
                     <Input
-                      id="edit-name"
+                      id='edit-name'
                       value={editUser.name}
-                      onChange={(e) => setEditUser({ ...editUser, name: e.target.value })}
-                      placeholder="Овог нэр"
-                      className="col-span-3"
+                      onChange={(e) =>
+                        setEditUser({ ...editUser, name: e.target.value })
+                      }
+                      placeholder='Овог нэр'
+                      className='col-span-3'
                     />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-email" className="text-right">
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='edit-email' className='text-right'>
                       И-мэйл
                     </Label>
                     <Input
-                      id="edit-email"
-                      type="email"
+                      id='edit-email'
+                      type='email'
                       value={editUser.email}
-                      onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
-                      placeholder="example@email.com"
-                      className="col-span-3"
+                      onChange={(e) =>
+                        setEditUser({ ...editUser, email: e.target.value })
+                      }
+                      placeholder='example@email.com'
+                      className='col-span-3'
                     />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-phone" className="text-right">
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='edit-phone' className='text-right'>
                       Утас
                     </Label>
                     <Input
-                      id="edit-phone"
-                      type="tel"
+                      id='edit-phone'
+                      type='tel'
                       value={editUser.phone}
-                      onChange={(e) => setEditUser({ ...editUser, phone: e.target.value })}
-                      placeholder="99112233"
-                      className="col-span-3"
+                      onChange={(e) =>
+                        setEditUser({ ...editUser, phone: e.target.value })
+                      }
+                      placeholder='99112233'
+                      className='col-span-3'
                     />
                   </div>
                   {/* District */}
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-district" className="text-right">
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='edit-district' className='text-right'>
                       Дүүрэг
                     </Label>
                     <Select
                       value={editUser.district}
-                      onValueChange={(value) => setEditUser({ ...editUser, district: value })}
+                      onValueChange={(value) =>
+                        setEditUser({ ...editUser, district: value })
+                      }
                     >
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Дүүрэг сонгоно уу" />
+                      <SelectTrigger className='col-span-3'>
+                        <SelectValue placeholder='Дүүрэг сонгоно уу' />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Багануур">Багануур</SelectItem>
-                        <SelectItem value="Багахангай">Багахангай</SelectItem>
-                        <SelectItem value="Баянгол">Баянгол</SelectItem>
-                        <SelectItem value="Баянзүрх">Баянзүрх</SelectItem>
-                        <SelectItem value="Налайх">Налайх</SelectItem>
-                        <SelectItem value="Сонгинохайрхан">Сонгинохайрхан</SelectItem>
-                        <SelectItem value="Сүхбаатар">Сүхбаатар</SelectItem>
-                        <SelectItem value="Хан-Уул">Хан-Уул</SelectItem>
-                        <SelectItem value="Чингэлтэй">Чингэлтэй</SelectItem>
+                        <SelectItem value='Багануур'>Багануур</SelectItem>
+                        <SelectItem value='Багахангай'>Багахангай</SelectItem>
+                        <SelectItem value='Баянгол'>Баянгол</SelectItem>
+                        <SelectItem value='Баянзүрх'>Баянзүрх</SelectItem>
+                        <SelectItem value='Налайх'>Налайх</SelectItem>
+                        <SelectItem value='Сонгинохайрхан'>
+                          Сонгинохайрхан
+                        </SelectItem>
+                        <SelectItem value='Сүхбаатар'>Сүхбаатар</SelectItem>
+                        <SelectItem value='Хан-Уул'>Хан-Уул</SelectItem>
+                        <SelectItem value='Чингэлтэй'>Чингэлтэй</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   {/* Khoroo */}
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-khoroo" className="text-right">
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='edit-khoroo' className='text-right'>
                       Хороо
                     </Label>
                     <Input
-                      id="edit-khoroo"
-                      type="number"
+                      id='edit-khoroo'
+                      type='number'
                       value={editUser.khoroo}
-                      onChange={(e) => setEditUser({ ...editUser, khoroo: e.target.value })}
-                      placeholder="Хороо"
-                      className="col-span-3"
+                      onChange={(e) =>
+                        setEditUser({ ...editUser, khoroo: e.target.value })
+                      }
+                      placeholder='Хороо'
+                      className='col-span-3'
                     />
                   </div>
                   {/* Street Building */}
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-streetBuilding" className="text-right">
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='edit-streetBuilding' className='text-right'>
                       Гудамж, байр
                     </Label>
                     <Input
-                      id="edit-streetBuilding"
+                      id='edit-streetBuilding'
                       value={editUser.streetBuilding}
-                      onChange={(e) => setEditUser({ ...editUser, streetBuilding: e.target.value })}
-                      placeholder="Гудамж, байр"
-                      className="col-span-3"
+                      onChange={(e) =>
+                        setEditUser({
+                          ...editUser,
+                          streetBuilding: e.target.value
+                        })
+                      }
+                      placeholder='Гудамж, байр'
+                      className='col-span-3'
                     />
                   </div>
                   {/* Apartment Number */}
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-apartmentNumber" className="text-right">
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label
+                      htmlFor='edit-apartmentNumber'
+                      className='text-right'
+                    >
                       Тоот
                     </Label>
                     <Input
-                      id="edit-apartmentNumber"
-                      type="number"
+                      id='edit-apartmentNumber'
+                      type='number'
                       value={editUser.apartmentNumber}
-                      onChange={(e) => setEditUser({ ...editUser, apartmentNumber: e.target.value })}
-                      placeholder="Тоот"
-                      className="col-span-3"
+                      onChange={(e) =>
+                        setEditUser({
+                          ...editUser,
+                          apartmentNumber: e.target.value
+                        })
+                      }
+                      placeholder='Тоот'
+                      className='col-span-3'
                     />
                   </div>
                   {/* Client Type */}
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-type" className="text-right">
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='edit-type' className='text-right'>
                       Төрөл
                     </Label>
                     <Select
                       value={editUser.type}
-                      onValueChange={(value) => setEditUser({ ...editUser, type: value })}
+                      onValueChange={(value) =>
+                        setEditUser({ ...editUser, type: value })
+                      }
                     >
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Төрөл сонгоно уу" />
+                      <SelectTrigger className='col-span-3'>
+                        <SelectValue placeholder='Төрөл сонгоно уу' />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="ААНБ">ААНБ</SelectItem>
-                        <SelectItem value="СӨХ">СӨХ</SelectItem>
-                        <SelectItem value="Айл">Айл</SelectItem>
-                        <SelectItem value="Ажилтан">Ажилтан</SelectItem>
+                        <SelectItem value='ААНБ'>ААНБ</SelectItem>
+                        <SelectItem value='СӨХ'>СӨХ</SelectItem>
+                        <SelectItem value='Айл'>Айл</SelectItem>
+                        <SelectItem value='Ажилтан'>Ажилтан</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <DialogFooter>
                   <Button
-                    type="button"
-                    variant="outline"
+                    type='button'
+                    variant='outline'
                     onClick={() => setIsEditDialogOpen(false)}
                     disabled={isEditing}
                   >
                     Цуцлах
                   </Button>
                   <Button
-                    type="button"
+                    type='button'
                     onClick={handleSaveEdit}
                     disabled={isEditing}
                   >
                     {isEditing ? (
                       <>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+                        <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                         Хадгалж байна...
                       </>
                     ) : (
@@ -587,32 +665,42 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
         {/* Main Stats Cards */}
         <div className='*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs md:grid-cols-2 lg:grid-cols-4'>
           <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">Нийт нэвтрэлт</CardTitle>
-                <IconActivity className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className='pb-3'>
+              <div className='flex items-center justify-between'>
+                <CardTitle className='text-sm font-medium'>
+                  Нийт нэвтрэлт
+                </CardTitle>
+                <IconActivity className='text-muted-foreground h-4 w-4' />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{cardData.totalAccess}</div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span className="text-blue-600">Өдөрт {cardData.accessesPerDay.toFixed(1)}</span>
+              <div className='text-2xl font-bold'>{cardData.totalAccess}</div>
+              <div className='text-muted-foreground flex items-center gap-1 text-xs'>
+                <span className='text-blue-600'>
+                  Өдөрт {cardData.accessesPerDay.toFixed(1)}
+                </span>
                 <span>•</span>
-                <span className="text-green-600">Сүүлийн 7 хоногт {cardData.recentAccess}</span>
+                <span className='text-green-600'>
+                  Сүүлийн 7 хоногт {cardData.recentAccess}
+                </span>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">Идэвхжилийн оноо</CardTitle>
-                <IconTrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className='pb-3'>
+              <div className='flex items-center justify-between'>
+                <CardTitle className='text-sm font-medium'>
+                  Идэвхжилийн оноо
+                </CardTitle>
+                <IconTrendingUp className='text-muted-foreground h-4 w-4' />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{cardData.activityScore.toFixed(0)}%</div>
-              <div className="flex items-center gap-1 text-xs">
+              <div className='text-2xl font-bold'>
+                {cardData.activityScore.toFixed(0)}%
+              </div>
+              <div className='flex items-center gap-1 text-xs'>
                 <span className={getActivityScoreColor(cardData.activityScore)}>
                   {getActivityScoreText(cardData.activityScore)}
                 </span>
@@ -621,147 +709,174 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
           </Card>
 
           <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">Ашигласан сав</CardTitle>
-                <IconMapPin className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className='pb-3'>
+              <div className='flex items-center justify-between'>
+                <CardTitle className='text-sm font-medium'>
+                  Ашигласан сав
+                </CardTitle>
+                <IconMapPin className='text-muted-foreground h-4 w-4' />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{cardData.uniqueBins}</div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span className="text-purple-600">Сав бүрт {cardData.uniqueBins > 0 ? (cardData.totalAccess / cardData.uniqueBins).toFixed(1) : 0} удаа</span>
+              <div className='text-2xl font-bold'>{cardData.uniqueBins}</div>
+              <div className='text-muted-foreground flex items-center gap-1 text-xs'>
+                <span className='text-purple-600'>
+                  Сав бүрт{' '}
+                  {cardData.uniqueBins > 0
+                    ? (cardData.totalAccess / cardData.uniqueBins).toFixed(1)
+                    : 0}{' '}
+                  удаа
+                </span>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">Сүүлийн нэвтрэлт</CardTitle>
-                <IconClock className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className='pb-3'>
+              <div className='flex items-center justify-between'>
+                <CardTitle className='text-sm font-medium'>
+                  Сүүлийн нэвтрэлт
+                </CardTitle>
+                <IconClock className='text-muted-foreground h-4 w-4' />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-bold">
-                {cardData.lastAccess ? formatRelativeDate(cardData.lastAccess) : 'Нэвтрэлт байхгүй'}
+              <div className='text-xl font-bold'>
+                {cardData.lastAccess
+                  ? formatRelativeDate(cardData.lastAccess)
+                  : 'Нэвтрэлт байхгүй'}
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* User Information */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           {/* Personal Details */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <IconUser className="h-5 w-5" />
+              <CardTitle className='flex items-center gap-2'>
+                <IconUser className='h-5 w-5' />
                 Хувийн мэдээлэл
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Нэр:</span>
-                <span 
-                  className="text-sm font-medium cursor-pointer hover:bg-muted/30 px-2 py-1 rounded transition-colors"
+            <CardContent className='space-y-3'>
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>Нэр:</span>
+                <span
+                  className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 text-sm font-medium transition-colors'
                   onClick={() => {
-                    const displayName = cardData.name === 'Unknown' ? `Хэрэглэгч ${cardData.id}` : cardData.name;
+                    const displayName =
+                      cardData.name === 'Unknown'
+                        ? `Хэрэглэгч ${cardData.id}`
+                        : cardData.name;
                     navigator.clipboard.writeText(displayName);
                     toast.success('Нэр хуулагдлаа');
                   }}
-                  title="Хуулахын тулд дарна уу"
+                  title='Хуулахын тулд дарна уу'
                 >
-                  {cardData.name === 'Unknown' ? `Хэрэглэгч ${cardData.id}` : cardData.name}
+                  {cardData.name === 'Unknown'
+                    ? `Хэрэглэгч ${cardData.id}`
+                    : cardData.name}
                 </span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">И-мэйл:</span>
-                <span 
-                  className="text-sm font-medium cursor-pointer hover:bg-muted/30 px-2 py-1 rounded transition-colors"
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>И-мэйл:</span>
+                <span
+                  className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 text-sm font-medium transition-colors'
                   onClick={() => {
                     if (cardData.email) {
                       navigator.clipboard.writeText(cardData.email);
                       toast.success('И-мэйл хуулагдлаа');
                     }
                   }}
-                  title={cardData.email ? "Хуулахын тулд дарна уу" : ""}
+                  title={cardData.email ? 'Хуулахын тулд дарна уу' : ''}
                 >
                   {cardData.email || 'Тодорхойгүй'}
                 </span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Утас:</span>
-                <span 
-                  className="text-sm font-medium cursor-pointer hover:bg-muted/30 px-2 py-1 rounded transition-colors"
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>Утас:</span>
+                <span
+                  className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 text-sm font-medium transition-colors'
                   onClick={() => {
                     if (cardData.phone) {
                       navigator.clipboard.writeText(cardData.phone);
                       toast.success('Утасны дугаар хуулагдлаа');
                     }
                   }}
-                  title={cardData.phone ? "Хуулахын тулд дарна уу" : ""}
+                  title={cardData.phone ? 'Хуулахын тулд дарна уу' : ''}
                 >
                   {cardData.phone || 'Тодорхойгүй'}
                 </span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Дүүрэг:</span>
-                <span className="text-sm font-medium">
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>Дүүрэг:</span>
+                <span className='text-sm font-medium'>
                   {cardData.district || 'Тодорхойгүй'}
                 </span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Хороо:</span>
-                <span className="text-sm font-medium">
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>Хороо:</span>
+                <span className='text-sm font-medium'>
                   {cardData.khoroo || 'Тодорхойгүй'}
                 </span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Гудамж, байр:</span>
-                <span className="text-sm font-medium">
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>
+                  Гудамж, байр:
+                </span>
+                <span className='text-sm font-medium'>
                   {cardData.streetBuilding || 'Тодорхойгүй'}
                 </span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Тоот:</span>
-                <span className="text-sm font-medium">
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>Тоот:</span>
+                <span className='text-sm font-medium'>
                   {cardData.apartmentNumber || 'Тодорхойгүй'}
                 </span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Төрөл:</span>
-                <span className="text-sm font-medium">
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>Төрөл:</span>
+                <span className='text-sm font-medium'>
                   {cardData.type || 'Тодорхойгүй'}
                 </span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Дэлгэрэнгүй хаяг:</span>
-                <span 
-                  className="text-sm font-medium cursor-pointer hover:bg-muted/30 px-2 py-1 rounded transition-colors"
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>
+                  Дэлгэрэнгүй хаяг:
+                </span>
+                <span
+                  className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 text-sm font-medium transition-colors'
                   onClick={() => {
                     if (cardData.address) {
                       navigator.clipboard.writeText(cardData.address);
                       toast.success('Хаяг хуулагдлаа');
                     }
                   }}
-                  title={cardData.address ? "Хуулахын тулд дарна уу" : ""}
+                  title={cardData.address ? 'Хуулахын тулд дарна уу' : ''}
                 >
                   {cardData.address || 'Тодорхойгүй'}
                 </span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Бүртгэгдсэн:</span>
-                <span className="text-sm font-medium">{cardData.createdAt ? formatDate(cardData.createdAt) : 'Тодорхойгүй'}</span>
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>
+                  Бүртгэгдсэн:
+                </span>
+                <span className='text-sm font-medium'>
+                  {cardData.createdAt
+                    ? formatDate(cardData.createdAt)
+                    : 'Тодорхойгүй'}
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -769,32 +884,48 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
           {/* Usage Statistics */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <IconActivity className="h-5 w-5" />
+              <CardTitle className='flex items-center gap-2'>
+                <IconActivity className='h-5 w-5' />
                 Ашиглалтын статистик
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Долоо хоногт дунджаар:</span>
-                <span className="text-sm font-medium">{cardData.averageAccessPerWeek.toFixed(1)} удаа</span>
+            <CardContent className='space-y-3'>
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>
+                  Долоо хоногт дунджаар:
+                </span>
+                <span className='text-sm font-medium'>
+                  {cardData.averageAccessPerWeek.toFixed(1)} удаа
+                </span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Сард дунджаар:</span>
-                <span className="text-sm font-medium">{cardData.monthlyAccess.toFixed(1)} удаа</span>
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>
+                  Сард дунджаар:
+                </span>
+                <span className='text-sm font-medium'>
+                  {cardData.monthlyAccess.toFixed(1)} удаа
+                </span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Идэвхжилийн хувь:</span>
-                <span className={`text-sm font-medium ${getActivityScoreColor(cardData.activityScore)}`}>
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>
+                  Идэвхжилийн хувь:
+                </span>
+                <span
+                  className={`text-sm font-medium ${getActivityScoreColor(cardData.activityScore)}`}
+                >
                   {cardData.activityScore.toFixed(1)}%
                 </span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Хамгийн их ашиглах сав:</span>
-                <span className="text-sm font-medium">{cardData.mostUsedBin || 'Тодорхойгүй'}</span>
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>
+                  Хамгийн их ашиглах сав:
+                </span>
+                <span className='text-sm font-medium'>
+                  {cardData.mostUsedBin || 'Тодорхойгүй'}
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -803,36 +934,36 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
         {/* Access History Table */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className='flex items-center justify-between'>
               <CardTitle>Нэвтрэлтийн түүх</CardTitle>
-              <div className="flex items-center gap-4">
+              <div className='flex items-center gap-4'>
                 {/* Rows Per Page Selection */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Мөр:</span>
-                  <Select 
-                    value={itemsPerPage.toString()} 
+                <div className='flex items-center gap-2'>
+                  <span className='text-muted-foreground text-sm'>Мөр:</span>
+                  <Select
+                    value={itemsPerPage.toString()}
                     onValueChange={(value) => {
                       setItemsPerPage(parseInt(value));
                       setCurrentPage(1);
                     }}
                   >
-                    <SelectTrigger className="w-[70px]">
+                    <SelectTrigger className='w-[70px]'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="25">25</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value='10'>10</SelectItem>
+                      <SelectItem value='20'>20</SelectItem>
+                      <SelectItem value='25'>25</SelectItem>
+                      <SelectItem value='50'>50</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
- 
+
                 {/* Date Filter Buttons */}
-                <div className="flex items-center gap-2">
+                <div className='flex items-center gap-2'>
                   <Button
                     variant={dateFilter === '7' ? 'default' : 'outline'}
-                    size="sm"
+                    size='sm'
                     onClick={() => {
                       setDateFilter('7');
                       setCurrentPage(1);
@@ -842,7 +973,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
                   </Button>
                   <Button
                     variant={dateFilter === '30' ? 'default' : 'outline'}
-                    size="sm"
+                    size='sm'
                     onClick={() => {
                       setDateFilter('30');
                       setCurrentPage(1);
@@ -852,7 +983,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
                   </Button>
                   <Button
                     variant={dateFilter === 'all' ? 'default' : 'outline'}
-                    size="sm"
+                    size='sm'
                     onClick={() => {
                       setDateFilter('all');
                       setCurrentPage(1);
@@ -865,7 +996,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
+            <div className='rounded-md border'>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -879,7 +1010,10 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
                 <TableBody>
                   {getPaginatedHistory().length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell
+                        colSpan={5}
+                        className='text-muted-foreground py-8 text-center'
+                      >
                         Сонгосон хугацаанд нэвтрэлт байхгүй
                       </TableCell>
                     </TableRow>
@@ -887,18 +1021,23 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
                     getPaginatedHistory().map((access, index) => (
                       <TableRow key={access.id || index}>
                         <TableCell>
-                          {new Date(access.createdAt).toLocaleDateString('mn-MN')}
+                          {new Date(access.createdAt).toLocaleDateString(
+                            'mn-MN'
+                          )}
                         </TableCell>
                         <TableCell>
-                          {new Date(access.createdAt).toLocaleTimeString('mn-MN', { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
+                          {new Date(access.createdAt).toLocaleTimeString(
+                            'mn-MN',
+                            {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }
+                          )}
                         </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          <Link 
+                        <TableCell className='font-mono text-sm'>
+                          <Link
                             href={`/dashboard/bins/${access.binId}`}
-                            className="font-medium text-primary hover:text-primary/80 hover:underline cursor-pointer"
+                            className='text-primary hover:text-primary/80 cursor-pointer font-medium hover:underline'
                           >
                             {access.binName || 'Тодорхойгүй'}
                           </Link>
@@ -907,7 +1046,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
                           {access.binLocation || 'Байршил тодорхойгүй'}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant='outline' className='text-xs'>
                             Амжилттай
                           </Badge>
                         </TableCell>
@@ -917,30 +1056,34 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
                 </TableBody>
               </Table>
             </div>
-            
+
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center space-x-2 py-4">
+              <div className='flex items-center justify-center space-x-2 py-4'>
                 <Pagination>
                   <PaginationContent>
                     <PaginationItem>
-                      <PaginationPrevious 
-                        href="#"
+                      <PaginationPrevious
+                        href='#'
                         onClick={(e) => {
                           e.preventDefault();
-                          setCurrentPage(prev => Math.max(prev - 1, 1));
+                          setCurrentPage((prev) => Math.max(prev - 1, 1));
                         }}
-                        className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                        className={
+                          currentPage === 1
+                            ? 'pointer-events-none opacity-50'
+                            : ''
+                        }
                       />
                     </PaginationItem>
-                    
+
                     {getPageNumbers().map((page, index) => (
                       <PaginationItem key={index}>
                         {page === 'ellipsis' ? (
                           <PaginationEllipsis />
                         ) : (
                           <PaginationLink
-                            href="#"
+                            href='#'
                             onClick={(e) => {
                               e.preventDefault();
                               setCurrentPage(page as number);
@@ -952,15 +1095,21 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
                         )}
                       </PaginationItem>
                     ))}
-                    
+
                     <PaginationItem>
-                      <PaginationNext 
-                        href="#"
+                      <PaginationNext
+                        href='#'
                         onClick={(e) => {
                           e.preventDefault();
-                          setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                          setCurrentPage((prev) =>
+                            Math.min(prev + 1, totalPages)
+                          );
                         }}
-                        className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                        className={
+                          currentPage === totalPages
+                            ? 'pointer-events-none opacity-50'
+                            : ''
+                        }
                       />
                     </PaginationItem>
                   </PaginationContent>
@@ -972,4 +1121,4 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
       </div>
     </PageContainer>
   );
-} 
+}
