@@ -422,7 +422,10 @@ export function CardsView() {
       if (response.ok) {
         setIsEditDialogOpen(false);
         setEditingUser(null);
-        window.location.reload();
+        toast.success(
+          'Картын мэдээлэл амжилттай шинэчлэгдлээ. Reload хийж шинэчлэгдсэн дата үзнэ үү.'
+        );
+        // window.location.reload();
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update client');
