@@ -72,6 +72,7 @@ import {
 import { authUtils } from '@/lib/auth';
 import { normalizeStorageLevel } from '@/lib/utils';
 import { toast } from 'sonner';
+import SwitchButton from '@/components/switch-button';
 
 interface CardData {
   id: number;
@@ -118,6 +119,7 @@ interface CardDetailViewProps {
 
 export function CardDetailView({ cardId }: CardDetailViewProps) {
   const router = useRouter();
+  const [isCardIdConverted, setIsCardIdConverted] = useState(false);
   const [cardData, setCardData] = useState<CardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -355,6 +357,36 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
     }
   };
 
+  const convertCardId = () => {
+    const currentHex = editUser.cardId;
+    const swapBytes = (hex: string) => {
+      const cleanHex = hex.replace(/\s+/g, '');
+      const paddedHex = cleanHex.length % 2 !== 0 ? '0' + cleanHex : cleanHex;
+      return (
+        paddedHex
+          .match(/.{1,2}/g)
+          ?.reverse()
+          .join('') || paddedHex
+      );
+    };
+
+    if (isCardIdConverted) {
+      // -----------------------------------------------------------
+      // Big-Endian -> Little-Endian
+      // 'D5F9D24B' -> '4BD2F9D5'
+      // -----------------------------------------------------------
+      const swappedValue = swapBytes(currentHex);
+      setEditUser({ ...editUser, cardId: swappedValue });
+    } else {
+      // -----------------------------------------------------------
+      // Little-Endian -> Big-Endian (Буцаах)
+      // '4BD2F9D5' -> 'D5F9D24B'
+      // -----------------------------------------------------------
+      const originalValue = swapBytes(currentHex);
+      setEditUser({ ...editUser, cardId: originalValue });
+    }
+  };
+
   if (loading) {
     return (
       <PageContainer>
@@ -502,17 +534,26 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
                     />
                   </div>
                   <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='edit-card-id' className='text-right'>
-                      Карт ID
+                    <Label htmlFor='edit-cardId' className='text-right'>
+                      Карт ID sdsd
                     </Label>
                     <Input
-                      id='edit-card-id'
+                      id='edit-cardId'
                       value={editUser.cardId}
-                      onChange={(e) =>
-                        setEditUser({ ...editUser, cardId: e.target.value })
+                      onChange={
+                        (e) => console.log('Card ID: ', e.target.value)
+                        // setEditUser({ ...editUser, cardId: e.target.value })
                       }
-                      placeholder='Карт ID'
-                      className='col-span-3'
+                      placeholder='C12345678'
+                      className='bg-muted-foreground/10 font-mono'
+                    />
+                    <SwitchButton
+                      value={isCardIdConverted}
+                      onChange={() => {
+                        setIsCardIdConverted(!isCardIdConverted);
+                        convertCardId();
+                      }}
+                      label={!isCardIdConverted ? 'Хөрвүүлээгүй' : 'Хөрвүүлсэн'}
                     />
                   </div>
                   <div className='grid grid-cols-4 items-center gap-4'>

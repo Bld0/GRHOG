@@ -21,6 +21,5 @@
   "/dashboard/card/[id]/page": "app/dashboard/card/[id]/page.js",
   "/dashboard/card/page": "app/dashboard/card/page.js",
   "/dashboard/overview/page": "app/dashboard/overview/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/page": "app/page.js"
+  "/favicon.ico/route": "app/favicon.ico/route.js"
 }

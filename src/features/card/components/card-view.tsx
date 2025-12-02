@@ -103,9 +103,11 @@ import {
   ActiveFilter
 } from '@/components/ui/table-header-filter';
 import { ActiveFilters } from '@/components/ui/active-filters';
+import SwitchButton from '@/components/switch-button';
 
 export function CardsView() {
   const router = useRouter();
+  const [isCardIdConverted, setIsCardIdConverted] = useState(false);
   const { canPerformAction, canPost, canPut, canDelete } = useRolePermissions();
   const [currentPage, setCurrentPage] = useState(0); // Changed to 0-based for API
   const [itemsPerPage, setItemsPerPage] = useState(20);
@@ -149,6 +151,7 @@ export function CardsView() {
     email: '',
     phone: '',
     cardId: '',
+    cardIdDec: '',
     address: '',
     district: '',
     khoroo: '',
@@ -384,6 +387,7 @@ export function CardsView() {
       email: resident.email || '', // Use email from resident data if available
       phone: resident.phone || '', // Use phone from resident data if available
       cardId: resident.cardId,
+      cardIdDec: resident.cardIdDec,
       address: resident.address || '', // Add address to editUser state
       district: resident.district || '',
       khoroo: resident.khoroo || '',
@@ -615,6 +619,36 @@ export function CardsView() {
     }
 
     return pages;
+  };
+
+  const convertCardId = () => {
+    const currentHex = editUser.cardId;
+    const swapBytes = (hex: string) => {
+      const cleanHex = hex.replace(/\s+/g, '');
+      const paddedHex = cleanHex.length % 2 !== 0 ? '0' + cleanHex : cleanHex;
+      return (
+        paddedHex
+          .match(/.{1,2}/g)
+          ?.reverse()
+          .join('') || paddedHex
+      );
+    };
+
+    if (isCardIdConverted) {
+      // -----------------------------------------------------------
+      // Big-Endian -> Little-Endian
+      // 'D5F9D24B' -> '4BD2F9D5'
+      // -----------------------------------------------------------
+      const swappedValue = swapBytes(currentHex);
+      setEditUser({ ...editUser, cardId: swappedValue });
+    } else {
+      // -----------------------------------------------------------
+      // Little-Endian -> Big-Endian (Буцаах)
+      // '4BD2F9D5' -> 'D5F9D24B'
+      // -----------------------------------------------------------
+      const originalValue = swapBytes(currentHex);
+      setEditUser({ ...editUser, cardId: originalValue });
+    }
   };
 
   // Show loading state only on initial load
@@ -932,16 +966,25 @@ export function CardsView() {
                   {/* Card ID */}
                   <div className='grid grid-cols-4 items-center gap-4'>
                     <Label htmlFor='edit-cardId' className='text-right'>
-                      Карт ID
+                      Карт ID sdsd
                     </Label>
                     <Input
                       id='edit-cardId'
                       value={editUser.cardId}
-                      onChange={(e) =>
-                        setEditUser({ ...editUser, cardId: e.target.value })
+                      onChange={
+                        (e) => console.log('Card ID: ', e.target.value)
+                        // setEditUser({ ...editUser, cardId: e.target.value })
                       }
                       placeholder='C12345678'
-                      className='bg-muted-foreground/10 col-span-3 font-mono'
+                      className='bg-muted-foreground/10 font-mono'
+                    />
+                    <SwitchButton
+                      value={isCardIdConverted}
+                      onChange={() => {
+                        setIsCardIdConverted(!isCardIdConverted);
+                        convertCardId();
+                      }}
+                      label={!isCardIdConverted ? 'Хөрвүүлээгүй' : 'Хөрвүүлсэн'}
                     />
                   </div>
                   {/* Email */}
