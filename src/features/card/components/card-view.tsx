@@ -1446,7 +1446,9 @@ export function CardsView() {
                         key={resident.id}
                         className='hover:bg-muted/50 cursor-pointer'
                         onClick={() =>
-                          router.push(`/dashboard/card/${resident.cardId}`)
+                          router.push(
+                            `/dashboard/card/${editUser != null && editUser.cardId != null ? editUser.cardId : resident.cardId}`
+                          )
                         }
                       >
                         <TableCell>
