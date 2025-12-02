@@ -128,6 +128,8 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editUser, setEditUser] = useState({
+    id: 0,
+    cardId: '',
     name: '',
     email: '',
     phone: '',
@@ -190,7 +192,9 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
           type: activityData.clientType || null
         });
         setEditUser({
+          id: activityData.id || 0,
           name: activityData.clientName || '',
+          cardId: activityData.cardId || '',
           email: activityData.clientEmail || '',
           phone: activityData.clientPhone || '',
           district: activityData.clientDistrict || '',
@@ -304,6 +308,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
         method: 'PUT',
         body: JSON.stringify({
           name: editUser.name,
+          cardId: editUser.cardId,
           email: editUser.email,
           phone: editUser.phone,
           district: editUser.district || null,
@@ -321,6 +326,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
             ? {
                 ...prev,
                 name: editUser.name,
+                cardId: editUser.cardId,
                 email: editUser.email,
                 phone: editUser.phone,
                 district: editUser.district,
@@ -492,6 +498,20 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
                         setEditUser({ ...editUser, name: e.target.value })
                       }
                       placeholder='Овог нэр'
+                      className='col-span-3'
+                    />
+                  </div>
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='edit-card-id' className='text-right'>
+                      Карт ID
+                    </Label>
+                    <Input
+                      id='edit-card-id'
+                      value={editUser.cardId}
+                      onChange={(e) =>
+                        setEditUser({ ...editUser, cardId: e.target.value })
+                      }
+                      placeholder='Карт ID'
                       className='col-span-3'
                     />
                   </div>

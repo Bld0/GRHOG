@@ -28,7 +28,7 @@
       "static/chunks/_a0ff3932._.js",
       "static/chunks/turbopack-_1c4a3ad0._.js"
     ],
-    "/dashboard/bins/page": [
+    "/dashboard/card/[id]/page": [
       "static/chunks/node_modules_next_dist_8db7fb1f._.js",
       "static/chunks/src_app_favicon_ico_mjs_bfa49cab._.js",
       "static/chunks/node_modules_5d3e59c2._.js",
@@ -44,13 +44,9 @@
       "static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_56b6fd65._.js",
       "static/chunks/node_modules_3e6217a2._.js",
       "static/chunks/src_app_dashboard_layout_tsx_3ba4be84._.js",
-      "static/chunks/src_4a5b933f._.js",
-      "static/chunks/node_modules_axios_lib_99e19c7d._.js",
-      "static/chunks/node_modules_date-fns_89ee300f._.js",
-      "static/chunks/node_modules_react-day-picker_dist_index_esm_40dd87f3.js",
-      "static/chunks/node_modules_@radix-ui_react-icons_dist_react-icons_esm_ed175a16.js",
-      "static/chunks/node_modules_90192dba._.js",
-      "static/chunks/src_app_dashboard_bins_page_tsx_2af9ccf1._.js",
+      "static/chunks/src_19c361c4._.js",
+      "static/chunks/node_modules_721e941f._.js",
+      "static/chunks/src_app_dashboard_card_[id]_page_tsx_2af9ccf1._.js",
       "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_2861768b._.js",
       "static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js",
       "static/chunks/node_modules_next_dist_compiled_next-devtools_index_a9cb0712.js",

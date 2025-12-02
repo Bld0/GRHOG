@@ -97,7 +97,11 @@ import React from 'react'; // Added missing import for React
 import { toast } from 'sonner';
 import { authUtils } from '@/lib/auth';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { TableHeaderFilter, useTableFilters, ActiveFilter } from '@/components/ui/table-header-filter';
+import {
+  TableHeaderFilter,
+  useTableFilters,
+  ActiveFilter
+} from '@/components/ui/table-header-filter';
 import { ActiveFilters } from '@/components/ui/active-filters';
 
 export function CardsView() {
@@ -123,7 +127,7 @@ export function CardsView() {
     clearAllFilters,
     handleSort,
     setActiveFilters
-  } = useTableFilters();    
+  } = useTableFilters();
 
   // Form state for creating new user
   const [newUser, setNewUser] = useState({
@@ -164,10 +168,10 @@ export function CardsView() {
 
     // Build search query from advanced filters
     const searchParts: string[] = [];
-    
-    activeFilters.forEach(filter => {
+
+    activeFilters.forEach((filter) => {
       let searchPart = '';
-      
+
       switch (filter.operator) {
         case 'is':
           searchPart = `${filter.field}: {"is": "${filter.value}"}`;
@@ -186,12 +190,17 @@ export function CardsView() {
           break;
         case 'between':
           // Handle between logic for range filtering
-          if (filter.value && typeof filter.value === 'object' && 'min' in filter.value && 'max' in filter.value) {
+          if (
+            filter.value &&
+            typeof filter.value === 'object' &&
+            'min' in filter.value &&
+            'max' in filter.value
+          ) {
             searchPart = `${filter.field}: {"between": {"min": "${filter.value.min}", "max": "${filter.value.max}"}}`;
           }
           break;
       }
-      
+
       if (searchPart) {
         searchParts.push(searchPart);
       }
@@ -208,12 +217,7 @@ export function CardsView() {
     }
 
     return params;
-  }, [
-    currentPage,
-    itemsPerPage,
-    activeFilters,
-    sortConfig
-  ]);
+  }, [currentPage, itemsPerPage, activeFilters, sortConfig]);
 
   // Fetch real API data with pagination and filters
   const {
@@ -291,7 +295,7 @@ export function CardsView() {
         streetBuilding: client.streetBuilding || '',
         apartmentNumber: client.apartmentNumber || null,
         type: client.type || '',
-                  totalAccess: client.totalAccess || 0,
+        totalAccess: client.totalAccess || 0,
         cardUsedAt: client.cardUsedAt ? new Date(client.cardUsedAt) : null,
         createdAt: new Date(client.createdAt),
         status: 'active' as 'active' | 'blocked'
@@ -394,25 +398,27 @@ export function CardsView() {
     if (!editingUser || !editingUser.id) return;
     setIsEditing(true);
     try {
+      const bodyJson = JSON.stringify({
+        name: editUser.name,
+        email: editUser.email || null,
+        phone: editUser.phone || null,
+        cardId: editUser.cardId,
+        address: editUser.address || null,
+        district: editUser.district || null,
+        khoroo: editUser.khoroo ? parseInt(editUser.khoroo) : null,
+        streetBuilding: editUser.streetBuilding || null,
+        apartmentNumber: editUser.apartmentNumber
+          ? parseInt(editUser.apartmentNumber)
+          : null,
+        type: editUser.type || null
+      });
+
       const response = await fetch(`/api/clients/${editingUser.id}`, {
         method: 'PUT',
         headers: authUtils.getAuthHeader(),
-        body: JSON.stringify({
-          name: editUser.name,
-          email: editUser.email || null,
-          
-          phone: editUser.phone || null,
-          cardId: editUser.cardId,
-          address: editUser.address || null,
-          district: editUser.district || null,
-          khoroo: editUser.khoroo ? parseInt(editUser.khoroo) : null,
-          streetBuilding: editUser.streetBuilding || null,
-          apartmentNumber: editUser.apartmentNumber
-            ? parseInt(editUser.apartmentNumber)
-            : null,
-          type: editUser.type || null
-        })
+        body: bodyJson
       });
+
       if (response.ok) {
         setIsEditDialogOpen(false);
         setEditingUser(null);
@@ -462,17 +468,17 @@ export function CardsView() {
   const exportToExcel = async () => {
     try {
       console.log('🚀 Starting Excel export...');
-      
+
       // Build query parameters from active filters
       const queryParams = new URLSearchParams();
-      
+
       // Add search query if there are active filters
       if (activeFilters.length > 0) {
         const searchParts: string[] = [];
-        
-        activeFilters.forEach(filter => {
+
+        activeFilters.forEach((filter) => {
           let searchPart = '';
-          
+
           switch (filter.operator) {
             case 'is':
               searchPart = `${filter.field}: {"is": "${filter.value}"}`;
@@ -490,17 +496,22 @@ export function CardsView() {
               searchPart = `${filter.field}: {"less_than": "${filter.value}"}`;
               break;
             case 'between':
-              if (filter.value && typeof filter.value === 'object' && 'min' in filter.value && 'max' in filter.value) {
+              if (
+                filter.value &&
+                typeof filter.value === 'object' &&
+                'min' in filter.value &&
+                'max' in filter.value
+              ) {
                 searchPart = `${filter.field}: {"between": {"min": "${filter.value.min}", "max": "${filter.value.max}"}}`;
               }
               break;
           }
-          
+
           if (searchPart) {
             searchParts.push(searchPart);
           }
         });
-        
+
         if (searchParts.length > 0) {
           queryParams.append('search', searchParts.join('; '));
         }
@@ -516,18 +527,19 @@ export function CardsView() {
 
       const url = `/api/export/cards?${queryParams.toString()}`;
       console.log('📤 Export URL:', url);
-      
+
       // Get authentication headers
       const authHeaders = authUtils.getAuthHeader();
       console.log('🔐 Auth headers:', authHeaders);
-      
+
       // Fetch the Excel file with authentication
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           ...authHeaders,
-          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        },
+          Accept:
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        }
       });
 
       if (!response.ok) {
@@ -539,26 +551,29 @@ export function CardsView() {
       // Get the Excel file as blob
       const blob = await response.blob();
       console.log('📄 Excel blob received:', blob.size, 'bytes');
-      
+
       // Create download link
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = `cards_export_${new Date().toISOString().split('T')[0]}.xlsx`;
-      
+
       // Trigger download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Clean up
       window.URL.revokeObjectURL(downloadUrl);
-      
+
       console.log('✅ Export completed successfully');
       toast.success('Excel файл татаж эхэллээ');
     } catch (error) {
       console.error('❌ Export error:', error);
-      toast.error('Экспорт хийхэд алдаа гарлаа: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast.error(
+        'Экспорт хийхэд алдаа гарлаа: ' +
+          (error instanceof Error ? error.message : 'Unknown error')
+      );
     }
   };
 
@@ -757,7 +772,9 @@ export function CardsView() {
                         <SelectItem value='Баянгол'>Баянгол</SelectItem>
                         <SelectItem value='Баянзүрх'>Баянзүрх</SelectItem>
                         <SelectItem value='Налайх'>Налайх</SelectItem>
-                        <SelectItem value='Сонгинохайрхан'>Сонгинохайрхан</SelectItem>
+                        <SelectItem value='Сонгинохайрхан'>
+                          Сонгинохайрхан
+                        </SelectItem>
                         <SelectItem value='Сүхбаатар'>Сүхбаатар</SelectItem>
                         <SelectItem value='Хан-Уул'>Хан-Уул</SelectItem>
                         <SelectItem value='Чингэлтэй'>Чингэлтэй</SelectItem>
@@ -872,7 +889,7 @@ export function CardsView() {
                   >
                     {isCreating ? (
                       <>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+                        <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                         Үүсгэж байна...
                       </>
                     ) : (
@@ -921,7 +938,6 @@ export function CardsView() {
                         setEditUser({ ...editUser, cardId: e.target.value })
                       }
                       placeholder='C12345678'
-                      disabled
                       className='bg-muted-foreground/10 col-span-3 font-mono'
                     />
                   </div>
@@ -957,7 +973,7 @@ export function CardsView() {
                       className='col-span-3'
                     />
                   </div>
-            
+
                   {/* District */}
                   <div className='grid grid-cols-4 items-center gap-4'>
                     <Label htmlFor='edit-district' className='text-right'>
@@ -978,7 +994,9 @@ export function CardsView() {
                         <SelectItem value='Баянгол'>Баянгол</SelectItem>
                         <SelectItem value='Баянзүрх'>Баянзүрх</SelectItem>
                         <SelectItem value='Налайх'>Налайх</SelectItem>
-                        <SelectItem value='Сонгинохайрхан'>Сонгинохайрхан</SelectItem>
+                        <SelectItem value='Сонгинохайрхан'>
+                          Сонгинохайрхан
+                        </SelectItem>
                         <SelectItem value='Сүхбаатар'>Сүхбаатар</SelectItem>
                         <SelectItem value='Хан-Уул'>Хан-Уул</SelectItem>
                         <SelectItem value='Чингэлтэй'>Чингэлтэй</SelectItem>
@@ -1010,7 +1028,10 @@ export function CardsView() {
                       id='edit-streetBuilding'
                       value={editUser.streetBuilding}
                       onChange={(e) =>
-                        setEditUser({ ...editUser, streetBuilding: e.target.value })
+                        setEditUser({
+                          ...editUser,
+                          streetBuilding: e.target.value
+                        })
                       }
                       placeholder='Гудамж, байр'
                       className='col-span-3'
@@ -1018,7 +1039,10 @@ export function CardsView() {
                   </div>
                   {/* Apartment Number */}
                   <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='edit-apartmentNumber' className='text-right'>
+                    <Label
+                      htmlFor='edit-apartmentNumber'
+                      className='text-right'
+                    >
                       Тоот
                     </Label>
                     <Input
@@ -1026,7 +1050,10 @@ export function CardsView() {
                       type='number'
                       value={editUser.apartmentNumber}
                       onChange={(e) =>
-                        setEditUser({ ...editUser, apartmentNumber: e.target.value })
+                        setEditUser({
+                          ...editUser,
+                          apartmentNumber: e.target.value
+                        })
                       }
                       placeholder='Тоот'
                       className='col-span-3'
@@ -1079,14 +1106,14 @@ export function CardsView() {
                   >
                     Цуцлах
                   </Button>
-                  <Button 
-                    type='button' 
+                  <Button
+                    type='button'
                     onClick={handleSaveEdit}
                     disabled={isEditing}
                   >
                     {isEditing ? (
                       <>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+                        <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                         Хадгалж байна...
                       </>
                     ) : (
@@ -1202,8 +1229,9 @@ export function CardsView() {
               <div>
                 <CardTitle>Картын жагсаалт</CardTitle>
                 <CardDescription>
-                    {pagination.totalElements} карт олдлоо • {pagination?.statistics?.totalAccessedCount || 0} нэвтрэлттэй • Хуудас{' '}
-                  {currentPage + 1}/{pagination.totalPages}
+                  {pagination.totalElements} карт олдлоо •{' '}
+                  {pagination?.statistics?.totalAccessedCount || 0} нэвтрэлттэй
+                  • Хуудас {currentPage + 1}/{pagination.totalPages}
                 </CardDescription>
               </div>
               <div className='flex items-center gap-2'>
@@ -1228,7 +1256,6 @@ export function CardsView() {
             </div>
           </CardHeader>
           <CardContent>
-
             {/* Active Filter Chips */}
             <ActiveFilters
               activeFilters={activeFilters}
@@ -1236,133 +1263,135 @@ export function CardsView() {
               onClearAll={clearAllFilters}
             />
 
-            <div className="rounded-md border overflow-x-auto">
-              <ScrollArea className="w-full">
-                <Table className="w-full min-w-[1400px]">
+            <div className='overflow-x-auto rounded-md border'>
+              <ScrollArea className='w-full'>
+                <Table className='w-full min-w-[1400px]'>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-center w-[120px] relative">
+                      <TableHead className='relative w-[120px] text-center'>
                         <TableHeaderFilter
-                          field="district"
-                          label="Дүүрэг"
-                          type="text"
+                          field='district'
+                          label='Дүүрэг'
+                          type='text'
                           currentSort={sortConfig}
                           activeFilters={activeFilters}
                           onSort={handleSort}
                           onFilterChange={setActiveFilters}
                         />
                       </TableHead>
-                      <TableHead className="text-center w-[100px] relative">
+                      <TableHead className='relative w-[100px] text-center'>
                         <TableHeaderFilter
-                          field="khoroo"
-                          label="Хороо"
-                          type="number"
+                          field='khoroo'
+                          label='Хороо'
+                          type='number'
                           currentSort={sortConfig}
                           activeFilters={activeFilters}
                           onSort={handleSort}
                           onFilterChange={setActiveFilters}
                         />
                       </TableHead>
-                      <TableHead className="text-center w-[150px] relative">
+                      <TableHead className='relative w-[150px] text-center'>
                         <TableHeaderFilter
-                          field="streetBuilding"
-                          label="Байр/гудамж"
-                          type="text"
+                          field='streetBuilding'
+                          label='Байр/гудамж'
+                          type='text'
                           currentSort={sortConfig}
                           activeFilters={activeFilters}
                           onSort={handleSort}
                           onFilterChange={setActiveFilters}
                         />
                       </TableHead>
-                      <TableHead className="text-center w-[100px] relative">
+                      <TableHead className='relative w-[100px] text-center'>
                         <TableHeaderFilter
-                          field="apartmentNumber"
-                          label="Тоот"
-                          type="text"
+                          field='apartmentNumber'
+                          label='Тоот'
+                          type='text'
                           currentSort={sortConfig}
                           activeFilters={activeFilters}
                           onSort={handleSort}
                           onFilterChange={setActiveFilters}
                         />
                       </TableHead>
-                      <TableHead className="text-center w-[120px] relative">
+                      <TableHead className='relative w-[120px] text-center'>
                         <TableHeaderFilter
-                          field="type"
-                          label="Төрөл"
-                          type="text"
+                          field='type'
+                          label='Төрөл'
+                          type='text'
                           currentSort={sortConfig}
                           activeFilters={activeFilters}
                           onSort={handleSort}
                           onFilterChange={setActiveFilters}
                         />
                       </TableHead>
-                      <TableHead className="text-center w-[150px] relative">
+                      <TableHead className='relative w-[150px] text-center'>
                         <TableHeaderFilter
-                          field="name"
-                          label="Нэр"
-                          type="text"
+                          field='name'
+                          label='Нэр'
+                          type='text'
                           currentSort={sortConfig}
                           activeFilters={activeFilters}
                           onSort={handleSort}
                           onFilterChange={setActiveFilters}
                         />
                       </TableHead>
-                      <TableHead className="text-center w-[150px] relative">
+                      <TableHead className='relative w-[150px] text-center'>
                         <TableHeaderFilter
-                          field="cardIdDec"
-                          label="Карт ID"
-                          type="text"
+                          field='cardIdDec'
+                          label='Карт ID'
+                          type='text'
                           currentSort={sortConfig}
                           activeFilters={activeFilters}
                           onSort={handleSort}
                           onFilterChange={setActiveFilters}
                         />
                       </TableHead>
-                      <TableHead className="text-center w-[120px] relative">
+                      <TableHead className='relative w-[120px] text-center'>
                         <TableHeaderFilter
-                          field="totalAccess"
-                          label="Нэвтрэлт"
-                          type="number"
+                          field='totalAccess'
+                          label='Нэвтрэлт'
+                          type='number'
                           currentSort={sortConfig}
                           activeFilters={activeFilters}
                           onSort={handleSort}
                           onFilterChange={setActiveFilters}
                         />
                       </TableHead>
-                      <TableHead className="text-center w-[150px] relative">
+                      <TableHead className='relative w-[150px] text-center'>
                         <TableHeaderFilter
-                          field="cardUsedAt"
-                          label="Сүүлийн нэвтрэлт"
-                          type="date"
+                          field='cardUsedAt'
+                          label='Сүүлийн нэвтрэлт'
+                          type='date'
                           currentSort={sortConfig}
                           activeFilters={activeFilters}
                           onSort={handleSort}
                           onFilterChange={setActiveFilters}
                         />
                       </TableHead>
-                      <TableHead className="text-center w-[150px] relative">
+                      <TableHead className='relative w-[150px] text-center'>
                         <TableHeaderFilter
-                          field="createdAt"
-                          label="Бүртгэгдсэн огноо"
-                          type="date"
+                          field='createdAt'
+                          label='Бүртгэгдсэн огноо'
+                          type='date'
                           currentSort={sortConfig}
                           activeFilters={activeFilters}
                           onSort={handleSort}
                           onFilterChange={setActiveFilters}
                         />
                       </TableHead>
-                      <TableHead className="text-center w-[120px] relative">
+                      <TableHead className='relative w-[120px] text-center'>
                         <TableHeaderFilter
-                          field="phone"
-                          label="Утасны дугаар"
-                          type="text"
+                          field='phone'
+                          label='Утасны дугаар'
+                          type='text'
                           currentSort={sortConfig}
                           activeFilters={activeFilters}
                           onSort={handleSort}
                           onFilterChange={setActiveFilters}
                         />
                       </TableHead>
-                      <TableHead className="text-center w-[100px]">Үйлдэл</TableHead>
+                      <TableHead className='w-[100px] text-center'>
+                        Үйлдэл
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1375,25 +1404,25 @@ export function CardsView() {
                         }
                       >
                         <TableCell>
-                          <div className='text-sm font-medium text-center'>
+                          <div className='text-center text-sm font-medium'>
                             {resident.district || '-'}
                           </div>
                         </TableCell>
                         {/* Khoroo Column */}
                         <TableCell>
-                          <div className='text-sm text-center'>
+                          <div className='text-center text-sm'>
                             {resident.khoroo || '-'}
                           </div>
                         </TableCell>
                         {/* Street/Building Column */}
                         <TableCell>
-                          <div className='text-sm text-center'>
+                          <div className='text-center text-sm'>
                             {resident.streetBuilding || '-'}
                           </div>
                         </TableCell>
                         {/* Apartment Number Column */}
                         <TableCell>
-                          <div className='text-sm text-center'>
+                          <div className='text-center text-sm'>
                             {resident.apartmentNumber || '-'}
                           </div>
                         </TableCell>
@@ -1407,17 +1436,17 @@ export function CardsView() {
                         </TableCell>
                         {/* Name Column */}
                         <TableCell>
-                        <div
-                                className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 font-medium text-center transition-colors'
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigator.clipboard.writeText(resident.name);
-                                  toast.success('Нэр хуулагдлаа');
-                                }}
-                                title='Хуулахын тулд дарна уу'
-                              >
-                                {resident.name}
-                              </div> 
+                          <div
+                            className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 text-center font-medium transition-colors'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(resident.name);
+                              toast.success('Нэр хуулагдлаа');
+                            }}
+                            title='Хуулахын тулд дарна уу'
+                          >
+                            {resident.name}
+                          </div>
                         </TableCell>
                         {/* Card ID Column */}
                         <TableCell>
@@ -1442,7 +1471,7 @@ export function CardsView() {
                         </TableCell>
                         {/* Total Access Column */}
                         <TableCell>
-                          <div className='font-medium text-center'>
+                          <div className='text-center font-medium'>
                             {resident.totalAccess}
                           </div>
                         </TableCell>
@@ -1467,7 +1496,7 @@ export function CardsView() {
                         {/* Phone Column */}
                         <TableCell>
                           <div
-                            className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 font-medium text-center transition-colors'
+                            className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 text-center font-medium transition-colors'
                             onClick={(e) => {
                               e.stopPropagation();
                               navigator.clipboard.writeText(resident.phone);
@@ -1516,7 +1545,7 @@ export function CardsView() {
                                 className='text-red-600 hover:bg-red-50 hover:text-red-700'
                               >
                                 {deletingClientId === resident.id ? (
-                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                  <div className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                                 ) : (
                                   <IconTrash className='h-4 w-4' />
                                 )}
@@ -1530,10 +1559,9 @@ export function CardsView() {
                       <TableRow>
                         <TableCell colSpan={13} className='py-8 text-center'>
                           <div className='flex flex-col items-center gap-2'>
-                            <IconSearch className='h-8 w-8 text-muted-foreground' />
+                            <IconSearch className='text-muted-foreground h-8 w-8' />
                             <p className='text-muted-foreground'>
-                              {
-                              activeFilters.length > 0
+                              {activeFilters.length > 0
                                 ? 'Хайлтын үр дүн олдсонгүй'
                                 : 'Бүртгэлтэй карт байхгүй'}
                             </p>
