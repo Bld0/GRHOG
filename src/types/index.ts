@@ -158,6 +158,7 @@ export interface Client {
   address: string | null;
   cardId: string;
   cardIdDec: string | null;
+  cardIdConverted: boolean | false;
   isActive: boolean;
   createdAt: string;
   updatedAt: string | null;

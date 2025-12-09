@@ -1149,6 +1149,7 @@ export function useClientActivityChange() {
         }
       );
 
+      console.log('Client Activity Change Response:', response.data);
       if (response.status !== 200) {
         throw new Error('Failed to fetch client activity change data');
       }

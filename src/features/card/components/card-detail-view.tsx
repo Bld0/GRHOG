@@ -79,6 +79,7 @@ interface CardData {
   name: string;
   cardId: string;
   cardIdDec: string | null;
+  cardIdConverted: boolean;
   address: string | null;
   status: 'active' | 'inactive';
   totalAccess: number;
@@ -119,7 +120,6 @@ interface CardDetailViewProps {
 
 export function CardDetailView({ cardId }: CardDetailViewProps) {
   const router = useRouter();
-  const [isCardIdConverted, setIsCardIdConverted] = useState(false);
   const [cardData, setCardData] = useState<CardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -132,6 +132,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
   const [editUser, setEditUser] = useState({
     id: 0,
     cardId: '',
+    cardIdConverted: false,
     name: '',
     email: '',
     phone: '',
@@ -157,12 +158,15 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
           throw new Error('Failed to fetch card activity');
         }
         const activityData = await response.json();
+        console.log('Activity Data:', activityData);
+
         setAccessHistory(activityData.activityHistory || []);
         setCardData({
           id: activityData.id,
           name: activityData.clientName,
           cardId: activityData.cardId,
           cardIdDec: activityData.clientCardIdDec,
+          cardIdConverted: activityData.cardIdConverted || false,
           address: activityData.clientAddress,
           status: activityData.clientStatus || 'active',
           totalAccess: activityData.totalAccess,
@@ -197,6 +201,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
           id: activityData.id || 0,
           name: activityData.clientName || '',
           cardId: activityData.cardId || '',
+          cardIdConverted: activityData.cardIdConverted || false,
           email: activityData.clientEmail || '',
           phone: activityData.clientPhone || '',
           district: activityData.clientDistrict || '',
@@ -311,6 +316,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
         body: JSON.stringify({
           name: editUser.name,
           cardId: editUser.cardId,
+          cardIdConverted: editUser.cardIdConverted,
           email: editUser.email,
           phone: editUser.phone,
           district: editUser.district || null,
@@ -329,6 +335,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
                 ...prev,
                 name: editUser.name,
                 cardId: editUser.cardId,
+                cardIdConverted: editUser.cardIdConverted,
                 email: editUser.email,
                 phone: editUser.phone,
                 district: editUser.district,
@@ -359,9 +366,11 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
 
   const convertCardId = () => {
     const currentHex = editUser.cardId;
-    const swapBytes = (hex: string) => {
+    const swapBytes = (hex: String) => {
+      if (!hex) return '';
       const cleanHex = hex.replace(/\s+/g, '');
       const paddedHex = cleanHex.length % 2 !== 0 ? '0' + cleanHex : cleanHex;
+
       return (
         paddedHex
           .match(/.{1,2}/g)
@@ -370,21 +379,13 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
       );
     };
 
-    if (isCardIdConverted) {
-      // -----------------------------------------------------------
-      // Big-Endian -> Little-Endian
-      // 'D5F9D24B' -> '4BD2F9D5'
-      // -----------------------------------------------------------
-      const swappedValue = swapBytes(currentHex);
-      setEditUser({ ...editUser, cardId: swappedValue });
-    } else {
-      // -----------------------------------------------------------
-      // Little-Endian -> Big-Endian (Буцаах)
-      // '4BD2F9D5' -> 'D5F9D24B'
-      // -----------------------------------------------------------
-      const originalValue = swapBytes(currentHex);
-      setEditUser({ ...editUser, cardId: originalValue });
-    }
+    const convertedValue = swapBytes(currentHex);
+
+    setEditUser((prev) => ({
+      ...prev,
+      cardId: convertedValue,
+      cardIdConverted: !prev.cardIdConverted
+    }));
   };
 
   if (loading) {
@@ -533,27 +534,28 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
                       className='col-span-3'
                     />
                   </div>
+                  {/* Card ID */}
                   <div className='grid grid-cols-4 items-center gap-4'>
                     <Label htmlFor='edit-cardId' className='text-right'>
-                      Карт ID sdsd
+                      Карт ID
                     </Label>
                     <Input
                       id='edit-cardId'
                       value={editUser.cardId}
-                      onChange={
-                        (e) => console.log('Card ID: ', e.target.value)
-                        // setEditUser({ ...editUser, cardId: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setEditUser({ ...editUser, cardId: e.target.value });
+                      }}
                       placeholder='C12345678'
                       className='bg-muted-foreground/10 font-mono'
                     />
                     <SwitchButton
-                      value={isCardIdConverted}
+                      value={editUser.cardIdConverted}
                       onChange={() => {
-                        setIsCardIdConverted(!isCardIdConverted);
                         convertCardId();
                       }}
-                      label={!isCardIdConverted ? 'Хөрвүүлээгүй' : 'Хөрвүүлсэн'}
+                      label={
+                        editUser.cardIdConverted ? 'Хөрвүүлсэн' : 'Хөрвүүлээгүй'
+                      }
                     />
                   </div>
                   <div className='grid grid-cols-4 items-center gap-4'>

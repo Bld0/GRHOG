@@ -54,7 +54,7 @@ import {
   PopoverTrigger
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, set } from 'date-fns';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import PageContainer from '@/components/layout/page-container';
@@ -104,10 +104,11 @@ import {
 } from '@/components/ui/table-header-filter';
 import { ActiveFilters } from '@/components/ui/active-filters';
 import SwitchButton from '@/components/switch-button';
+import { ca } from 'date-fns/locale';
 
 export function CardsView() {
   const router = useRouter();
-  const [isCardIdConverted, setIsCardIdConverted] = useState(false);
+  // const [isCardIdConverted, setIsCardIdConverted] = useState(false);
   const { canPerformAction, canPost, canPut, canDelete } = useRolePermissions();
   const [currentPage, setCurrentPage] = useState(0); // Changed to 0-based for API
   const [itemsPerPage, setItemsPerPage] = useState(20);
@@ -152,6 +153,7 @@ export function CardsView() {
     phone: '',
     cardId: '',
     cardIdDec: '',
+    cardIdConverted: false,
     address: '',
     district: '',
     khoroo: '',
@@ -290,6 +292,7 @@ export function CardsView() {
         name: client.name || `Хэрэглэгч ${client.id}`,
         cardId: client.cardId,
         cardIdDec: client.cardIdDec,
+        cardIdConverted: client.cardIdConverted || false,
         email: client.email || '',
         phone: client.phone || '-',
         address: client.address || '',
@@ -388,6 +391,7 @@ export function CardsView() {
       phone: resident.phone || '', // Use phone from resident data if available
       cardId: resident.cardId,
       cardIdDec: resident.cardIdDec,
+      cardIdConverted: resident.cardIdConverted,
       address: resident.address || '', // Add address to editUser state
       district: resident.district || '',
       khoroo: resident.khoroo || '',
@@ -407,6 +411,7 @@ export function CardsView() {
         email: editUser.email || null,
         phone: editUser.phone || null,
         cardId: editUser.cardId,
+        cardIdConverted: editUser.cardIdConverted || false,
         address: editUser.address || null,
         district: editUser.district || null,
         khoroo: editUser.khoroo ? parseInt(editUser.khoroo) : null,
@@ -623,9 +628,11 @@ export function CardsView() {
 
   const convertCardId = () => {
     const currentHex = editUser.cardId;
-    const swapBytes = (hex: string) => {
+    const swapBytes = (hex: String) => {
+      if (!hex) return '';
       const cleanHex = hex.replace(/\s+/g, '');
       const paddedHex = cleanHex.length % 2 !== 0 ? '0' + cleanHex : cleanHex;
+
       return (
         paddedHex
           .match(/.{1,2}/g)
@@ -634,21 +641,13 @@ export function CardsView() {
       );
     };
 
-    if (isCardIdConverted) {
-      // -----------------------------------------------------------
-      // Big-Endian -> Little-Endian
-      // 'D5F9D24B' -> '4BD2F9D5'
-      // -----------------------------------------------------------
-      const swappedValue = swapBytes(currentHex);
-      setEditUser({ ...editUser, cardId: swappedValue });
-    } else {
-      // -----------------------------------------------------------
-      // Little-Endian -> Big-Endian (Буцаах)
-      // '4BD2F9D5' -> 'D5F9D24B'
-      // -----------------------------------------------------------
-      const originalValue = swapBytes(currentHex);
-      setEditUser({ ...editUser, cardId: originalValue });
-    }
+    const convertedValue = swapBytes(currentHex);
+
+    setEditUser((prev) => ({
+      ...prev,
+      cardId: convertedValue,
+      cardIdConverted: !prev.cardIdConverted
+    }));
   };
 
   // Show loading state only on initial load
@@ -966,25 +965,25 @@ export function CardsView() {
                   {/* Card ID */}
                   <div className='grid grid-cols-4 items-center gap-4'>
                     <Label htmlFor='edit-cardId' className='text-right'>
-                      Карт ID sdsd
+                      Карт ID
                     </Label>
                     <Input
                       id='edit-cardId'
                       value={editUser.cardId}
-                      onChange={
-                        (e) => console.log('Card ID: ', e.target.value)
-                        // setEditUser({ ...editUser, cardId: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setEditUser({ ...editUser, cardId: e.target.value });
+                      }}
                       placeholder='C12345678'
                       className='bg-muted-foreground/10 font-mono'
                     />
                     <SwitchButton
-                      value={isCardIdConverted}
+                      value={editUser.cardIdConverted}
                       onChange={() => {
-                        setIsCardIdConverted(!isCardIdConverted);
                         convertCardId();
                       }}
-                      label={!isCardIdConverted ? 'Хөрвүүлээгүй' : 'Хөрвүүлсэн'}
+                      label={
+                        editUser.cardIdConverted ? 'Хөрвүүлсэн' : 'Хөрвүүлээгүй'
+                      }
                     />
                   </div>
                   {/* Email */}
@@ -1445,11 +1444,16 @@ export function CardsView() {
                       <TableRow
                         key={resident.id}
                         className='hover:bg-muted/50 cursor-pointer'
-                        onClick={() =>
-                          router.push(
-                            `/dashboard/card/${editUser != null && editUser.cardId != null ? editUser.cardId : resident.cardId}`
+                        onClick={() => {
+                          if (
+                            editUser != null &&
+                            editUser.cardId != null &&
+                            editUser.cardId != ''
                           )
-                        }
+                            router.push(`/dashboard/card/${editUser.cardId}`);
+                          else
+                            router.push(`/dashboard/card/${resident.cardId}`);
+                        }}
                       >
                         <TableCell>
                           <div className='text-center text-sm font-medium'>
@@ -1561,10 +1565,19 @@ export function CardsView() {
                             <Button
                               variant='outline'
                               size='sm'
-                              onClick={(e) => {
-                                router.push(
-                                  `/dashboard/card/${resident.cardId}`
-                                );
+                              onClick={() => {
+                                if (
+                                  editUser != null &&
+                                  editUser.cardId != null &&
+                                  editUser.cardId != ''
+                                )
+                                  router.push(
+                                    `/dashboard/card/${editUser.cardId}`
+                                  );
+                                else
+                                  router.push(
+                                    `/dashboard/card/${resident.cardId}`
+                                  );
                               }}
                             >
                               <IconUser className='h-4 w-4' />
@@ -1575,6 +1588,7 @@ export function CardsView() {
                                 size='sm'
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  console.log('Editing resident:', resident);
                                   handleEditUser(resident);
                                 }}
                               >
