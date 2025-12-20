@@ -105,7 +105,17 @@ import {
 import { ActiveFilters } from '@/components/ui/active-filters';
 import SwitchButton from '@/components/switch-button';
 import { ca } from 'date-fns/locale';
-
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
 export function CardsView() {
   const router = useRouter();
   // const [isCardIdConverted, setIsCardIdConverted] = useState(false);
@@ -120,7 +130,11 @@ export function CardsView() {
   const [editingUser, setEditingUser] = useState<any>(null);
   const [deletingClientId, setDeletingClientId] = useState<number | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
-
+  const [selectedClients, setSelectedClients] = useState<Set<string>>(
+    new Set()
+  );
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   // Enhanced filter system state
   const {
     activeFilters,
@@ -229,7 +243,8 @@ export function CardsView() {
     data: apiClients,
     loading,
     error,
-    pagination
+    pagination,
+    refetch
   } = useClients(true, paginationParams);
 
   // Extract statistics from pagination object
@@ -376,7 +391,7 @@ export function CardsView() {
       console.error('Error creating client:', error);
       alert(
         'Карт үүсгэхэд алдаа гарлаа: ' +
-          (error instanceof Error ? error.message : 'Unknown error')
+        (error instanceof Error ? error.message : 'Unknown error')
       );
     } finally {
       setIsCreating(false);
@@ -443,37 +458,57 @@ export function CardsView() {
       console.error('Error updating client:', error);
       alert(
         'Карт засахад алдаа гарлаа: ' +
-          (error instanceof Error ? error.message : 'Unknown error')
+        (error instanceof Error ? error.message : 'Unknown error')
       );
     } finally {
       setIsEditing(false);
     }
   };
 
-  const handleDeleteClient = async (clientId: number) => {
-    if (!confirm('Энэ картыг устгахдаа итгэлтэй байна уу?')) return;
+  const toggleSelectClient = (clientId: string) => {
+    const newSelected = new Set(selectedClients);
+    if (newSelected.has(clientId)) {
+      newSelected.delete(clientId);
+    } else {
+      newSelected.add(clientId);
+    }
+    setSelectedClients(newSelected);
+  };
 
-    setDeletingClientId(clientId);
+  const toggleSelectAll = () => {
+    if (selectedClients.size === filteredResidents.length) {
+      setSelectedClients(new Set());
+    } else {
+      const newSelected = new Set(
+        filteredResidents.map((client) => String(client.id))
+      );
+      setSelectedClients(newSelected);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/users/clients/${clientId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authUtils.getAuthHeader()
-        }
-      });
+      const deletePromises = Array.from(selectedClients).map((clientId) =>
+        fetch(`/api/users/clients/${clientId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            ...authUtils.getAuthHeader()
+          }
+        })
+      );
 
-      if (response.ok) {
-        toast.success('Карт амжилттай устгагдлаа');
-        window.location.reload();
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.message || 'Карт устгахад алдаа гарлаа');
-      }
+      await Promise.all(deletePromises);
+      toast.success('Сонгосон картууд амжилттай устгагдлаа');
+      refetch();
     } catch (error) {
+      console.error('Error deleting clients:', error);
       toast.error('Карт устгахад алдаа гарлаа');
     } finally {
-      setDeletingClientId(null);
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setSelectedClients(new Set());
     }
   };
 
@@ -584,7 +619,7 @@ export function CardsView() {
       console.error('❌ Export error:', error);
       toast.error(
         'Экспорт хийхэд алдаа гарлаа: ' +
-          (error instanceof Error ? error.message : 'Unknown error')
+        (error instanceof Error ? error.message : 'Unknown error')
       );
     }
   };
@@ -703,14 +738,24 @@ export function CardsView() {
 
   return (
     <PageContainer>
-      <div className='flex flex-1 flex-col space-y-6'>
-        <div className='flex items-center justify-between'>
+      <div className='flex flex-1 flex-col space-y-5 h-full'>
+        <div className='flex items-center justify-between pr-6'>
           <div>
             <h1 className='text-3xl font-bold tracking-tight'>
               Картын жагсаалт
             </h1>
           </div>
           <div className='flex items-center gap-2'>
+            {selectedClients.size > 0 && (
+              <Button
+                variant='destructive'
+                size='sm'
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <IconTrash className='mr-2 h-4 w-4' />
+                Устгах ({selectedClients.size})
+              </Button>
+            )}
             <Dialog
               open={isCreateDialogOpen}
               onOpenChange={setIsCreateDialogOpen}
@@ -1177,7 +1222,7 @@ export function CardsView() {
         </div>
 
         {/* Statistics Cards */}
-        <div className='*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs md:grid-cols-2 lg:grid-cols-3'>
+        <div className='*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs md:grid-cols-2 lg:grid-cols-3 pr-6'>
           <Card>
             <CardHeader className='pb-3'>
               <div className='flex items-center justify-between'>
@@ -1308,332 +1353,333 @@ export function CardsView() {
               onClearAll={clearAllFilters}
             />
 
-            <div className='overflow-x-auto rounded-md border'>
-              <ScrollArea className='w-full'>
-                <Table className='w-full min-w-[1400px]'>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className='relative w-[120px] text-center'>
-                        <TableHeaderFilter
-                          field='district'
-                          label='Дүүрэг'
-                          type='text'
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
+            <div className='flex-1 overflow-auto rounded-md border relative'>
+              <Table className='w-full'>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className='w-[50px] text-center sticky top-0 z-10 bg-background'>
+                      <Checkbox
+                        checked={
+                          filteredResidents.length > 0 &&
+                          selectedClients.size === filteredResidents.length
+                        }
+                        onCheckedChange={toggleSelectAll}
+                        aria-label='Select all'
+                      />
+                    </TableHead>
+                    <TableHead className='relative text-center sticky top-0 z-10 bg-background'>
+                      <TableHeaderFilter
+                        field='district'
+                        label='Дүүрэг'
+                        type='text'
+                        currentSort={sortConfig}
+                        activeFilters={activeFilters}
+                        onSort={handleSort}
+                        onFilterChange={setActiveFilters}
+                      />
+                    </TableHead>
+                    <TableHead className='relative text-center sticky top-0 z-10 bg-background'>
+                      <TableHeaderFilter
+                        field='khoroo'
+                        label='Хороо'
+                        type='number'
+                        currentSort={sortConfig}
+                        activeFilters={activeFilters}
+                        onSort={handleSort}
+                        onFilterChange={setActiveFilters}
+                      />
+                    </TableHead>
+                    <TableHead className='relative text-center sticky top-0 z-10 bg-background'>
+                      <TableHeaderFilter
+                        field='streetBuilding'
+                        label='Байр/гудамж'
+                        type='text'
+                        currentSort={sortConfig}
+                        activeFilters={activeFilters}
+                        onSort={handleSort}
+                        onFilterChange={setActiveFilters}
+                      />
+                    </TableHead>
+                    <TableHead className='relative text-center sticky top-0 z-10 bg-background'>
+                      <TableHeaderFilter
+                        field='apartmentNumber'
+                        label='Тоот'
+                        type='text'
+                        currentSort={sortConfig}
+                        activeFilters={activeFilters}
+                        onSort={handleSort}
+                        onFilterChange={setActiveFilters}
+                      />
+                    </TableHead>
+                    <TableHead className='relative text-center sticky top-0 z-10 bg-background'>
+                      <TableHeaderFilter
+                        field='type'
+                        label='Төрөл'
+                        type='text'
+                        currentSort={sortConfig}
+                        activeFilters={activeFilters}
+                        onSort={handleSort}
+                        onFilterChange={setActiveFilters}
+                      />
+                    </TableHead>
+                    <TableHead className='relative text-center sticky top-0 z-10 bg-background'>
+                      <TableHeaderFilter
+                        field='name'
+                        label='Нэр'
+                        type='text'
+                        currentSort={sortConfig}
+                        activeFilters={activeFilters}
+                        onSort={handleSort}
+                        onFilterChange={setActiveFilters}
+                      />
+                    </TableHead>
+                    <TableHead className='relative text-center sticky top-0 z-10 bg-background'>
+                      <TableHeaderFilter
+                        field='cardIdDec'
+                        label='Карт ID'
+                        type='text'
+                        currentSort={sortConfig}
+                        activeFilters={activeFilters}
+                        onSort={handleSort}
+                        onFilterChange={setActiveFilters}
+                      />
+                    </TableHead>
+                    <TableHead className='relative text-center sticky top-0 z-10 bg-background'>
+                      <TableHeaderFilter
+                        field='totalAccess'
+                        label='Нэвтрэлт'
+                        type='number'
+                        currentSort={sortConfig}
+                        activeFilters={activeFilters}
+                        onSort={handleSort}
+                        onFilterChange={setActiveFilters}
+                      />
+                    </TableHead>
+                    <TableHead className='relative text-center sticky top-0 z-10 bg-background'>
+                      <TableHeaderFilter
+                        field='cardUsedAt'
+                        label='Сүүлийн нэвтрэлт'
+                        type='date'
+                        currentSort={sortConfig}
+                        activeFilters={activeFilters}
+                        onSort={handleSort}
+                        onFilterChange={setActiveFilters}
+                      />
+                    </TableHead>
+                    <TableHead className='relative text-center sticky top-0 z-10 bg-background'>
+                      <TableHeaderFilter
+                        field='createdAt'
+                        label='Бүртгэгдсэн огноо'
+                        type='date'
+                        currentSort={sortConfig}
+                        activeFilters={activeFilters}
+                        onSort={handleSort}
+                        onFilterChange={setActiveFilters}
+                      />
+                    </TableHead>
+                    <TableHead className='relative text-center sticky top-0 z-10 bg-background'>
+                      <TableHeaderFilter
+                        field='phone'
+                        label='Утасны дугаар'
+                        type='text'
+                        currentSort={sortConfig}
+                        activeFilters={activeFilters}
+                        onSort={handleSort}
+                        onFilterChange={setActiveFilters}
+                      />
+                    </TableHead>
+                    <TableHead className='text-center sticky top-0 z-10 bg-background'>
+                      Үйлдэл
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredResidents.map((resident: any) => (
+                    <TableRow
+                      key={resident.id}
+                      className='hover:bg-muted/50 cursor-pointer'
+                      onClick={() => {
+                        if (
+                          editUser != null &&
+                          editUser.cardId != null &&
+                          editUser.cardId != ''
+                        )
+                          router.push(`/dashboard/card/${editUser.cardId}`);
+                        else
+                          router.push(`/dashboard/card/${resident.cardId}`);
+                      }}
+                    >
+                      <TableCell className='text-center'>
+                        <Checkbox
+                          checked={selectedClients.has(String(resident.id))}
+                          onCheckedChange={() =>
+                            toggleSelectClient(String(resident.id))
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label='Select row'
                         />
-                      </TableHead>
-                      <TableHead className='relative w-[100px] text-center'>
-                        <TableHeaderFilter
-                          field='khoroo'
-                          label='Хороо'
-                          type='number'
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className='relative w-[150px] text-center'>
-                        <TableHeaderFilter
-                          field='streetBuilding'
-                          label='Байр/гудамж'
-                          type='text'
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className='relative w-[100px] text-center'>
-                        <TableHeaderFilter
-                          field='apartmentNumber'
-                          label='Тоот'
-                          type='text'
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className='relative w-[120px] text-center'>
-                        <TableHeaderFilter
-                          field='type'
-                          label='Төрөл'
-                          type='text'
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className='relative w-[150px] text-center'>
-                        <TableHeaderFilter
-                          field='name'
-                          label='Нэр'
-                          type='text'
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className='relative w-[150px] text-center'>
-                        <TableHeaderFilter
-                          field='cardIdDec'
-                          label='Карт ID'
-                          type='text'
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className='relative w-[120px] text-center'>
-                        <TableHeaderFilter
-                          field='totalAccess'
-                          label='Нэвтрэлт'
-                          type='number'
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className='relative w-[150px] text-center'>
-                        <TableHeaderFilter
-                          field='cardUsedAt'
-                          label='Сүүлийн нэвтрэлт'
-                          type='date'
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className='relative w-[150px] text-center'>
-                        <TableHeaderFilter
-                          field='createdAt'
-                          label='Бүртгэгдсэн огноо'
-                          type='date'
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className='relative w-[120px] text-center'>
-                        <TableHeaderFilter
-                          field='phone'
-                          label='Утасны дугаар'
-                          type='text'
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className='w-[100px] text-center'>
-                        Үйлдэл
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredResidents.map((resident: any) => (
-                      <TableRow
-                        key={resident.id}
-                        className='hover:bg-muted/50 cursor-pointer'
-                        onClick={() => {
-                          if (
-                            editUser != null &&
-                            editUser.cardId != null &&
-                            editUser.cardId != ''
-                          )
-                            router.push(`/dashboard/card/${editUser.cardId}`);
-                          else
-                            router.push(`/dashboard/card/${resident.cardId}`);
-                        }}
-                      >
-                        <TableCell>
-                          <div className='text-center text-sm font-medium'>
-                            {resident.district || '-'}
-                          </div>
-                        </TableCell>
-                        {/* Khoroo Column */}
-                        <TableCell>
-                          <div className='text-center text-sm'>
-                            {resident.khoroo || '-'}
-                          </div>
-                        </TableCell>
-                        {/* Street/Building Column */}
-                        <TableCell>
-                          <div className='text-center text-sm'>
-                            {resident.streetBuilding || '-'}
-                          </div>
-                        </TableCell>
-                        {/* Apartment Number Column */}
-                        <TableCell>
-                          <div className='text-center text-sm'>
-                            {resident.apartmentNumber || '-'}
-                          </div>
-                        </TableCell>
-                        {/* Type Column */}
-                        <TableCell>
-                          <div className='flex items-center gap-2 text-center'>
-                            <Badge variant='outline' className='text-xs'>
-                              {resident.type || '-'}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        {/* Name Column */}
-                        <TableCell>
-                          <div
-                            className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 text-center font-medium transition-colors'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigator.clipboard.writeText(resident.name);
-                              toast.success('Нэр хуулагдлаа');
-                            }}
-                            title='Хуулахын тулд дарна уу'
-                          >
-                            {resident.name}
-                          </div>
-                        </TableCell>
-                        {/* Card ID Column */}
-                        <TableCell>
-                          <div className='flex flex-col gap-1 text-center'>
-                            <div className='flex items-center gap-2'>
-                              <IconCreditCard className='text-muted-foreground h-4 w-4' />
-                              <span
-                                className='bg-muted hover:bg-muted/70 cursor-pointer rounded px-2 py-1 font-mono text-sm transition-colors'
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigator.clipboard.writeText(
-                                    resident.cardIdDec
-                                  );
-                                  toast.success('Карт ID хуулагдлаа');
-                                }}
-                                title='Хуулахын тулд дарна уу'
-                              >
-                                {resident.cardIdDec}
-                              </span>
-                            </div>
-                          </div>
-                        </TableCell>
-                        {/* Total Access Column */}
-                        <TableCell>
-                          <div className='text-center font-medium'>
-                            {resident.totalAccess}
-                          </div>
-                        </TableCell>
-                        {/* Last Access Column */}
-                        <TableCell>
-                          <div className='flex items-center gap-2 text-center'>
-                            <IconCalendar className='text-muted-foreground h-4 w-4' />
-                            <span className='text-sm'>
-                              {formatDate(resident.cardUsedAt)}
+                      </TableCell>
+                      <TableCell>
+                        <div className='text-center text-sm font-medium'>
+                          {resident.district || '-'}
+                        </div>
+                      </TableCell>
+                      {/* Khoroo Column */}
+                      <TableCell>
+                        <div className='text-center text-sm'>
+                          {resident.khoroo || '-'}
+                        </div>
+                      </TableCell>
+                      {/* Street/Building Column */}
+                      <TableCell>
+                        <div className='text-center text-sm'>
+                          {resident.streetBuilding || '-'}
+                        </div>
+                      </TableCell>
+                      {/* Apartment Number Column */}
+                      <TableCell>
+                        <div className='text-center text-sm'>
+                          {resident.apartmentNumber || '-'}
+                        </div>
+                      </TableCell>
+                      {/* Type Column */}
+                      <TableCell>
+                        <div className='flex items-center gap-2 text-center'>
+                          <Badge variant='outline' className='text-xs'>
+                            {resident.type || '-'}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      {/* Name Column */}
+                      <TableCell>
+                        <div
+                          className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 text-center font-medium transition-colors'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(resident.name);
+                            toast.success('Нэр хуулагдлаа');
+                          }}
+                          title='Хуулахын тулд дарна уу'
+                        >
+                          {resident.name}
+                        </div>
+                      </TableCell>
+                      {/* Card ID Column */}
+                      <TableCell>
+                        <div className='flex flex-col gap-1 text-center'>
+                          <div className='flex items-center gap-2'>
+                            <IconCreditCard className='text-muted-foreground h-4 w-4' />
+                            <span
+                              className='bg-muted hover:bg-muted/70 cursor-pointer rounded px-2 py-1 font-mono text-sm transition-colors'
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(
+                                  resident.cardIdDec
+                                );
+                                toast.success('Карт ID хуулагдлаа');
+                              }}
+                              title='Хуулахын тулд дарна уу'
+                            >
+                              {resident.cardIdDec}
                             </span>
                           </div>
-                        </TableCell>
-                        {/* Created Date Column */}
-                        <TableCell>
-                          <div className='flex items-center gap-2 text-center'>
-                            <IconCalendar className='text-muted-foreground h-4 w-4' />
-                            <span className='text-sm'>
-                              {formatDate(resident.createdAt)}
-                            </span>
-                          </div>
-                        </TableCell>
-                        {/* Phone Column */}
-                        <TableCell>
-                          <div
-                            className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 text-center font-medium transition-colors'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigator.clipboard.writeText(resident.phone);
-                              toast.success('Утасны дугаар хуулагдлаа');
+                        </div>
+                      </TableCell>
+                      {/* Total Access Column */}
+                      <TableCell>
+                        <div className='text-center font-medium'>
+                          {resident.totalAccess}
+                        </div>
+                      </TableCell>
+                      {/* Last Access Column */}
+                      <TableCell>
+                        <div className='flex items-center gap-2 text-center'>
+                          <IconCalendar className='text-muted-foreground h-4 w-4' />
+                          <span className='text-sm'>
+                            {formatDate(resident.cardUsedAt)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      {/* Created Date Column */}
+                      <TableCell>
+                        <div className='flex items-center gap-2 text-center'>
+                          <IconCalendar className='text-muted-foreground h-4 w-4' />
+                          <span className='text-sm'>
+                            {formatDate(resident.createdAt)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      {/* Phone Column */}
+                      <TableCell>
+                        <div
+                          className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 text-center font-medium transition-colors'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(resident.phone);
+                            toast.success('Утасны дугаар хуулагдлаа');
+                          }}
+                          title='Хуулахын тулд дарна уу'
+                        >
+                          {resident.phone}
+                        </div>
+                      </TableCell>
+                      {/* Actions Column */}
+                      <TableCell className='text-center'>
+                        <div className='flex items-center justify-end gap-2'>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => {
+                              if (
+                                editUser != null &&
+                                editUser.cardId != null &&
+                                editUser.cardId != ''
+                              )
+                                router.push(
+                                  `/dashboard/card/${editUser.cardId}`
+                                );
+                              else
+                                router.push(
+                                  `/dashboard/card/${resident.cardId}`
+                                );
                             }}
-                            title='Хуулахын тулд дарна уу'
                           >
-                            {resident.phone}
-                          </div>
-                        </TableCell>
-                        {/* Actions Column */}
-                        <TableCell className='text-center'>
-                          <div className='flex items-center justify-end gap-2'>
+                            <IconUser className='h-4 w-4' />
+                          </Button>
+                          {canPerformAction('canEditClients') && (
                             <Button
                               variant='outline'
                               size='sm'
-                              onClick={() => {
-                                if (
-                                  editUser != null &&
-                                  editUser.cardId != null &&
-                                  editUser.cardId != ''
-                                )
-                                  router.push(
-                                    `/dashboard/card/${editUser.cardId}`
-                                  );
-                                else
-                                  router.push(
-                                    `/dashboard/card/${resident.cardId}`
-                                  );
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('Editing resident:', resident);
+                                handleEditUser(resident);
                               }}
                             >
-                              <IconUser className='h-4 w-4' />
+                              <IconEdit className='h-4 w-4' />
                             </Button>
-                            {canPerformAction('canEditClients') && (
-                              <Button
-                                variant='outline'
-                                size='sm'
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  console.log('Editing resident:', resident);
-                                  handleEditUser(resident);
-                                }}
-                              >
-                                <IconEdit className='h-4 w-4' />
-                              </Button>
-                            )}
-                            {canPerformAction('canDeleteClients') && (
-                              <Button
-                                variant='outline'
-                                size='sm'
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteClient(resident.id);
-                                }}
-                                disabled={deletingClientId === resident.id}
-                                className='text-red-600 hover:bg-red-50 hover:text-red-700'
-                              >
-                                {deletingClientId === resident.id ? (
-                                  <div className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
-                                ) : (
-                                  <IconTrash className='h-4 w-4' />
-                                )}
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {filteredResidents.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={13} className='py-8 text-center'>
-                          <div className='flex flex-col items-center gap-2'>
-                            <IconSearch className='text-muted-foreground h-8 w-8' />
-                            <p className='text-muted-foreground'>
-                              {activeFilters.length > 0
-                                ? 'Хайлтын үр дүн олдсонгүй'
-                                : 'Бүртгэлтэй карт байхгүй'}
-                            </p>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
+                          )}
+
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {filteredResidents.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={14} className='py-8 text-center'>
+                        <div className='flex flex-col items-center gap-2'>
+                          <IconSearch className='text-muted-foreground h-8 w-8' />
+                          <p className='text-muted-foreground'>
+                            {activeFilters.length > 0
+                              ? 'Хайлтын үр дүн олдсонгүй'
+                              : 'Бүртгэлтэй карт байхгүй'}
+                          </p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
 
             {/* Pagination */}
@@ -1829,6 +1875,30 @@ export function CardsView() {
           </DialogContent>
         </Dialog>
       </div>
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className='z-[1000]'>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Та итгэлтэй байна уу?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Та {selectedClients.size} картыг устгах гэж байна. Энэ үйлдлийг
+              буцаах боломжгүй.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Болих</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteSelected();
+              }}
+              className='bg-red-600 hover:bg-red-700'
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Устгаж байна...' : 'Устгах'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageContainer>
   );
 }

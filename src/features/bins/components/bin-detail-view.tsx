@@ -174,6 +174,8 @@ export function BinDetailView({ id }: BinDetailViewProps) {
             id: specificBin.id,
             binId: specificBin.binId,
             khoroo: specificBin.khoroo || null,
+            phone: specificBin.phone || null,
+            details: specificBin.details || null,
             binName: specificBin.binName || `Савны нэр олгоогүй`,
             location: specificBin.location || 'Байршил тодорхойгүй',
             fillPercentage: specificBin.storageLevelPercent || 0,
@@ -335,14 +337,20 @@ export function BinDetailView({ id }: BinDetailViewProps) {
     let updatePayload: any = {};
     // Always include binId
     updatePayload.binId = editingBin.binId || editingBin.id;
-    if (editField === 'location') updatePayload.location = editingBin.location;
+
+    // Include all editable fields since the dialog allows editing everything
+    updatePayload.location = editingBin.location;
+    updatePayload.type = editingBin.type;
+    updatePayload.serialNumber = editingBin.serialNumber;
+    updatePayload.binName = editingBin.binName;
+    updatePayload.khoroo = editingBin.khoroo;
+    updatePayload.phone = editingBin.phone;
+    updatePayload.details = editingBin.details;
+
     if (editField === 'coordinates') {
       updatePayload.latitude = editingBin.coordinates.lat;
       updatePayload.longitude = editingBin.coordinates.lng;
     }
-    if (editField === 'type') updatePayload.type = editingBin.type;
-    if (editField === 'serialNumber')
-      updatePayload.serialNumber = editingBin.serialNumber;
     try {
       const authHeaders = authUtils.getAuthHeader();
       console.log('🔧 Bin update - Auth headers being sent:', authHeaders);
@@ -586,6 +594,24 @@ export function BinDetailView({ id }: BinDetailViewProps) {
               <Separator />
               <div className='flex items-center justify-between'>
                 <span className='text-muted-foreground text-sm'>
+                  Утасны дугаар:
+                </span>
+                <span
+                  className='hover:bg-muted/30 cursor-pointer rounded px-2 py-1 font-mono text-sm font-medium transition-colors'
+                  onClick={() => {
+                    const serialNumber =
+                      bin.phone === '-' ? '' : bin.phone;
+                    navigator.clipboard.writeText(serialNumber);
+                    toast.success('Утасны дугаар хуулагдлаа');
+                  }}
+                  title='Хуулахын тулд дарна уу'
+                >
+                  {bin.phone ?? '-'}
+                </span>
+              </div>
+              <Separator />
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>
                   Суурилуулсан огноо:
                 </span>
                 <span className='text-sm font-medium'>
@@ -633,6 +659,15 @@ export function BinDetailView({ id }: BinDetailViewProps) {
                   title='Хуулахын тулд дарна уу'
                 >
                   {bin.location}
+                </span>
+              </div>
+              <Separator />
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>
+                  Тайлбар:
+                </span>
+                <span className='text-sm font-medium'>
+                  {bin.details ?? '-'}
                 </span>
               </div>
             </CardContent>
@@ -1016,6 +1051,20 @@ export function BinDetailView({ id }: BinDetailViewProps) {
                     />
                   </div>
                   <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='edit-phone' className='text-right'>
+                      Утасны дугаар
+                    </Label>
+                    <Input
+                      id='edit-phone'
+                      value={editingBin.phone}
+                      onChange={(e) =>
+                        setEditingBin({ ...editingBin, phone: e.target.value })
+                      }
+                      placeholder='Утасны дугаар'
+                      className='col-span-3'
+                    />
+                  </div>
+                  <div className='grid grid-cols-4 items-center gap-4'>
                     <Label htmlFor='edit-name' className='text-right'>
                       Савны нэр
                     </Label>
@@ -1063,6 +1112,27 @@ export function BinDetailView({ id }: BinDetailViewProps) {
                         })
                       }
                       placeholder='Байршлын дэлгэрэнгүй мэдээлэл'
+                      className='col-span-3'
+                      rows={2}
+                    />
+                  </div>
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label
+                      htmlFor='edit-details-manual'
+                      className='text-right'
+                    >
+                      Тайлбар
+                    </Label>
+                    <Textarea
+                      id='edit-details-manual'
+                      value={editingBin.details}
+                      onChange={(e) =>
+                        setEditingBin({
+                          ...editingBin,
+                          details: e.target.value
+                        })
+                      }
+                      placeholder='Нэмэлт тайлбар...'
                       className='col-span-3'
                       rows={2}
                     />
@@ -1212,6 +1282,7 @@ export function BinDetailView({ id }: BinDetailViewProps) {
                     body: JSON.stringify({
                       binId: editingBin.binId || editingBin.id,
                       binName: editingBin.binName,
+                      phone: editingBin.phone,
                       location: editingBin.location,
                       khoroo: editingBin.khoroo,
                       latitude: parseFloat(
@@ -1220,7 +1291,8 @@ export function BinDetailView({ id }: BinDetailViewProps) {
                       longitude: parseFloat(
                         editingBin.longitude || editingBin.coordinates.lng
                       ),
-                      batteryLevel: editingBin.batteryLevel || '12V'
+                      batteryLevel: editingBin.batteryLevel || '12V',
+                      details: editingBin.details
                     })
                   });
                   if (response.ok) {
