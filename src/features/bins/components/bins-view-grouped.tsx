@@ -48,8 +48,21 @@ import {
   IconDownload,
   IconAlertTriangle,
   IconChevronDown,
-  IconChevronUp
+  IconChevronUp,
+  IconTrash
 } from '@tabler/icons-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
+import { deleteBin } from '@/lib/api';
 import {
   TableHeaderFilter,
   useTableFilters
@@ -65,6 +78,9 @@ export function BinsViewGrouped() {
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [selectedBins, setSelectedBins] = useState<Set<number>>(new Set());
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Enhanced filter system state
   const {
@@ -140,7 +156,8 @@ export function BinsViewGrouped() {
     data: groupedBins,
     loading,
     error,
-    pagination
+    pagination,
+    refetch
   } = useGroupedBins(true, paginationParams);
 
   // Reset to first page when filters change
@@ -213,6 +230,48 @@ export function BinsViewGrouped() {
   const isGroupExpanded = (khoroo: number, location: string) => {
     const key = `${khoroo}-${location}`;
     return expandedGroups.has(key);
+  };
+
+  const toggleSelectBin = (binId: number) => {
+    setSelectedBins((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(binId)) {
+        newSet.delete(binId);
+      } else {
+        newSet.add(binId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectGroup = (groupBins: any[]) => {
+    const groupBinIds = groupBins.map((b) => b.id);
+    const allSelected = groupBinIds.every((id) => selectedBins.has(id));
+
+    setSelectedBins((prev) => {
+      const newSet = new Set(prev);
+      if (allSelected) {
+        groupBinIds.forEach((id) => newSet.delete(id));
+      } else {
+        groupBinIds.forEach((id) => newSet.add(id));
+      }
+      return newSet;
+    });
+  };
+
+  const handleDeleteSelected = async () => {
+    setIsDeleting(true);
+    try {
+      await Promise.all(Array.from(selectedBins).map((id) => deleteBin(id)));
+      toast.success(`${selectedBins.size} хогийн сав устгагдлаа`);
+      setSelectedBins(new Set());
+      setShowDeleteDialog(false);
+      refetch();
+    } catch (error) {
+      toast.error('Устгахад алдаа гарлаа');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const exportToExcel = async () => {
@@ -301,7 +360,7 @@ export function BinsViewGrouped() {
     } catch (error) {
       toast.error(
         'Экспорт хийхэд алдаа гарлаа: ' +
-          (error instanceof Error ? error.message : 'Unknown error')
+        (error instanceof Error ? error.message : 'Unknown error')
       );
     }
   };
@@ -373,6 +432,16 @@ export function BinsViewGrouped() {
             </h1>
           </div>
           <div className='flex items-center gap-2'>
+            {selectedBins.size > 0 && (
+              <Button
+                variant='destructive'
+                size='sm'
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <IconTrash className='mr-2 h-4 w-4' />
+                Устгах ({selectedBins.size})
+              </Button>
+            )}
             <Button onClick={exportToExcel} variant='outline' size='sm'>
               <IconDownload className='mr-2 h-4 w-4' />
               Excel татах
@@ -482,6 +551,7 @@ export function BinsViewGrouped() {
                 <Table className='w-full'>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className='w-[40px]'></TableHead>
                       <TableHead className='w-[50px]'></TableHead>
                       <TableHead className='w-[150px] text-center'>
                         <TableHeaderFilter
@@ -557,6 +627,16 @@ export function BinsViewGrouped() {
                                 toggleGroup(group.khoroo, group.location || '')
                               }
                             >
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                <Checkbox
+                                  checked={group.bins.every((b) =>
+                                    selectedBins.has(b.id)
+                                  )}
+                                  onCheckedChange={() =>
+                                    toggleSelectGroup(group.bins)
+                                  }
+                                />
+                              </TableCell>
                               <TableCell>
                                 {isExpanded ? (
                                   <IconChevronUp className='h-4 w-4' />
@@ -628,6 +708,14 @@ export function BinsViewGrouped() {
                                     router.push(`/dashboard/bins/${bin.id}`)
                                   }
                                 >
+                                  <TableCell onClick={(e) => e.stopPropagation()}>
+                                    <Checkbox
+                                      checked={selectedBins.has(bin.id)}
+                                      onCheckedChange={() =>
+                                        toggleSelectBin(bin.id)
+                                      }
+                                    />
+                                  </TableCell>
                                   <TableCell></TableCell>
                                   <TableCell className='pl-8'>
                                     <div
@@ -698,7 +786,7 @@ export function BinsViewGrouped() {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className='py-8 text-center'>
+                        <TableCell colSpan={7} className='py-8 text-center'>
                           <div className='flex flex-col items-center gap-2'>
                             <IconSearch className='text-muted-foreground h-8 w-8' />
                             <p className='text-muted-foreground'>
@@ -777,6 +865,31 @@ export function BinsViewGrouped() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Та итгэлтэй байна уу?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Та {selectedBins.size} хогийн савыг устгах гэж байна. Энэ үйлдлийг
+              буцаах боломжгүй.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Болих</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteSelected();
+              }}
+              className='bg-red-600 hover:bg-red-700'
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Устгаж байна...' : 'Устгах'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageContainer>
   );
 }

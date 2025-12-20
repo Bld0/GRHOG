@@ -79,6 +79,17 @@ import {
   DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
+import { deleteBin } from '@/lib/api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
@@ -115,6 +126,8 @@ export function BinDetailView({ id }: BinDetailViewProps) {
   const [editField, setEditField] = useState<
     'location' | 'coordinates' | 'type' | 'serialNumber'
   >('location');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchBinDetails = async () => {
@@ -354,6 +367,20 @@ export function BinDetailView({ id }: BinDetailViewProps) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!bin?.id) return;
+    setIsDeleting(true);
+    try {
+      await deleteBin(bin.id);
+      toast.success('Хогийн сав амжилттай устгагдлаа');
+      router.push('/dashboard/bins');
+    } catch (error) {
+      toast.error('Устгахад алдаа гарлаа');
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
   if (loading) {
     return (
       <PageContainer>
@@ -439,6 +466,14 @@ export function BinDetailView({ id }: BinDetailViewProps) {
             <Button size='sm' onClick={openEditDialog}>
               <IconEdit className='mr-2 h-4 w-4' />
               Засах
+            </Button>
+            <Button
+              variant='destructive'
+              size='sm'
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <IconTrash className='mr-2 h-4 w-4' />
+              Устгах
             </Button>
           </div>
         </div>
@@ -1205,7 +1240,32 @@ export function BinDetailView({ id }: BinDetailViewProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </PageContainer>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className='z-[1000]'>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Та итгэлтэй байна уу?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Та энэ хогийн савыг устгах гэж байна. Энэ үйлдлийг буцаах
+              боломжгүй.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Болих</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              className='bg-red-600 hover:bg-red-700'
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Устгаж байна...' : 'Устгах'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </PageContainer >
   );
 }
 

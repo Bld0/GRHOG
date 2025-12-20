@@ -1,11 +1,12 @@
 {
   "/api/auth/signin/route": "app/api/auth/signin/route.js",
   "/api/bin-usages/route": "app/api/bin-usages/route.js",
+  "/api/bins/[id]/clearings/route": "app/api/bins/[id]/clearings/route.js",
+  "/api/bins/[id]/route": "app/api/bins/[id]/route.js",
+  "/api/bins/route": "app/api/bins/route.js",
   "/api/cards/activity-rate/route": "app/api/cards/activity-rate/route.js",
   "/api/cards/total-access/route": "app/api/cards/total-access/route.js",
   "/api/cards/total-cards/route": "app/api/cards/total-cards/route.js",
-  "/api/clients/[id]/activity/route": "app/api/clients/[id]/activity/route.js",
-  "/api/clients/[id]/route": "app/api/clients/[id]/route.js",
   "/api/clients/route": "app/api/clients/route.js",
   "/api/dashboard/active-bins/route": "app/api/dashboard/active-bins/route.js",
   "/api/dashboard/active-cards/route": "app/api/dashboard/active-cards/route.js",
@@ -14,12 +15,15 @@
   "/api/dashboard/client-type-counts/route": "app/api/dashboard/client-type-counts/route.js",
   "/api/dashboard/current-usage/route": "app/api/dashboard/current-usage/route.js",
   "/api/dashboard/getDistrict/route": "app/api/dashboard/getDistrict/route.js",
+  "/api/dashboard/getKhoroo/route": "app/api/dashboard/getKhoroo/route.js",
   "/api/dashboard/khoroo-usage/route": "app/api/dashboard/khoroo-usage/route.js",
   "/api/dashboard/total-cards/route": "app/api/dashboard/total-cards/route.js",
   "/api/dashboard/total-household/route": "app/api/dashboard/total-household/route.js",
   "/auth/sign-in/page": "app/auth/sign-in/page.js",
-  "/dashboard/card/[id]/page": "app/dashboard/card/[id]/page.js",
+  "/dashboard/bins/[id]/page": "app/dashboard/bins/[id]/page.js",
+  "/dashboard/bins/page": "app/dashboard/bins/page.js",
   "/dashboard/card/page": "app/dashboard/card/page.js",
   "/dashboard/overview/page": "app/dashboard/overview/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js"
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/page": "app/page.js"
 }
