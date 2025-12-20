@@ -73,6 +73,7 @@ import { authUtils } from '@/lib/auth';
 import { normalizeStorageLevel } from '@/lib/utils';
 import { toast } from 'sonner';
 import SwitchButton from '@/components/switch-button';
+import { useRolePermissions } from '@/hooks/use-role-permissions';
 
 interface CardData {
   id: number;
@@ -142,6 +143,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
     apartmentNumber: '',
     type: ''
   });
+  const { canPerformAction } = useRolePermissions();
 
   useEffect(() => {
     const fetchCardDetails = async () => {
@@ -332,20 +334,20 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
         setCardData((prev) =>
           prev
             ? {
-                ...prev,
-                name: editUser.name,
-                cardId: editUser.cardId,
-                cardIdConverted: editUser.cardIdConverted,
-                email: editUser.email,
-                phone: editUser.phone,
-                district: editUser.district,
-                khoroo: editUser.khoroo ? parseInt(editUser.khoroo) : null,
-                streetBuilding: editUser.streetBuilding,
-                apartmentNumber: editUser.apartmentNumber
-                  ? parseInt(editUser.apartmentNumber)
-                  : null,
-                type: editUser.type as 'ААНБ' | 'СӨХ' | 'Айл' | 'Ажилтан' | null
-              }
+              ...prev,
+              name: editUser.name,
+              cardId: editUser.cardId,
+              cardIdConverted: editUser.cardIdConverted,
+              email: editUser.email,
+              phone: editUser.phone,
+              district: editUser.district,
+              khoroo: editUser.khoroo ? parseInt(editUser.khoroo) : null,
+              streetBuilding: editUser.streetBuilding,
+              apartmentNumber: editUser.apartmentNumber
+                ? parseInt(editUser.apartmentNumber)
+                : null,
+              type: editUser.type as 'ААНБ' | 'СӨХ' | 'Айл' | 'Ажилтан' | null
+            }
             : null
         );
         setIsEditDialogOpen(false);
@@ -357,7 +359,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
       console.error('Error updating client:', error);
       alert(
         'Карт засахад алдаа гарлаа: ' +
-          (error instanceof Error ? error.message : 'Unknown error')
+        (error instanceof Error ? error.message : 'Unknown error')
       );
     } finally {
       setIsEditing(false);
@@ -451,9 +453,9 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
                   {cardData.name === 'Unknown'
                     ? `ХЗ`
                     : cardData.name
-                        .split(' ')
-                        .map((n: string) => n[0])
-                        .join('')}
+                      .split(' ')
+                      .map((n: string) => n[0])
+                      .join('')}
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -506,10 +508,12 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
             </Badge>
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
               <DialogTrigger asChild>
-                <Button size='sm' onClick={() => setIsEditDialogOpen(true)}>
-                  <IconEdit className='mr-2 h-4 w-4' />
-                  Засах
-                </Button>
+                {canPerformAction('canEditClients') && (
+                  <Button size='sm' onClick={() => setIsEditDialogOpen(true)}>
+                    <IconEdit className='mr-2 h-4 w-4' />
+                    Засах
+                  </Button>
+                )}
               </DialogTrigger>
               <DialogContent className='sm:max-w-[525px]'>
                 <DialogHeader>

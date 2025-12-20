@@ -74,7 +74,7 @@ import { cn } from '@/lib/utils';
 
 export function BinsViewGrouped() {
   const router = useRouter();
-  useRolePermissions(); // Keep this for potential future use
+  const { canPerformAction } = useRolePermissions();
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -432,7 +432,7 @@ export function BinsViewGrouped() {
             </h1>
           </div>
           <div className='flex items-center gap-2'>
-            {selectedBins.size > 0 && (
+            {selectedBins.size > 0 && canPerformAction('canDeleteBins') && (
               <Button
                 variant='destructive'
                 size='sm'

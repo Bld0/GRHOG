@@ -93,6 +93,7 @@ import { deleteBin } from '@/lib/api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { useRolePermissions } from '@/hooks/use-role-permissions';
 
 // Dynamically import LeafletMap to avoid SSR issues
 const LeafletMap = dynamic(() => import('@/components/leaflet-map'), {
@@ -128,6 +129,7 @@ export function BinDetailView({ id }: BinDetailViewProps) {
   >('location');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { canPerformAction } = useRolePermissions();
 
   useEffect(() => {
     const fetchBinDetails = async () => {
@@ -471,18 +473,22 @@ export function BinDetailView({ id }: BinDetailViewProps) {
               />
               {getBinStatusText(bin.fillPercentage)}
             </Badge>
-            <Button size='sm' onClick={openEditDialog}>
-              <IconEdit className='mr-2 h-4 w-4' />
-              Засах
-            </Button>
-            <Button
-              variant='destructive'
-              size='sm'
-              onClick={() => setShowDeleteDialog(true)}
-            >
-              <IconTrash className='mr-2 h-4 w-4' />
-              Устгах
-            </Button>
+            {canPerformAction('canEditBins') && (
+              <Button size='sm' onClick={openEditDialog}>
+                <IconEdit className='mr-2 h-4 w-4' />
+                Засах
+              </Button>
+            )}
+            {canPerformAction('canDeleteBins') && (
+              <Button
+                variant='destructive'
+                size='sm'
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <IconTrash className='mr-2 h-4 w-4' />
+                Устгах
+              </Button>
+            )}
           </div>
         </div>
 

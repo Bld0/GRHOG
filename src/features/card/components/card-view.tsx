@@ -119,7 +119,7 @@ import {
 export function CardsView() {
   const router = useRouter();
   // const [isCardIdConverted, setIsCardIdConverted] = useState(false);
-  const { canPerformAction, canPost, canPut, canDelete } = useRolePermissions();
+  const { canPerformAction } = useRolePermissions();
   const [currentPage, setCurrentPage] = useState(0); // Changed to 0-based for API
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -746,7 +746,7 @@ export function CardsView() {
             </h1>
           </div>
           <div className='flex items-center gap-2'>
-            {selectedClients.size > 0 && (
+            {selectedClients.size > 0 && canPerformAction('canDeleteClients') && (
               <Button
                 variant='destructive'
                 size='sm'
@@ -761,10 +761,12 @@ export function CardsView() {
               onOpenChange={setIsCreateDialogOpen}
             >
               <DialogTrigger asChild>
-                <Button size='sm'>
-                  <IconPlus className='mr-2 h-4 w-4' />
-                  Карт нэмэх
-                </Button>
+                {canPerformAction('canCreateClients') && (
+                  <Button size='sm'>
+                    <IconPlus className='mr-2 h-4 w-4' />
+                    Карт нэмэх
+                  </Button>
+                )}
               </DialogTrigger>
               <DialogContent className='sm:max-w-[525px]'>
                 <DialogHeader>

@@ -19,7 +19,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,  
+  SelectValue,
 } from '@/components/ui/select';
 import {
   Dialog,
@@ -59,7 +59,7 @@ import {
   PaginationContent,
   PaginationItem,
   PaginationLink,
-  PaginationNext, 
+  PaginationNext,
   PaginationPrevious,
   PaginationEllipsis,
 } from '@/components/ui/pagination';
@@ -67,7 +67,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 // Dynamically import the entire Leaflet map component to avoid SSR issues
-const DynamicLeafletMap = dynamic(() => import('@/components/leaflet-map'), { 
+const DynamicLeafletMap = dynamic(() => import('@/components/leaflet-map'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-48 md:h-[400px] bg-gray-100 rounded-lg border border-gray-300 flex items-center justify-center">
@@ -83,18 +83,18 @@ import { useBins } from '@/hooks/use-api-data';
 import { PaginationParams } from '@/hooks/use-pagination';
 // Removed utility functions - now using backend percentage fields
 import { authUtils } from '@/lib/auth';
-import { 
-  useTotalBins, 
-  useAverageFillLevel, 
-  useWarningBins, 
-  useAverageBattery 
+import {
+  useTotalBins,
+  useAverageFillLevel,
+  useWarningBins,
+  useAverageBattery
 } from '@/hooks/use-bin-stats';
 import { useRolePermissions } from '@/hooks/use-role-permissions';
 import { toast } from 'sonner';
-import { 
-  IconBattery, 
-  IconWifi, 
-  IconDoor, 
+import {
+  IconBattery,
+  IconWifi,
+  IconDoor,
   IconTrash,
   IconMapPin,
   IconWeight,
@@ -132,7 +132,7 @@ export function BinsView() {
   const [clearingBin, setClearingBin] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(0); // Changed to 0-based for API
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  
+
   // Enhanced filter system state
   const {
     activeFilters,
@@ -143,7 +143,7 @@ export function BinsView() {
     handleSort,
     setActiveFilters
   } = useTableFilters();
-  
+
   // Form state for creating new bin
   const [newBin, setNewBin] = useState({
     id: '',
@@ -151,9 +151,9 @@ export function BinsView() {
     latitude: '',
     longitude: '',
   });
-  
+
   // Map state
-  const [selectedLocation, setSelectedLocation] = useState<{lat: number; lng: number} | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'map'>('table');
@@ -175,10 +175,10 @@ export function BinsView() {
 
     // Build search query from advanced filters
     const searchParts: string[] = [];
-    
+
     activeFilters.forEach(filter => {
       let searchPart = '';
-      
+
       switch (filter.operator) {
         case 'is':
           searchPart = `${filter.field}: {"is": "${filter.value}"}`;
@@ -202,12 +202,12 @@ export function BinsView() {
           }
           break;
       }
-      
+
       if (searchPart) {
         searchParts.push(searchPart);
       }
     });
-    
+
     // Combine existing search with filter search parts
     if (searchParts.length > 0) {
       const filterSearch = searchParts.join('; ');
@@ -235,26 +235,26 @@ export function BinsView() {
     if (!Array.isArray(apiBins)) {
       return [];
     }
-    
+
     return apiBins.map(bin => {
       return {
-          id: bin.id, // Use binId if available, fallback to id
-          binName: bin.binName || `Савны нэр олгоогүй`, // Use binName, fallback to generated name
-          location: bin.location || `Байршил тодорхойгүй`,
-          fillPercentage: bin.storageLevelPercent || 0, // Use backend percentage field
-          batteryLevel: bin.batteryLevelPercent || 0, // Use backend percentage field
-          clearedAt: bin.clearedAt,
-          createdAt: bin.createdAt,
-          updatedAt: bin.updatedAt,
-          active: bin.active, // Use 'active' field from API response
-          storageLevelBeforeClear: bin.storageLevelBeforeClearPercent || 0, // Use backend percentage field
-          coordinates: {
-            lat: bin.latitude || 0,
-            lng: bin.longitude || 0
-          },
-          usageCount: bin.usageCount, // Add usage count to bin data
-          penetrationsSinceLastClear: (bin as any).penetrationsSinceLastClear || 0 // Add penetrations since last clear
-        };
+        id: bin.id, // Use binId if available, fallback to id
+        binName: bin.binName || `Савны нэр олгоогүй`, // Use binName, fallback to generated name
+        location: bin.location || `Байршил тодорхойгүй`,
+        fillPercentage: bin.storageLevelPercent || 0, // Use backend percentage field
+        batteryLevel: bin.batteryLevelPercent || 0, // Use backend percentage field
+        clearedAt: bin.clearedAt,
+        createdAt: bin.createdAt,
+        updatedAt: bin.updatedAt,
+        active: bin.active, // Use 'active' field from API response
+        storageLevelBeforeClear: bin.storageLevelBeforeClearPercent || 0, // Use backend percentage field
+        coordinates: {
+          lat: bin.latitude || 0,
+          lng: bin.longitude || 0
+        },
+        usageCount: bin.usageCount, // Add usage count to bin data
+        penetrationsSinceLastClear: (bin as any).penetrationsSinceLastClear || 0 // Add penetrations since last clear
+      };
     });
   }, [apiBins]);
 
@@ -271,7 +271,7 @@ export function BinsView() {
     const pages = [];
     const maxVisiblePages = 5;
     const totalPages = pagination.totalPages;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 0; i < totalPages; i++) {
         pages.push(i);
@@ -299,7 +299,7 @@ export function BinsView() {
         pages.push(totalPages - 1);
       }
     }
-    
+
     return pages;
   };
 
@@ -311,17 +311,17 @@ export function BinsView() {
   const exportToExcel = async () => {
     try {
       console.log('🚀 Starting Excel export...');
-      
+
       // Build query parameters from active filters
       const queryParams = new URLSearchParams();
-      
+
       // Add search query if there are active filters
       if (activeFilters.length > 0) {
         const searchParts: string[] = [];
-        
+
         activeFilters.forEach(filter => {
           let searchPart = '';
-          
+
           switch (filter.operator) {
             case 'is':
               searchPart = `${filter.field}: {"is": "${filter.value}"}`;
@@ -344,12 +344,12 @@ export function BinsView() {
               }
               break;
           }
-          
+
           if (searchPart) {
             searchParts.push(searchPart);
           }
         });
-        
+
         if (searchParts.length > 0) {
           queryParams.append('search', searchParts.join('; '));
         }
@@ -365,11 +365,11 @@ export function BinsView() {
 
       const url = `/api/export/bins?${queryParams.toString()}`;
       console.log('📤 Export URL:', url);
-      
+
       // Get authentication headers
       const authHeaders = authUtils.getAuthHeader();
       console.log('🔐 Auth headers:', authHeaders);
-      
+
       // Fetch the Excel file with authentication
       const response = await fetch(url, {
         method: 'GET',
@@ -388,21 +388,21 @@ export function BinsView() {
       // Get the Excel file as blob
       const blob = await response.blob();
       console.log('📄 Excel blob received:', blob.size, 'bytes');
-      
+
       // Create download link
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = `bins_export_${new Date().toISOString().split('T')[0]}.xlsx`;
-      
+
       // Trigger download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Clean up
       window.URL.revokeObjectURL(downloadUrl);
-      
+
       console.log('✅ Export completed successfully');
       toast.success('Excel файл татаж эхэллээ');
     } catch (error) {
@@ -465,7 +465,7 @@ export function BinsView() {
   // Handle clearing a bin
   const handleClearBin = async () => {
     if (!clearingBin) return;
-    
+
     try {
       const response = await fetch(`/api/bins/${clearingBin.id}/clear`, {
         method: 'POST',
@@ -499,7 +499,7 @@ export function BinsView() {
       // Get authentication headers
       const authHeaders = authUtils.getAuthHeader();
       console.log('🗑️ Delete bin - Auth headers being sent:', authHeaders);
-      
+
       const response = await fetch(`/api/bins/${binId}`, {
         method: 'DELETE',
         headers: {
@@ -789,13 +789,13 @@ export function BinsView() {
                         try {
                           const authHeaders = authUtils.getAuthHeader();
                           console.log('🔧 Bins view - Auth headers being sent:', authHeaders);
-                          
+
                           const response = await fetch(`/api/bins/${editingBin.id}`, {
                             method: 'PUT',
                             headers: {
                               'Content-Type': 'application/json',
                               ...authHeaders,
-                            }, 
+                            },
                             body: JSON.stringify({
                               binId: editingBin.binId || editingBin.id,
                               binName: editingBin.binName,
@@ -925,7 +925,7 @@ export function BinsView() {
               Газрын зураг
             </Button>
           </div>
-          
+
           {viewMode === 'map' && (
             <div className="flex items-center gap-2">
               <Button
@@ -977,35 +977,35 @@ export function BinsView() {
         {viewMode === 'table' && (
           <Card>
             <CardHeader>
-            <div className='flex items-center justify-between'>
-              <div>
-                <CardTitle>Савны жагсаалт</CardTitle>
-                <CardDescription>
-                  {pagination.totalElements} сав олдлоо • {pagination.statistics?.totalActiveBins || 0} идэвхтэй сав • {pagination.statistics?.overallAvgStorageLevelPercent || 0}% дундаж дүүргэлтийн түвшин • {pagination.statistics?.overallAvgBatteryLevelPercent || 0}% батарей • Хуудас{' '}
-                  {currentPage + 1}/{pagination.totalPages}
-                </CardDescription>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <CardTitle>Савны жагсаалт</CardTitle>
+                  <CardDescription>
+                    {pagination.totalElements} сав олдлоо • {pagination.statistics?.totalActiveBins || 0} идэвхтэй сав • {pagination.statistics?.overallAvgStorageLevelPercent || 0}% дундаж дүүргэлтийн түвшин • {pagination.statistics?.overallAvgBatteryLevelPercent || 0}% батарей • Хуудас{' '}
+                    {currentPage + 1}/{pagination.totalPages}
+                  </CardDescription>
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={(value) => {
+                      setItemsPerPage(Number(value));
+                      setCurrentPage(0);
+                    }}
+                  >
+                    <SelectTrigger className='w-[100px]'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='5'>5</SelectItem>
+                      <SelectItem value='10'>10</SelectItem>
+                      <SelectItem value='20'>20</SelectItem>
+                      <SelectItem value='50'>50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className='flex items-center gap-2'>
-                <Select
-                  value={itemsPerPage.toString()}
-                  onValueChange={(value) => {
-                    setItemsPerPage(Number(value));
-                    setCurrentPage(0);
-                  }}
-                >
-                  <SelectTrigger className='w-[100px]'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='5'>5</SelectItem>
-                    <SelectItem value='10'>10</SelectItem>
-                    <SelectItem value='20'>20</SelectItem>
-                    <SelectItem value='50'>50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
+            </CardHeader>
             <CardContent>
               {/* Active Filter Chips */}
               <ActiveFilters
@@ -1017,280 +1017,280 @@ export function BinsView() {
               <div className="rounded-md border overflow-x-auto">
                 <ScrollArea className="w-full">
                   <Table className="w-full">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-center w-[150px] relative">
-                        <TableHeaderFilter
-                          field="binName"
-                          label="Нэр"
-                          type="text"
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className="text-center w-[100px] relative">
-                        <TableHeaderFilter
-                          field="isActive"
-                          label="Холболт"
-                          type="boolean"
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className="text-center w-[120px] relative">
-                        <TableHeaderFilter
-                          field="storageLevelPercent"
-                          label="Дүүргэлт (%)"
-                          type="number"
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className="text-center w-[100px] relative">
-                        <TableHeaderFilter
-                          field="penetrationsSinceLastClear"
-                          label="Сүүлийн хоослолтоос"
-                          type="number"
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className="text-center w-[120px] relative">
-                        <TableHeaderFilter
-                          field="batteryLevelPercent"
-                          label="Батарей"
-                          type="number"
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className="text-center w-[150px] relative">
-                        <TableHeaderFilter
-                          field="clearedAt"
-                          label="Хоослосон огноо"
-                          type="date"
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className="text-center w-[150px] relative">
-                        <TableHeaderFilter
-                          field="storageLevelBeforeClearPercent"
-                          label="Хоослох үеийн дүүргэлт"
-                          type="number"
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className="text-center w-[200px] relative">
-                        <TableHeaderFilter
-                          field="location"
-                          label="Байршил"
-                          type="text"
-                          currentSort={sortConfig}
-                          activeFilters={activeFilters}
-                          onSort={handleSort}
-                          onFilterChange={setActiveFilters}
-                        />
-                      </TableHead>
-                      <TableHead className="text-right w-[80px]">Үйлдэл</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedBins.map((bin) => (
-                      <TableRow 
-                        key={bin.id} 
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => router.push(`/dashboard/bins/${bin.id}`)}
-                      >
-                        <TableCell className="font-medium">
-                          <div 
-                            className="cursor-pointer hover:bg-muted/30 px-2 py-1 rounded transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigator.clipboard.writeText(bin.binName);
-                              toast.success('Савны нэр хуулагдлаа');
-                            }}
-                            title="Хуулахын тулд дарна уу"
-                          >
-                            {bin.binName}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={bin.active ? 'default' : 'secondary'}>
-                            <IconWifi className="h-3 w-3 mr-1" />
-                            {bin.active ? 'Идэвхтэй' : 'Идэвхгүй'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Progress value={bin.fillPercentage} className="w-16 h-2" />
-                            <span className="text-sm font-medium">{bin.fillPercentage.toFixed(2)}%</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">{(bin as any).penetrationsSinceLastClear || 0}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">{bin.batteryLevel.toFixed(2)}%</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {bin.clearedAt ? formatDate(bin.clearedAt) : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Progress value={bin.storageLevelBeforeClear} className="w-16 h-2" />
-                            <span className="text-sm font-medium">{bin.storageLevelBeforeClear.toFixed(2)}%</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
-                          <div 
-                            className="cursor-pointer hover:bg-muted/30 px-2 py-1 rounded transition-colors truncate"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigator.clipboard.writeText(bin.location);
-                              toast.success('Байршил хуулагдлаа');
-                            }}
-                            title={`${bin.location} - Хуулахын тулд дарна уу`}
-                          >
-                            {bin.location}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <IconDotsVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => {
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-center w-[150px] relative">
+                          <TableHeaderFilter
+                            field="binName"
+                            label="Нэр"
+                            type="text"
+                            currentSort={sortConfig}
+                            activeFilters={activeFilters}
+                            onSort={handleSort}
+                            onFilterChange={setActiveFilters}
+                          />
+                        </TableHead>
+                        <TableHead className="text-center w-[100px] relative">
+                          <TableHeaderFilter
+                            field="isActive"
+                            label="Холболт"
+                            type="boolean"
+                            currentSort={sortConfig}
+                            activeFilters={activeFilters}
+                            onSort={handleSort}
+                            onFilterChange={setActiveFilters}
+                          />
+                        </TableHead>
+                        <TableHead className="text-center w-[120px] relative">
+                          <TableHeaderFilter
+                            field="storageLevelPercent"
+                            label="Дүүргэлт (%)"
+                            type="number"
+                            currentSort={sortConfig}
+                            activeFilters={activeFilters}
+                            onSort={handleSort}
+                            onFilterChange={setActiveFilters}
+                          />
+                        </TableHead>
+                        <TableHead className="text-center w-[100px] relative">
+                          <TableHeaderFilter
+                            field="penetrationsSinceLastClear"
+                            label="Сүүлийн хоослолтоос"
+                            type="number"
+                            currentSort={sortConfig}
+                            activeFilters={activeFilters}
+                            onSort={handleSort}
+                            onFilterChange={setActiveFilters}
+                          />
+                        </TableHead>
+                        <TableHead className="text-center w-[120px] relative">
+                          <TableHeaderFilter
+                            field="batteryLevelPercent"
+                            label="Батарей"
+                            type="number"
+                            currentSort={sortConfig}
+                            activeFilters={activeFilters}
+                            onSort={handleSort}
+                            onFilterChange={setActiveFilters}
+                          />
+                        </TableHead>
+                        <TableHead className="text-center w-[150px] relative">
+                          <TableHeaderFilter
+                            field="clearedAt"
+                            label="Хоослосон огноо"
+                            type="date"
+                            currentSort={sortConfig}
+                            activeFilters={activeFilters}
+                            onSort={handleSort}
+                            onFilterChange={setActiveFilters}
+                          />
+                        </TableHead>
+                        <TableHead className="text-center w-[150px] relative">
+                          <TableHeaderFilter
+                            field="storageLevelBeforeClearPercent"
+                            label="Хоослох үеийн дүүргэлт"
+                            type="number"
+                            currentSort={sortConfig}
+                            activeFilters={activeFilters}
+                            onSort={handleSort}
+                            onFilterChange={setActiveFilters}
+                          />
+                        </TableHead>
+                        <TableHead className="text-center w-[200px] relative">
+                          <TableHeaderFilter
+                            field="location"
+                            label="Байршил"
+                            type="text"
+                            currentSort={sortConfig}
+                            activeFilters={activeFilters}
+                            onSort={handleSort}
+                            onFilterChange={setActiveFilters}
+                          />
+                        </TableHead>
+                        <TableHead className="text-right w-[80px]">Үйлдэл</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedBins.map((bin) => (
+                        <TableRow
+                          key={bin.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => router.push(`/dashboard/bins/${bin.id}`)}
+                        >
+                          <TableCell className="font-medium">
+                            <div
+                              className="cursor-pointer hover:bg-muted/30 px-2 py-1 rounded transition-colors"
+                              onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(`/dashboard/bins/${bin.id}`);
-                              }}>
-                                <IconEye className="h-4 w-4 mr-2" />
-                                Харах
-                              </DropdownMenuItem>
-                              {canPut && (
+                                navigator.clipboard.writeText(bin.binName);
+                                toast.success('Савны нэр хуулагдлаа');
+                              }}
+                              title="Хуулахын тулд дарна уу"
+                            >
+                              {bin.binName}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={bin.active ? 'default' : 'secondary'}>
+                              <IconWifi className="h-3 w-3 mr-1" />
+                              {bin.active ? 'Идэвхтэй' : 'Идэвхгүй'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <Progress value={bin.fillPercentage} className="w-16 h-2" />
+                              <span className="text-sm font-medium">{bin.fillPercentage.toFixed(2)}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm font-medium">{(bin as any).penetrationsSinceLastClear || 0}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm font-medium">{bin.batteryLevel.toFixed(2)}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {bin.clearedAt ? formatDate(bin.clearedAt) : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <Progress value={bin.storageLevelBeforeClear} className="w-16 h-2" />
+                              <span className="text-sm font-medium">{bin.storageLevelBeforeClear.toFixed(2)}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            <div
+                              className="cursor-pointer hover:bg-muted/30 px-2 py-1 rounded transition-colors truncate"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(bin.location);
+                                toast.success('Байршил хуулагдлаа');
+                              }}
+                              title={`${bin.location} - Хуулахын тулд дарна уу`}
+                            >
+                              {bin.location}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <IconDotsVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={(e) => {
                                   e.stopPropagation();
-                                  setEditingBin(bin);
-                                  setIsEditDialogOpen(true);
+                                  router.push(`/dashboard/bins/${bin.id}`);
                                 }}>
-                                  <IconEdit className="h-4 w-4 mr-2" />
-                                  Засах
+                                  <IconEye className="h-4 w-4 mr-2" />
+                                  Харах
                                 </DropdownMenuItem>
-                              )}
-                              {canDelete && (
-                                <DropdownMenuItem 
-                                  onClick={(e) => {
+                                {canPut && (
+                                  <DropdownMenuItem onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDeleteBin(bin.id);
-                                  }}
-                                  className="text-red-600 focus:text-red-600"
-                                >
-                                  <IconTrash className="h-4 w-4 mr-2" />
-                                  Устгах
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                    setEditingBin(bin);
+                                    setIsEditDialogOpen(true);
+                                  }}>
+                                    <IconEdit className="h-4 w-4 mr-2" />
+                                    Засах
+                                  </DropdownMenuItem>
+                                )}
+                                {canDelete && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteBin(bin.id);
+                                    }}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <IconTrash className="h-4 w-4 mr-2" />
+                                    Устгах
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
 
-                    {paginatedBins.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8">
-                          <div className="flex flex-col items-center gap-2">
-                            <IconSearch className="h-8 w-8 text-muted-foreground" />
-                            <p className="text-muted-foreground">
-                              {activeFilters.length > 0
-                                ? 'Хайлтын үр дүн олдсонгүй' 
-                                : 'Бүртгэлтэй сав байхгүй'}
-                            </p>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                      {paginatedBins.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={10} className="text-center py-8">
+                            <div className="flex flex-col items-center gap-2">
+                              <IconSearch className="h-8 w-8 text-muted-foreground" />
+                              <p className="text-muted-foreground">
+                                {activeFilters.length > 0
+                                  ? 'Хайлтын үр дүн олдсонгүй'
+                                  : 'Бүртгэлтэй сав байхгүй'}
+                              </p>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </ScrollArea>
               </div>
 
-            {/* Pagination */}
-            {pagination.totalPages > 1 && (
-              <div className="flex items-center justify-center space-x-2 py-4">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (pagination.hasPrevious) setCurrentPage(currentPage - 1);
-                        }}
-                        className={!pagination.hasPrevious ? 'pointer-events-none opacity-50' : ''}
-                      />
-                    </PaginationItem>
-                    
-                    {getPageNumbers().map((page, index) => (
-                      <PaginationItem key={index}>
-                        {page === 'ellipsis' ? (
-                          <PaginationEllipsis />
-                        ) : (
-                          <PaginationLink
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setCurrentPage(page as number);
-                            }}
-                            isActive={currentPage === page}
-                          >
-                            {(page as number) + 1}
-                          </PaginationLink>
-                        )}
+              {/* Pagination */}
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center justify-center space-x-2 py-4">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (pagination.hasPrevious) setCurrentPage(currentPage - 1);
+                          }}
+                          className={!pagination.hasPrevious ? 'pointer-events-none opacity-50' : ''}
+                        />
                       </PaginationItem>
-                    ))}
-                    
-                    <PaginationItem>
-                      <PaginationNext 
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (pagination.hasNext) setCurrentPage(currentPage + 1);
-                        }}
-                        className={!pagination.hasNext ? 'pointer-events-none opacity-50' : ''}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+
+                      {getPageNumbers().map((page, index) => (
+                        <PaginationItem key={index}>
+                          {page === 'ellipsis' ? (
+                            <PaginationEllipsis />
+                          ) : (
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage(page as number);
+                              }}
+                              isActive={currentPage === page}
+                            >
+                              {(page as number) + 1}
+                            </PaginationLink>
+                          )}
+                        </PaginationItem>
+                      ))}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (pagination.hasNext) setCurrentPage(currentPage + 1);
+                          }}
+                          className={!pagination.hasNext ? 'pointer-events-none opacity-50' : ''}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
 
 
