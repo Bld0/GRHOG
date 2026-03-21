@@ -1,1 +1,31 @@
-globalThis.__BUILD_MANIFEST={polyfillFiles:["static/chunks/polyfills-42372ed130431b0a.js"],devFiles:[],ampDevFiles:[],lowPriorityFiles:[],rootMainFiles:["static/chunks/webpack-49e9760d9e8743ff.js","static/chunks/4bd1b696-100b9d70ed4e49c1.js","static/chunks/633-ac50b501822c1762.js","static/chunks/main-app-9438aaddc80e722c.js"],rootMainFilesTree:{},pages:{"/_app":["static/chunks/webpack-49e9760d9e8743ff.js","static/chunks/framework-acb38774a4ee775d.js","static/chunks/main-4ecce0f43123e3bb.js","static/chunks/pages/_app-4b3fb5e477a0267f.js"],"/_error":["static/chunks/webpack-49e9760d9e8743ff.js","static/chunks/framework-acb38774a4ee775d.js","static/chunks/main-4ecce0f43123e3bb.js","static/chunks/pages/_error-c970d8b55ace1b48.js"]},ampFirstPages:[]},globalThis.__BUILD_MANIFEST.lowPriorityFiles=["/static/"+process.env.__NEXT_BUILD_ID+"/_buildManifest.js",,"/static/"+process.env.__NEXT_BUILD_ID+"/_ssgManifest.js"];
+globalThis.__BUILD_MANIFEST = {
+  "pages": {
+    "/_app": []
+  },
+  "devFiles": [],
+  "ampDevFiles": [],
+  "polyfillFiles": [
+    "static/chunks/node_modules_next_dist_build_polyfills_polyfill-nomodule.js"
+  ],
+  "lowPriorityFiles": [],
+  "rootMainFiles": [
+    "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_e08839f4._.js",
+    "static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js",
+    "static/chunks/node_modules_next_dist_compiled_next-devtools_index_d575f738.js",
+    "static/chunks/node_modules_next_dist_compiled_0f1b9fd4._.js",
+    "static/chunks/node_modules_next_dist_client_20b209c9._.js",
+    "static/chunks/node_modules_next_dist_445d8acf._.js",
+    "static/chunks/node_modules_@sentry_core_build_esm_ee1a280f._.js",
+    "static/chunks/node_modules_@sentry-internal_browser-utils_build_esm_9ed6ba72._.js",
+    "static/chunks/node_modules_8dab5cf7._.js",
+    "static/chunks/src_instrumentation-client_ts_4aba9a11._.js",
+    "static/chunks/_e69f0d32._.js",
+    "static/chunks/_41fcdd49._.js"
+  ],
+  "ampFirstPages": []
+};
+globalThis.__BUILD_MANIFEST.lowPriorityFiles = [
+"/static/" + process.env.__NEXT_BUILD_ID + "/_buildManifest.js",
+,"/static/" + process.env.__NEXT_BUILD_ID + "/_ssgManifest.js",
+
+];
