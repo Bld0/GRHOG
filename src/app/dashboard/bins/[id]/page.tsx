@@ -17,4 +17,4 @@ export async function generateMetadata({ params }: BinDetailPageProps) {
     title: `Сав ${id} - Хогийн савны жагсаалт`,
     description: `${id} савны дэлгэрэнгүй мэдээлэл`
   };
-} 
+}
