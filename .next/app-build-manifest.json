@@ -1,3 +1,61 @@
 {
+<<<<<<< HEAD
   "pages": {}
+=======
+  "pages": {
+    "/auth/sign-in/page": [
+      "static/chunks/7270b_next_dist_8b151933._.js",
+      "static/chunks/src_app_favicon_ico_mjs_1805b69d._.js",
+      "static/chunks/node_modules__pnpm_d58b949d._.js",
+      "static/chunks/src_components_640d814c._.js",
+      "static/chunks/[root-of-the-server]__c2798b91._.css",
+      "static/chunks/src_app_layout_tsx_e89696b1._.js",
+      "static/chunks/node_modules__pnpm_fa98d03e._.js",
+      "static/chunks/src_40a875c6._.js",
+      "static/chunks/src_app_not-found_tsx_1deb5e1f._.js",
+      "static/chunks/_f743a9af._.js",
+      "static/chunks/src_app_global-error_tsx_1deb5e1f._.js",
+      "static/chunks/src_534738d4._.js",
+      "static/chunks/node_modules__pnpm_f3853d3c._.js",
+      "static/chunks/src_app_auth_sign-in_page_tsx_1deb5e1f._.js",
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_32d90dec._.js",
+      "static/chunks/7270b_next_dist_compiled_react-dom_b9daf3a9._.js",
+      "static/chunks/7270b_next_dist_compiled_next-devtools_index_13b921a9.js",
+      "static/chunks/7270b_next_dist_compiled_3826fba0._.js",
+      "static/chunks/7270b_next_dist_client_d2d10782._.js",
+      "static/chunks/7270b_next_dist_d36bb0dc._.js",
+      "static/chunks/9760d_@sentry_core_build_esm_f3335faf._.js",
+      "static/chunks/c946c_@sentry-internal_browser-utils_build_esm_1a64a216._.js",
+      "static/chunks/node_modules__pnpm_e136642a._.js",
+      "static/chunks/src_instrumentation-client_ts_4aba9a11._.js",
+      "static/chunks/_e69f0d32._.js",
+      "static/chunks/_a8cf0729._.js"
+    ],
+    "/page": [
+      "static/chunks/7270b_next_dist_8b151933._.js",
+      "static/chunks/src_app_favicon_ico_mjs_1805b69d._.js",
+      "static/chunks/node_modules__pnpm_d58b949d._.js",
+      "static/chunks/src_components_640d814c._.js",
+      "static/chunks/[root-of-the-server]__c2798b91._.css",
+      "static/chunks/src_app_layout_tsx_e89696b1._.js",
+      "static/chunks/node_modules__pnpm_fa98d03e._.js",
+      "static/chunks/src_40a875c6._.js",
+      "static/chunks/src_app_not-found_tsx_1deb5e1f._.js",
+      "static/chunks/_f743a9af._.js",
+      "static/chunks/src_app_global-error_tsx_1deb5e1f._.js",
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_32d90dec._.js",
+      "static/chunks/7270b_next_dist_compiled_react-dom_b9daf3a9._.js",
+      "static/chunks/7270b_next_dist_compiled_next-devtools_index_13b921a9.js",
+      "static/chunks/7270b_next_dist_compiled_3826fba0._.js",
+      "static/chunks/7270b_next_dist_client_d2d10782._.js",
+      "static/chunks/7270b_next_dist_d36bb0dc._.js",
+      "static/chunks/9760d_@sentry_core_build_esm_f3335faf._.js",
+      "static/chunks/c946c_@sentry-internal_browser-utils_build_esm_1a64a216._.js",
+      "static/chunks/node_modules__pnpm_e136642a._.js",
+      "static/chunks/src_instrumentation-client_ts_4aba9a11._.js",
+      "static/chunks/_e69f0d32._.js",
+      "static/chunks/_a8cf0729._.js"
+    ]
+  }
+>>>>>>> 287d7ae90ae6a23163d79889c35b940a06e3ee51
 }

@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 self.__NEXT_FONT_MANIFEST="{\n  \"app\": {},\n  \"appUsingSizeAdjust\": false,\n  \"pages\": {},\n  \"pagesUsingSizeAdjust\": false\n}"
+=======
+self.__NEXT_FONT_MANIFEST="{\n  \"app\": {\n    \"[project]/src/app/auth/sign-in/page\": [\n      \"static/media/b0a57561b6cb5495-s.p.1a6fa3e1.woff2\",\n      \"static/media/8ee3a1ba4ed5baee-s.p.be19f591.woff2\",\n      \"static/media/e21d16ba801d4115-s.p.818a91ab.woff2\",\n      \"static/media/80caf739cce25032-s.p.2dea3710.woff2\",\n      \"static/media/7380723fb1ff782d-s.p.211e7ae2.woff2\",\n      \"static/media/06ba6ef833b337bc-s.p.0faac26c.woff2\"\n    ],\n    \"[project]/src/app/page\": [\n      \"static/media/b0a57561b6cb5495-s.p.1a6fa3e1.woff2\",\n      \"static/media/8ee3a1ba4ed5baee-s.p.be19f591.woff2\",\n      \"static/media/e21d16ba801d4115-s.p.818a91ab.woff2\",\n      \"static/media/80caf739cce25032-s.p.2dea3710.woff2\",\n      \"static/media/7380723fb1ff782d-s.p.211e7ae2.woff2\",\n      \"static/media/06ba6ef833b337bc-s.p.0faac26c.woff2\"\n    ]\n  },\n  \"appUsingSizeAdjust\": true,\n  \"pages\": {},\n  \"pagesUsingSizeAdjust\": false\n}"
+>>>>>>> 287d7ae90ae6a23163d79889c35b940a06e3ee51

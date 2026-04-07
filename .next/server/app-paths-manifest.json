@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
   "/api/bins/total-bins/route": "app/api/bins/total-bins/route.js",
   "/api/clients/route": "app/api/clients/route.js",
   "/api/dashboard/active-bins/route": "app/api/dashboard/active-bins/route.js",
   "/api/dashboard/total-household/route": "app/api/dashboard/total-household/route.js"
+=======
+  "/auth/sign-in/page": "app/auth/sign-in/page.js",
+  "/page": "app/page.js"
+>>>>>>> 287d7ae90ae6a23163d79889c35b940a06e3ee51
 }
