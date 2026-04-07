@@ -1,21 +1,4 @@
 {
-  "/api/auth/signin/route": "app/api/auth/signin/route.js",
-  "/api/dashboard/active-bins/route": "app/api/dashboard/active-bins/route.js",
-  "/api/dashboard/active-cards/route": "app/api/dashboard/active-cards/route.js",
-  "/api/dashboard/all-bins/route": "app/api/dashboard/all-bins/route.js",
-  "/api/dashboard/average-bin-filling/route": "app/api/dashboard/average-bin-filling/route.js",
-  "/api/dashboard/client-type-counts/route": "app/api/dashboard/client-type-counts/route.js",
-  "/api/dashboard/current-usage/route": "app/api/dashboard/current-usage/route.js",
-  "/api/dashboard/getDistrict/route": "app/api/dashboard/getDistrict/route.js",
-  "/api/dashboard/khoroo-usage/route": "app/api/dashboard/khoroo-usage/route.js",
-  "/api/dashboard/total-cards/route": "app/api/dashboard/total-cards/route.js",
-  "/api/dashboard/total-household/route": "app/api/dashboard/total-household/route.js",
-  "/api/notifications/[id]/read/route": "app/api/notifications/[id]/read/route.js",
-  "/api/notifications/[id]/route": "app/api/notifications/[id]/route.js",
-  "/api/notifications/count/route": "app/api/notifications/count/route.js",
-  "/api/notifications/route": "app/api/notifications/route.js",
   "/auth/sign-in/page": "app/auth/sign-in/page.js",
-  "/dashboard/overview/page": "app/dashboard/overview/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/page": "app/page.js"
 }
