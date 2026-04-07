@@ -1,13 +1,19 @@
 import type { NextConfig } from 'next';
 import { withSentryConfig } from '@sentry/nextjs';
 
-// Backend base URL — used for the /api/* edge rewrite below. Strip a trailing
-// slash so the joined path doesn't end up with `//`.
-const BACKEND_URL = (
+// Backend base URL — used for the /api/* edge rewrite below.
+// - Strip a trailing slash so the joined path doesn't end up with `//`.
+// - Prepend `https://` if the env var was set without a scheme (Next.js
+//   rejects rewrite destinations that don't start with `/`, `http://`, or
+//   `https://`).
+const rawBackendUrl = (
   process.env.BACKEND_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
   'https://grhog-api-production-0161.up.railway.app'
 ).replace(/\/$/, '');
+const BACKEND_URL = /^https?:\/\//.test(rawBackendUrl)
+  ? rawBackendUrl
+  : `https://${rawBackendUrl}`;
 
 // Define the base Next.js configuration
 const baseConfig: NextConfig = {
