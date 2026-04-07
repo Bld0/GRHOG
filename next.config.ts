@@ -1,6 +1,14 @@
 import type { NextConfig } from 'next';
 import { withSentryConfig } from '@sentry/nextjs';
 
+// Backend base URL — used for the /api/* edge rewrite below. Strip a trailing
+// slash so the joined path doesn't end up with `//`.
+const BACKEND_URL = (
+  process.env.BACKEND_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://grhog-api-production-0161.up.railway.app'
+).replace(/\/$/, '');
+
 // Define the base Next.js configuration
 const baseConfig: NextConfig = {
   images: {
@@ -13,6 +21,26 @@ const baseConfig: NextConfig = {
     ]
   },
   transpilePackages: ['geist'],
+  async rewrites() {
+    // beforeFiles runs before Next.js filesystem routes, so /api/* requests
+    // are forwarded to the backend at the edge and never hit a serverless
+    // function. This matches how the mobile app talks to the backend and
+    // sidesteps the Next.js API route handlers entirely on Vercel.
+    //
+    // /api/auth/* is intentionally excluded — those routes still need to run
+    // through the local handlers because they set/clear the `auth-token`
+    // cookie that middleware.ts checks for protected pages.
+    return {
+      beforeFiles: [
+        {
+          source: '/api/:path((?!auth/).*)',
+          destination: `${BACKEND_URL}/:path*`
+        }
+      ],
+      afterFiles: [],
+      fallback: []
+    };
+  },
   async headers() {
     return [
       {

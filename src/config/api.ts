@@ -1,15 +1,18 @@
 // API Configuration
 export const API_CONFIG = {
-  // Base URL for the backend API - point to actual backend server
-  // For client-side requests, always use Next.js API routes to avoid CORS issues
-  // For server-side requests, use the direct backend URL
+  // Base URL for the backend API. The client always talks to '/api/*' on the
+  // same origin; in production a Next.js `beforeFiles` rewrite (see
+  // next.config.ts) forwards those requests directly to the backend at the
+  // edge, so requests never hit a serverless function. The server-side branch
+  // exists for SSR/route-handler fallbacks.
   BASE_URL: (() => {
     if (typeof window !== 'undefined') {
-      // Client-side: use Next.js API routes
       return '/api';
     }
-    // Server-side: use direct backend URL
-    return process.env.BACKEND_URL || 'www.grhog.mn';
+    return (
+      process.env.BACKEND_URL ||
+      'https://grhog-api-production-0161.up.railway.app'
+    ).replace(/\/$/, '');
   })(),
 
   // API endpoints

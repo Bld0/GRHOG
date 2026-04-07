@@ -86,16 +86,8 @@ export const API_ENDPOINTS = {
 export async function signIn(
   credentials: LoginCredentials
 ): Promise<AuthResponse> {
-  // Call the backend API directly (same URL as the mobile app uses) instead of
-  // going through the Next.js /api/auth/signin proxy.
-  const directBaseUrl = (
-    process.env.NEXT_PUBLIC_API_URL ||
-    'https://grhog-api-production-0161.up.railway.app/'
-  ).replace(/\/$/, '');
-  const signinUrl = `${directBaseUrl}${API_CONFIG.ENDPOINTS.AUTH.SIGNIN}`;
-
   const response = await apiClient.post<AuthResponse>(
-    signinUrl,
+    API_ENDPOINTS.AUTH_SIGNIN,
     credentials,
     false
   );
