@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { API_CONFIG } from '@/config/api';
+import { API_CONFIG, getBackendUrl } from '@/config/api';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = getBackendUrl();
     console.log('Attempting to authenticate with backend:', `${backendUrl}${API_CONFIG.ENDPOINTS.AUTH.SIGNIN}`);
     
     const response = await fetch(`${backendUrl}${API_CONFIG.ENDPOINTS.AUTH.SIGNIN}`, {

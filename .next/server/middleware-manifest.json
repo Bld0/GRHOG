@@ -3,35 +3,38 @@
   "middleware": {
     "/": {
       "files": [
-        "server/edge-instrumentation.js",
-        "server/edge-runtime-webpack.js",
-        "server/src/middleware.js"
+        "server/edge/chunks/node_modules__pnpm_a5af2d5a._.js",
+        "server/edge/chunks/_2ccad757._.js",
+        "server/edge/chunks/edge-wrapper_5256fb3d.js",
+        "server/edge/chunks/_23da8e78._.js",
+        "server/edge/chunks/[root-of-the-server]__dc15d093._.js",
+        "server/edge/chunks/edge-wrapper_3f37540e.js"
       ],
-      "name": "src/middleware",
+      "name": "middleware",
       "page": "/",
       "matchers": [
         {
-          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*))(\\.json)?[\\/#\\?]?$",
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*))(\\\\.json)?[\\/#\\?]?$",
           "originalSource": "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)"
         },
         {
-          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/(api|trpc))(.*)(\\.json)?[\\/#\\?]?$",
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/(api|trpc))(.*)(\\\\.json)?[\\/#\\?]?$",
           "originalSource": "/(api|trpc)(.*)"
         }
       ],
       "wasm": [],
       "assets": [],
       "env": {
-        "__NEXT_BUILD_ID": "6EoFAazM2RVwgARu_S78Z",
+        "__NEXT_BUILD_ID": "development",
         "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "Sh6KwR1fgHGBadyahjZgaBrf9zWa9KfcObG2Ro3IpYY=",
-        "__NEXT_PREVIEW_MODE_ID": "ce766d25c6955575015b05dee2730c01",
-        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "7de85b9ed104119107becb6cbb6bea854081145c744c441d65824969052ae9cc",
-        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "575b6f0dcce2a8e5efbec7178314769a8d4b946d7ef6ef41c0fd1973ca156dd3"
+        "__NEXT_PREVIEW_MODE_ID": "5563837d4e179615149b3265acbeb9a2",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "d053b2af4e5094bcff18c690bc93090fa93dec0acf3c189119ae10dc2bd5532d",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "2748b20b3ba2d6f8297e4cff8706ad43d6fb203452dd27bc0284018fd5cfdacf"
       }
     }
   },
-  "functions": {},
   "sortedMiddleware": [
     "/"
-  ]
+  ],
+  "functions": {}
 }

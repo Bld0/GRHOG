@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { API_CONFIG } from '@/config/api';
+import { API_CONFIG, getBackendUrl } from '@/config/api';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,8 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call backend signout endpoint
-    // Use the backend URL directly since this is a server-side API route
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = getBackendUrl();
     const response = await fetch(`${backendUrl}${API_CONFIG.ENDPOINTS.AUTH.SIGNOUT}`, {
       method: 'POST',
       headers,

@@ -89,6 +89,19 @@ export const buildApiUrl = (endpoint: string): string => {
   return `${API_CONFIG.BASE_URL}${endpoint}`;
 };
 
+// Returns the backend base URL normalized for server-side fetch:
+// - strips a trailing slash so paths don't end up with `//`
+// - prepends `https://` if the env var was set without a scheme
+// Used by the /api/auth/* route handlers that proxy to the backend.
+export const getBackendUrl = (): string => {
+  const raw = (
+    process.env.BACKEND_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'https://grhog-api-production-0161.up.railway.app'
+  ).replace(/\/$/, '');
+  return /^https?:\/\//.test(raw) ? raw : `https://${raw}`;
+};
+
 // Helper function to get API endpoint
 export const getApiEndpoint = (path: string): string => {
   const endpoint =

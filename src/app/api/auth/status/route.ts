@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/config/api';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
     
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = getBackendUrl();
     console.log('Attempting to check auth status with backend:', `${backendUrl}/auth/status`);
     
     const response = await fetch(`${backendUrl}/auth/status`, {

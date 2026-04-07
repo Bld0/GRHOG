@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/config/api';
 
 export async function POST(request: NextRequest) {
   try {
     console.log('Signout request received');
-    
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+
+    const backendUrl = getBackendUrl();
     console.log('Attempting to signout with backend:', `${backendUrl}/auth/signout`);
     
     const response = await fetch(`${backendUrl}/auth/signout`, {
