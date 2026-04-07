@@ -33,7 +33,13 @@ const baseConfig: NextConfig = {
     return {
       beforeFiles: [
         {
-          source: '/api/:path((?!auth/).*)',
+          // Wildcard `+` modifier on the named param matches one-or-more
+          // segments, so the destination's `:path*` substitution receives a
+          // segment array instead of a single string with embedded slashes.
+          // The custom regex excludes `/api/auth` and `/api/auth/*` so those
+          // still flow through the local route handlers (which set the
+          // `auth-token` cookie that middleware.ts checks).
+          source: '/api/:path((?!auth$|auth/).+)+',
           destination: `${BACKEND_URL}/:path*`
         }
       ],
