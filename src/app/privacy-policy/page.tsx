@@ -9,7 +9,7 @@ type Lang = 'mn' | 'en';
 const content = {
   mn: {
     title: 'Нууцлалын бодлого',
-    lastUpdated: 'Сүүлд шинэчлэгдсэн: 2026-04-13',
+    // lastUpdated: 'Сүүлд шинэчлэгдсэн: 2026-04-13',
     toc: 'Агуулга',
     backToSignIn: 'Нэвтрэх хуудас руу буцах',
     sections: [
@@ -402,7 +402,7 @@ export default function PrivacyPolicyPage() {
           <div className='mb-6 flex items-center justify-between border-b pb-6'>
             <div>
               <h1 className='text-3xl font-bold tracking-tight'>{t.title}</h1>
-              <p className='mt-2 text-sm text-muted-foreground'>{t.lastUpdated}</p>
+              {/* <p className='mt-2 text-sm text-muted-foreground'>{t.lastUpdated}</p> */}
             </div>
             <div className='flex gap-1 rounded-md border p-1'>
               <button
