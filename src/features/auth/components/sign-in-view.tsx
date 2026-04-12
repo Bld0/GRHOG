@@ -44,6 +44,11 @@ export default function SignInViewPage({ stars }: { stars: number }) {
               Бүртгүүлэх
             </Link>
           </p>
+          <Link
+            href='/privacy-policy'
+            className='text-xs text-muted-foreground underline underline-offset-4 hover:text-primary'>
+            Нууцлалын бодлого
+          </Link>
         </div>
       </div>
     </div>
