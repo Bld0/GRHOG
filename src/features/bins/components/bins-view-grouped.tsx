@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/pagination';
 import PageContainer from '@/components/layout/page-container';
 import { useGroupedBins } from '@/hooks/use-api-data';
+import { useBinSummary } from '@/hooks/use-bin-stats';
 import { PaginationParams } from '@/hooks/use-pagination';
 import { useRolePermissions } from '@/hooks/use-role-permissions';
 import { toast } from 'sonner';
@@ -159,6 +160,9 @@ export function BinsViewGrouped() {
     pagination,
     refetch
   } = useGroupedBins(true, paginationParams);
+
+  // Нийт/идэвхтэй/дүүрсэн савны нэгдсэн тоо (дэлгэцийн Statistics Cards-д).
+  const { data: binSummary } = useBinSummary();
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -416,7 +420,15 @@ export function BinsViewGrouped() {
     );
   }
 
-  const totalActiveBins = pagination.statistics?.totalActiveBins || 0;
+  const totalActiveBins =
+    binSummary?.active ?? pagination.statistics?.totalActiveBins ?? 0;
+  const totalBinsCount = binSummary?.total ?? totalActiveBins;
+  const fullBinsCount = binSummary?.full ?? 0;
+  const lowBatteryBinsCount = binSummary?.lowBattery ?? 0;
+  // Дүүрсэн (≥90%) эсвэл цэнэг бага (≤20%) савны тоо. Backend-ийн full ба
+  // lowBattery-г тусад нь тоолсон тул хоёуланд нь таарах савыг давхар тооцож
+  // болзошгүй.
+  const attentionBinsCount = fullBinsCount + lowBatteryBinsCount;
   const overallAvgStorage =
     pagination.statistics?.overallAvgStorageLevelPercent || 0;
   const overallAvgBattery =
@@ -470,8 +482,18 @@ export function BinsViewGrouped() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>{totalActiveBins}</div>
-              <p className='text-muted-foreground text-xs'>Нийт идэвхтэй</p>
+              <div className='text-2xl font-bold'>
+                {attentionBinsCount}
+                {totalBinsCount > attentionBinsCount && (
+                  <span className='text-muted-foreground text-base font-normal'>
+                    {' / '}
+                    {totalBinsCount}
+                  </span>
+                )}
+              </div>
+              <p className='text-muted-foreground text-xs'>
+                Дүүрсэн: {fullBinsCount} · Цэнэг бага: {lowBatteryBinsCount}
+              </p>
             </CardContent>
           </Card>
 
@@ -617,7 +639,7 @@ export function BinsViewGrouped() {
                           group.khoroo,
                           group.location || ''
                         );
-                        const groupKey = `${group.district}-${group.khoroo}`;
+                        const groupKey = `${group.district}-${group.khoroo}-${group.location || ''}`;
                         return (
                           <React.Fragment key={groupKey}>
                             {/* Group Row */}

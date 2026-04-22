@@ -48,6 +48,45 @@ export interface AverageBatteryStats {
   date: string;
 }
 
+// Backend /dashboard/bin-summary response. Нэг endpoint-оос бүх тоог
+// (нийт, идэвхтэй, дүүрсэн, батерей бага) цуг авах зориулалттай.
+export interface BinSummaryStats {
+  total: number;
+  active: number;
+  inactive: number;
+  full: number;
+  warning: number;
+  normal: number;
+  lowBattery: number;
+  offline: number;
+}
+
+export function useBinSummary() {
+  const [data, setData] = useState<BinSummaryStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('/api/dashboard/bin-summary', {
+          headers: authUtils.getAuthHeader(),
+        });
+        setData(response.data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  return { data, loading, error };
+}
+
 // Hook for total bins count
 export function useTotalBins() {
   const [data, setData] = useState<TotalBinsStats | null>(null);

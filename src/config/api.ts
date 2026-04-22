@@ -30,6 +30,7 @@ export const API_CONFIG = {
     CLEARINGS: '/clearings',
     DASHBOARD: {
       ACTIVE_BINS: '/dashboard/active-bins',
+      BIN_SUMMARY: '/dashboard/bin-summary',
       ACTIVE_CARDS: '/dashboard/active-cards',
       TOTAL_CARDS: '/dashboard/total-cards',
       CURRENT_USAGE: '/dashboard/current-usage',
