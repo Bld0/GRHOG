@@ -425,10 +425,6 @@ export function BinsViewGrouped() {
   const totalBinsCount = binSummary?.total ?? totalActiveBins;
   const fullBinsCount = binSummary?.full ?? 0;
   const lowBatteryBinsCount = binSummary?.lowBattery ?? 0;
-  // Дүүрсэн (≥90%) эсвэл цэнэг бага (≤20%) савны тоо. Backend-ийн full ба
-  // lowBattery-г тусад нь тоолсон тул хоёуланд нь таарах савыг давхар тооцож
-  // болзошгүй.
-  const attentionBinsCount = fullBinsCount + lowBatteryBinsCount;
   const overallAvgStorage =
     pagination.statistics?.overallAvgStorageLevelPercent || 0;
   const overallAvgBattery =
@@ -483,8 +479,8 @@ export function BinsViewGrouped() {
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>
-                {attentionBinsCount}
-                {totalBinsCount > attentionBinsCount && (
+                {totalActiveBins}
+                {totalBinsCount > totalActiveBins && (
                   <span className='text-muted-foreground text-base font-normal'>
                     {' / '}
                     {totalBinsCount}
