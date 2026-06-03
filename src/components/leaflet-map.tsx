@@ -74,6 +74,21 @@ const createCustomIcon = (status?: string, fillLevel?: number) => {
   });
 };
 
+// Returns true only if the map is still mounted and its panes exist.
+// After react-leaflet removes the map (navigation, tab switch, StrictMode/HMR
+// remount) the internal `_mapPane` is deleted and the container is detached;
+// calling setView/fitBounds then throws "Cannot read properties of undefined
+// (reading '_leaflet_pos')" from Leaflet's deferred animation frame.
+const isMapAlive = (m: L.Map | null): m is L.Map => {
+  if (!m) return false;
+  try {
+    const container = m.getContainer();
+    return !!container && container.isConnected && !!(m as any)._mapPane;
+  } catch {
+    return false;
+  }
+};
+
 // Battery level indicator component
 const BatteryIndicator = ({ level }: { level: number }) => {
   const getBatteryColor = (level: number) => {
@@ -144,50 +159,56 @@ export default function LeafletMap({
 
   // Fit bounds when multiple locations are provided
   useEffect(() => {
-    if (map && multipleLocations.length > 1) {
+    if (!isMapAlive(map) || multipleLocations.length <= 1) return;
+    try {
       const bounds = L.latLngBounds(
         multipleLocations.map(loc => [loc.lat, loc.lng])
       );
-      map.fitBounds(bounds, { padding: [20, 20] });
+      // animate: false applies the move synchronously, avoiding the deferred
+      // animation frame that crashes if the map is removed mid-transition.
+      map.fitBounds(bounds, { padding: [20, 20], animate: false });
+    } catch {
+      // map was torn down between the guard and the call -> ignore
     }
   }, [map, multipleLocations]);
 
   // Try to center on user's location if available. If access is denied or unavailable,
   // fall back to Ulaanbaatar center at city zoom.
   useEffect(() => {
-    if (!map) return;
+    if (!isMapAlive(map)) return;
+
+    // The geolocation callback fires asynchronously (after a permission prompt
+    // it can be seconds later), by which point the user may have navigated away
+    // and the map been removed. `cancelled` + the liveness re-check prevent any
+    // setView on a dead map.
+    let cancelled = false;
+    const safeSetView = (lat: number, lng: number, z: number) => {
+      if (cancelled || !isMapAlive(map)) return;
+      try {
+        map.setView([lat, lng], z, { animate: false });
+      } catch {
+        // ignore
+      }
+    };
 
     // Only attempt when there are no multiple locations to fit (single or none)
     if ((multipleLocations?.length ?? 0) <= 1 && !selectedLocation) {
       if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const { latitude, longitude } = pos.coords;
-            try {
-              map.setView([latitude, longitude], Math.max(13, zoom));
-            } catch (e) {
-              // ignore
-            }
-          },
-          () => {
-            // Permission denied or other error -> center Ulaanbaatar
-            try {
-              map.setView([47.9211, 106.9154], 12);
-            } catch (e) {
-              // ignore
-            }
-          },
+          (pos) => safeSetView(pos.coords.latitude, pos.coords.longitude, Math.max(13, zoom)),
+          // Permission denied or other error -> center Ulaanbaatar
+          () => safeSetView(47.9211, 106.9154, 12),
           { timeout: 5000 }
         );
       } else {
         // No geolocation API -> default to Ulaanbaatar
-        try {
-          map.setView([47.9211, 106.9154], 12);
-        } catch (e) {
-          // ignore
-        }
+        safeSetView(47.9211, 106.9154, 12);
       }
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [map, multipleLocations, selectedLocation, zoom]);
 
   return (
