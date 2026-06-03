@@ -312,8 +312,11 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
     if (!cardData) return;
     setIsEditing(true);
     try {
-      const response = await fetch(`/api/clients/${cardData.id}`, {
-        headers: authUtils.getAuthHeader(),
+      const response = await fetch(`/api/users/clients/${cardData.id}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...authUtils.getAuthHeader()
+        },
         method: 'PUT',
         body: JSON.stringify({
           name: editUser.name,

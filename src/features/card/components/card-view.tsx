@@ -437,9 +437,12 @@ export function CardsView() {
         type: editUser.type || null
       });
 
-      const response = await fetch(`/api/clients/${editingUser.id}`, {
+      const response = await fetch(`/api/users/clients/${editingUser.id}`, {
         method: 'PUT',
-        headers: authUtils.getAuthHeader(),
+        headers: {
+          'Content-Type': 'application/json',
+          ...authUtils.getAuthHeader()
+        },
         body: bodyJson
       });
 
