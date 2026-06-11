@@ -10,12 +10,11 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<AuthResponse | null>(null);
 
-  // Check authentication status on mount
   useEffect(() => {
     const checkAuth = () => {
       const authenticated = authUtils.isAuthenticated();
       const userConfig = authUtils.getUserConfig();
-      
+
       setIsAuthenticated(authenticated);
       if (userConfig && authenticated) {
         setUser({
@@ -43,11 +42,11 @@ export function useAuth() {
       setError(null);
 
       const response = await signIn(credentials);
-      
+
       if (response.token) {
         // Store auth data in localStorage
         authUtils.setAuthData(response);
-        
+
         setIsAuthenticated(true);
         setUser({
           ...response,
@@ -59,23 +58,25 @@ export function useAuth() {
       }
     } catch (err) {
       let errorMessage = 'Login failed';
-      
+
       if (err instanceof Error) {
         errorMessage = err.message;
       }
-      
+
       // Handle axios errors with response data
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as any;
         if (axiosError.response?.data?.error) {
           errorMessage = axiosError.response.data.error;
         } else if (axiosError.response?.status === 406) {
-          errorMessage = 'Invalid credentials. Please check your username and password.';
+          errorMessage =
+            'Invalid credentials. Please check your username and password.';
         } else if (axiosError.response?.status === 503) {
-          errorMessage = 'Backend server is not available. Please try again later.';
+          errorMessage =
+            'Backend server is not available. Please try again later.';
         }
       }
-      
+
       setError(errorMessage);
       setIsAuthenticated(false);
       setUser(null);
@@ -100,7 +101,9 @@ export function useAuth() {
   };
 
   // Check if user has specific permission
-  const hasPermission = (permission: keyof AuthResponse['permissions']): boolean => {
+  const hasPermission = (
+    permission: keyof AuthResponse['permissions']
+  ): boolean => {
     return user?.permissions?.[permission] || false;
   };
 
@@ -142,6 +145,6 @@ export function useAuth() {
     getUserRole,
     isSuperAdmin,
     isAdmin,
-    isViewer,
+    isViewer
   };
-} 
+}
