@@ -39,7 +39,7 @@ import {
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { mn } from 'date-fns/locale';
-import { authUtils } from '@/lib/auth';
+import { apiClient } from '@/lib/api-client';
 import {
   Pagination,
   PaginationContent,
@@ -136,12 +136,8 @@ export function BinDetailView({ id }: BinDetailViewProps) {
       try {
         // Fetch bin details and clearings in parallel
         const [binResponse, clearingsResponse] = await Promise.all([
-          fetch(`/api/bins/${id}`, {
-            headers: authUtils.getAuthHeader()
-          }),
-          fetch(`/api/bins/${id}/clearings`, {
-            headers: authUtils.getAuthHeader()
-          })
+          apiClient.fetchWithAuth(`/api/bins/${id}`),
+          apiClient.fetchWithAuth(`/api/bins/${id}/clearings`)
         ]);
 
         if (!binResponse.ok) {
@@ -354,14 +350,10 @@ export function BinDetailView({ id }: BinDetailViewProps) {
       updatePayload.longitude = editingBin.coordinates.lng;
     }
     try {
-      const authHeaders = authUtils.getAuthHeader();
-      console.log('🔧 Bin update - Auth headers being sent:', authHeaders);
-
-      const response = await fetch(`/api/bins/${editingBin.id}`, {
+      const response = await apiClient.fetchWithAuth(`/api/bins/${editingBin.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...authHeaders
         },
         body: JSON.stringify(updatePayload)
       });
@@ -1272,18 +1264,12 @@ export function BinDetailView({ id }: BinDetailViewProps) {
               onClick={async () => {
                 if (!editingBin?.id) return;
                 try {
-                  const authHeaders = authUtils.getAuthHeader();
-                  console.log(
-                    '🔧 Bin save - Auth headers being sent:',
-                    authHeaders
-                  );
                   console.log('🔧 Bin save - Payload:', editingBin);
 
-                  const response = await fetch(`/api/bins/${editingBin.id}`, {
+                  const response = await apiClient.fetchWithAuth(`/api/bins/${editingBin.id}`, {
                     method: 'PUT',
                     headers: {
                       'Content-Type': 'application/json',
-                      ...authHeaders
                     },
                     body: JSON.stringify({
                       binId: editingBin.binId || editingBin.id,

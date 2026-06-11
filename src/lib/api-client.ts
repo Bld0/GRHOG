@@ -20,7 +20,26 @@ class ApiClient {
     this.failedQueue = [];
   }
 
-  private async refreshToken(): Promise<string | null> {
+  private refreshPromise: Promise<string | null> | null = null;
+
+  // Dedupe concurrent refreshes: every caller shares the single in-flight
+  // refresh instead of each firing its own /auth/refresh request.
+  private refreshToken(): Promise<string | null> {
+    if (!this.refreshPromise) {
+      this.refreshPromise = this.doRefresh().finally(() => {
+        this.refreshPromise = null;
+      });
+    }
+    return this.refreshPromise;
+  }
+
+  // Public entry point so other transports (e.g. the axios instance) can share
+  // the same deduped refresh instead of implementing their own.
+  forceRefresh(): Promise<string | null> {
+    return this.refreshToken();
+  }
+
+  private async doRefresh(): Promise<string | null> {
     try {
       const refreshToken = localStorage.getItem('grhog-refresh-token');
       if (!refreshToken) {
@@ -40,23 +59,31 @@ class ApiClient {
       }
 
       const data = await response.json();
-      
-      // Store new tokens
-      authUtils.setToken(data.accessToken);
-      localStorage.setItem('grhog-refresh-token', data.refreshToken);
-      
-      return data.accessToken;
+
+      // The backend may name the new access token `accessToken` or `token`
+      // (signin returns `token`), and may or may not rotate the refresh token.
+      // Handle every shape so a naming mismatch can't silently break refresh.
+      const newAccessToken = data.accessToken ?? data.token;
+      const newRefreshToken = data.refreshToken ?? refreshToken;
+      if (!newAccessToken) {
+        throw new Error('Refresh response missing access token');
+      }
+
+      authUtils.setToken(newAccessToken);
+      localStorage.setItem('grhog-refresh-token', newRefreshToken);
+
+      return newAccessToken;
     } catch (error) {
       console.error('Token refresh failed:', error);
       // Clear all auth data on refresh failure
       authUtils.removeAuthData();
       localStorage.removeItem('grhog-refresh-token');
-      
+
       // Redirect to login
       if (typeof window !== 'undefined') {
         window.location.href = '/auth/sign-in';
       }
-      
+
       return null;
     }
   }
@@ -159,6 +186,51 @@ class ApiClient {
     }
   }
 
+  // Like fetch(), but injects the bearer token and transparently refreshes it
+  // once on 401/403, then retries. Returns the raw Response so callers keep
+  // their own status/error handling (e.g. reading the backend's `message`).
+  async fetchWithAuth(
+    url: string,
+    options: RequestInit = {},
+    retryCount = 0
+  ): Promise<Response> {
+    const headers: Record<string, string> = {};
+    if (options.headers) {
+      if (Array.isArray(options.headers)) {
+        options.headers.forEach(([key, value]) => {
+          headers[key] = value;
+        });
+      } else if (options.headers instanceof Headers) {
+        options.headers.forEach((value, key) => {
+          headers[key] = value;
+        });
+      } else {
+        Object.assign(headers, options.headers);
+      }
+    }
+
+    const token = authUtils.getToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, { ...options, headers });
+
+    // Token likely expired — refresh once and retry the original request.
+    if (
+      (response.status === 401 || response.status === 403) &&
+      retryCount === 0
+    ) {
+      const newToken = await this.refreshToken();
+      if (newToken) {
+        return this.fetchWithAuth(url, options, retryCount + 1);
+      }
+      // refreshToken() already cleared auth and redirected to /auth/sign-in.
+    }
+
+    return response;
+  }
+
   // Helper methods for common HTTP operations
   async get<T>(url: string, requireAuth = true): Promise<T> {
     return this.request<T>(url, { method: 'GET' }, requireAuth);
@@ -185,3 +257,8 @@ class ApiClient {
 
 // Export singleton instance
 export const apiClient = new ApiClient();
+
+// Shared, deduped access-token refresh. Used by both fetchWithAuth and the
+// axios instance so a single /auth/refresh serves all concurrent 401/403s.
+export const refreshAccessToken = (): Promise<string | null> =>
+  apiClient.forceRefresh();

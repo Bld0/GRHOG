@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Icons } from '@/components/icons';
 import { toast } from 'sonner';
-import { authUtils } from '@/lib/auth';
+import { apiClient } from '@/lib/api-client';
 
 interface SystemUser {
   id: number;
@@ -54,9 +54,7 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/users', {
-        headers: authUtils.getAuthHeader(),
-      });
+      const response = await apiClient.fetchWithAuth('/api/users');
       if (response.ok) {
         const data = await response.json();
         setUsers(data.content || []);
@@ -70,11 +68,10 @@ export default function UsersPage() {
 
   const handleCreateUser = async () => {
     try {
-      const response = await fetch('/api/users/create', {
+      const response = await apiClient.fetchWithAuth('/api/users/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...authUtils.getAuthHeader(),
         },
         body: JSON.stringify(formData),
       });
@@ -97,11 +94,10 @@ export default function UsersPage() {
     if (!selectedUser) return;
 
     try {
-      const response = await fetch(`/api/users/${selectedUser.id}`, {
+      const response = await apiClient.fetchWithAuth(`/api/users/${selectedUser.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...authUtils.getAuthHeader(),
         },
         body: JSON.stringify(formData),
       });
@@ -125,9 +121,8 @@ export default function UsersPage() {
     if (!confirm('Are you sure you want to delete this user?')) return;
 
     try {
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await apiClient.fetchWithAuth(`/api/users/${userId}`, {
         method: 'DELETE',
-        headers: authUtils.getAuthHeader(),
       });
 
       if (response.ok) {

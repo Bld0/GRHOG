@@ -69,8 +69,8 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog';
-import { authUtils } from '@/lib/auth';
 import { normalizeStorageLevel } from '@/lib/utils';
+import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
 import SwitchButton from '@/components/switch-button';
 import { useRolePermissions } from '@/hooks/use-role-permissions';
@@ -149,9 +149,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
     const fetchCardDetails = async () => {
       try {
         // Fetch client activity and stats from backend
-        const response = await fetch(`/api/clients/${cardId}/activity`, {
-          headers: authUtils.getAuthHeader()
-        });
+        const response = await apiClient.fetchWithAuth(`/api/clients/${cardId}/activity`);
         if (!response.ok) {
           if (response.status === 404) {
             setError('Карт олдсонгүй');
@@ -312,10 +310,9 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
     if (!cardData) return;
     setIsEditing(true);
     try {
-      const response = await fetch(`/api/users/clients/${cardData.id}`, {
+      const response = await apiClient.fetchWithAuth(`/api/users/clients/${cardData.id}`, {
         headers: {
           'Content-Type': 'application/json',
-          ...authUtils.getAuthHeader()
         },
         method: 'PUT',
         body: JSON.stringify({

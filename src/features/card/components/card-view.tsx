@@ -95,7 +95,7 @@ import {
 } from '@tabler/icons-react';
 import React from 'react'; // Added missing import for React
 import { toast } from 'sonner';
-import { authUtils } from '@/lib/auth';
+import { apiClient } from '@/lib/api-client';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   TableHeaderFilter,
@@ -345,11 +345,10 @@ export function CardsView() {
 
     setIsCreating(true);
     try {
-      const response = await fetch('/api/users/create-client', {
+      const response = await apiClient.fetchWithAuth('/api/users/create-client', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...authUtils.getAuthHeader()
         },
         body: JSON.stringify({
           name: newUser.name,
@@ -437,11 +436,10 @@ export function CardsView() {
         type: editUser.type || null
       });
 
-      const response = await fetch(`/api/users/clients/${editingUser.id}`, {
+      const response = await apiClient.fetchWithAuth(`/api/users/clients/${editingUser.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...authUtils.getAuthHeader()
         },
         body: bodyJson
       });
@@ -493,11 +491,10 @@ export function CardsView() {
     setIsDeleting(true);
     try {
       const deletePromises = Array.from(selectedClients).map((clientId) =>
-        fetch(`/api/users/clients/${clientId}`, {
+        apiClient.fetchWithAuth(`/api/users/clients/${clientId}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
-            ...authUtils.getAuthHeader()
           }
         })
       );
@@ -578,15 +575,10 @@ export function CardsView() {
       const url = `/api/export/cards?${queryParams.toString()}`;
       console.log('📤 Export URL:', url);
 
-      // Get authentication headers
-      const authHeaders = authUtils.getAuthHeader();
-      console.log('🔐 Auth headers:', authHeaders);
-
       // Fetch the Excel file with authentication
-      const response = await fetch(url, {
+      const response = await apiClient.fetchWithAuth(url, {
         method: 'GET',
         headers: {
-          ...authHeaders,
           Accept:
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         }

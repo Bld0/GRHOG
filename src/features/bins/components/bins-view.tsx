@@ -82,7 +82,7 @@ import PageContainer from '@/components/layout/page-container';
 import { useBins } from '@/hooks/use-api-data';
 import { PaginationParams } from '@/hooks/use-pagination';
 // Removed utility functions - now using backend percentage fields
-import { authUtils } from '@/lib/auth';
+import { apiClient } from '@/lib/api-client';
 import {
   useTotalBins,
   useAverageFillLevel,
@@ -366,15 +366,10 @@ export function BinsView() {
       const url = `/api/export/bins?${queryParams.toString()}`;
       console.log('📤 Export URL:', url);
 
-      // Get authentication headers
-      const authHeaders = authUtils.getAuthHeader();
-      console.log('🔐 Auth headers:', authHeaders);
-
       // Fetch the Excel file with authentication
-      const response = await fetch(url, {
+      const response = await apiClient.fetchWithAuth(url, {
         method: 'GET',
         headers: {
-          ...authHeaders,
           'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
       });
@@ -467,7 +462,7 @@ export function BinsView() {
     if (!clearingBin) return;
 
     try {
-      const response = await fetch(`/api/bins/${clearingBin.id}/clear`, {
+      const response = await apiClient.fetchWithAuth(`/api/bins/${clearingBin.id}/clear`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -496,15 +491,10 @@ export function BinsView() {
     if (!confirm('Энэ савыг устгахдаа итгэлтэй байна уу?')) return;
 
     try {
-      // Get authentication headers
-      const authHeaders = authUtils.getAuthHeader();
-      console.log('🗑️ Delete bin - Auth headers being sent:', authHeaders);
-
-      const response = await fetch(`/api/bins/${binId}`, {
+      const response = await apiClient.fetchWithAuth(`/api/bins/${binId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          ...authHeaders,
         },
       });
 
@@ -787,14 +777,10 @@ export function BinsView() {
                       onClick={async () => {
                         if (!editingBin?.id) return;
                         try {
-                          const authHeaders = authUtils.getAuthHeader();
-                          console.log('🔧 Bins view - Auth headers being sent:', authHeaders);
-
-                          const response = await fetch(`/api/bins/${editingBin.id}`, {
+                          const response = await apiClient.fetchWithAuth(`/api/bins/${editingBin.id}`, {
                             method: 'PUT',
                             headers: {
                               'Content-Type': 'application/json',
-                              ...authHeaders,
                             },
                             body: JSON.stringify({
                               binId: editingBin.binId || editingBin.id,

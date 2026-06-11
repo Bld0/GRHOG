@@ -19,7 +19,7 @@ import {
   DistrictKhorooGroup,
   TotalHouseholdsData
 } from '@/types';
-import axios from 'axios';
+import { apiAxios as axios } from '@/lib/api-axios';
 import { API_ENDPOINTS } from '@/lib/api';
 import { authUtils } from '@/lib/auth';
 import { PaginationParams } from './use-pagination';

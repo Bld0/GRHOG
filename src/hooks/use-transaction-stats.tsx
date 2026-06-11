@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { apiAxios as axios } from '@/lib/api-axios';
 import { authUtils } from '@/lib/auth';
 
 // Types for transaction statistics

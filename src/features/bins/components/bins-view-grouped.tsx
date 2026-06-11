@@ -70,7 +70,7 @@ import {
 } from '@/components/ui/table-header-filter';
 import { ActiveFilters } from '@/components/ui/active-filters';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { authUtils } from '@/lib/auth';
+import { apiClient } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 
 export function BinsViewGrouped() {
@@ -334,12 +334,10 @@ export function BinsViewGrouped() {
       }
 
       const url = `/api/export/bins?${queryParams.toString()}`;
-      const authHeaders = authUtils.getAuthHeader();
 
-      const response = await fetch(url, {
+      const response = await apiClient.fetchWithAuth(url, {
         method: 'GET',
         headers: {
-          ...authHeaders,
           Accept:
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         }

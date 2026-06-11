@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { buildApiUrl, API_CONFIG } from '@/config/api';
-import { authUtils } from '@/lib/auth';
+import { apiClient } from '@/lib/api-client';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 
 import {
@@ -35,9 +35,7 @@ export function PieGraph() {
   // Fetch districts
   React.useEffect(() => {
     let mounted = true;
-    fetch(buildApiUrl(API_CONFIG.ENDPOINTS.DASHBOARD.GET_DISTRICT), {
-      headers: { ...authUtils.getAuthHeader() }
-    })
+    apiClient.fetchWithAuth(buildApiUrl(API_CONFIG.ENDPOINTS.DASHBOARD.GET_DISTRICT))
       .then((r) => r.json())
       .then((json) => {
         if (!mounted) return;
@@ -58,9 +56,7 @@ export function PieGraph() {
     setKhorooList([]);
     setKhoroo('');
     if (!district) return;
-    fetch(buildApiUrl(API_CONFIG.ENDPOINTS.DASHBOARD.GET_KHOROO + `?district=${encodeURIComponent(district)}`), {
-      headers: { ...authUtils.getAuthHeader() }
-    })
+    apiClient.fetchWithAuth(buildApiUrl(API_CONFIG.ENDPOINTS.DASHBOARD.GET_KHOROO + `?district=${encodeURIComponent(district)}`))
       .then((r) => r.json())
       .then((json) => {
         if (!mounted) return;
@@ -83,9 +79,7 @@ export function PieGraph() {
     if (district) params.set('district', district);
     if (khoroo !== '') params.set('khoroo', String(khoroo));
 
-    fetch(buildApiUrl(API_CONFIG.ENDPOINTS.DASHBOARD.CLIENT_TYPE_COUNTS + `?${params.toString()}`), {
-      headers: { ...authUtils.getAuthHeader() }
-    })
+    apiClient.fetchWithAuth(buildApiUrl(API_CONFIG.ENDPOINTS.DASHBOARD.CLIENT_TYPE_COUNTS + `?${params.toString()}`))
       .then(async (r) => {
         if (!r.ok) throw new Error(await r.text());
         return r.json();

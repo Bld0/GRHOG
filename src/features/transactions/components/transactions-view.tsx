@@ -62,7 +62,7 @@ import {
 import { TableHeaderFilter, useTableFilters } from '@/components/ui/table-header-filter';
 import { ActiveFilters } from '@/components/ui/active-filters';
 import { toast } from 'sonner';
-import { authUtils } from '@/lib/auth';
+import { apiClient } from '@/lib/api-client';
 
 export function TransactionsView() {
   const [currentPage, setCurrentPage] = useState(0); // Changed to 0-based for API
@@ -273,16 +273,11 @@ export function TransactionsView() {
 
       const url = `/api/export/transactions?${queryParams.toString()}`;
       console.log('📤 Export URL:', url);
-      
-      // Get authentication headers
-      const authHeaders = authUtils.getAuthHeader();
-      console.log('🔐 Auth headers:', authHeaders);
-      
+
       // Fetch the Excel file with authentication
-      const response = await fetch(url, {
+      const response = await apiClient.fetchWithAuth(url, {
         method: 'GET',
         headers: {
-          ...authHeaders,
           'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
       });

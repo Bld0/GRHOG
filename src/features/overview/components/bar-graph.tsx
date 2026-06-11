@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { buildApiUrl, API_CONFIG } from '@/config/api';
-import { authUtils } from '@/lib/auth';
+import { apiClient } from '@/lib/api-client';
 import {
   Bar,
   BarChart,
@@ -68,15 +68,10 @@ export function BarGraph() {
   React.useEffect(() => {
     let mounted = true;
     // fetch districts list from new endpoint that returns string[]
-    fetch(
+    apiClient.fetchWithAuth(
       buildApiUrl(
         API_CONFIG.ENDPOINTS.DASHBOARD.GET_DISTRICT ?? '/dashboard/getDistrict'
-      ),
-      {
-        headers: {
-          ...authUtils.getAuthHeader()
-        }
-      }
+      )
     )
       .then((r) => r.json())
       .then((json) => {
@@ -104,11 +99,7 @@ export function BarGraph() {
     if (district) params.set('district', district);
     if (range) params.set('range', range);
 
-    fetch(buildApiUrl(`/dashboard/khoroo-usage?${params.toString()}`), {
-      headers: {
-        ...authUtils.getAuthHeader()
-      }
-    })
+    apiClient.fetchWithAuth(buildApiUrl(`/dashboard/khoroo-usage?${params.toString()}`))
       .then(async (r) => {
         if (!r.ok) throw new Error(await r.text());
         return r.json();
