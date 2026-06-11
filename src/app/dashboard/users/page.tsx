@@ -70,7 +70,7 @@ export default function UsersPage() {
 
   const handleCreateUser = async () => {
     try {
-      const response = await fetch('/api/users', {
+      const response = await fetch('/api/users/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
