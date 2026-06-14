@@ -1,8 +1,4 @@
 {
   "/dashboard/overview/page": "app/dashboard/overview/page.js",
-  "/dashboard/raw-data/page": "app/dashboard/raw-data/page.js",
-  "/dashboard/transactions/page": "app/dashboard/transactions/page.js",
-  "/dashboard/users/page": "app/dashboard/users/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/page": "app/page.js"
+  "/dashboard/raw-data/page": "app/dashboard/raw-data/page.js"
 }

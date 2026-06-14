@@ -52,7 +52,7 @@ function SlotCell({ slot, label }: { slot: Slot; label: string }) {
   return (
     <div className='flex items-center gap-1.5 text-red-500'>
       <Icons.close className='h-3.5 w-3.5 shrink-0' />
-      <span className='text-xs'></span>
+      <span className='text-xs'>{label}</span>
     </div>
   );
 }
