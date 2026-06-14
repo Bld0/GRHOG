@@ -58,6 +58,15 @@ export const navItems: NavItem[] = [
     items: [], // No child items
     requiresRole: 'SUPER_ADMIN' // Only visible to super admin
   },
+  {
+    title: 'Хэрэглэгчийн өгөгдөл',
+    url: '/dashboard/raw-data',
+    icon: 'rawData',
+    shortcut: ['w', 'w'],
+    isActive: false,
+    items: [], // No child items
+    requiresRole: 'DEVELOPER' // Only visible to developer and super admin
+  },
 ];
 
 export interface SaleUser {

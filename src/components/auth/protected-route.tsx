@@ -9,7 +9,7 @@ import { authUtils } from '@/lib/auth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER';
+  requiredRole?: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER';
   requiredPermission?: string;
   fallback?: React.ReactNode;
 }

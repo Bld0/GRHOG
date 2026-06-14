@@ -11,7 +11,7 @@ export interface NavItem {
   description?: string;
   isActive?: boolean;
   items?: NavItem[];
-  requiresRole?: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'; // Role requirement for menu items
+  requiresRole?: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER'; // Role requirement for menu items
 }
 
 export interface NavItemWithChildren extends NavItem {
@@ -79,7 +79,7 @@ export interface AuthResponse {
   token: string;
   username: string;
   email: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER';
   isActive?: boolean;
   active?: boolean;
   permissions: UserPermissions;
@@ -94,7 +94,7 @@ export interface User {
   phone: string | null;
   address: string | null;
   isActive: boolean;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER';
   createdAt: string;
   updatedAt: string | null;
 }

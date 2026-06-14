@@ -133,6 +133,11 @@ export function useAuth() {
     return getUserRole() === 'VIEWER';
   };
 
+  // Check if user is developer
+  const isDeveloper = (): boolean => {
+    return getUserRole() === 'DEVELOPER';
+  };
+
   return {
     isAuthenticated,
     isLoading,
@@ -145,6 +150,7 @@ export function useAuth() {
     getUserRole,
     isSuperAdmin,
     isAdmin,
-    isViewer
+    isViewer,
+    isDeveloper
   };
 }

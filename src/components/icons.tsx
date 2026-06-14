@@ -7,6 +7,7 @@ import {
   IconChevronRight,
   IconCommand,
   IconCreditCard,
+  IconDatabase,
   IconFile,
   IconFileText,
   IconHelpCircle,
@@ -83,5 +84,6 @@ export const Icons = {
   transaction: IconReceipt,
   analytics: IconChartBar,
   eye: IconEye,
-  eyeOff: IconEyeOff
+  eyeOff: IconEyeOff,
+  rawData: IconDatabase
 };

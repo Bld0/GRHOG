@@ -77,16 +77,19 @@ export default function AppSidebar() {
     return navItems.filter(item => {
       // If no role requirement, show to all authenticated users
       if (!item.requiresRole) return true;
-      
+
       // Role-based access: SUPER_ADMIN can see everything
       if (userRole === 'SUPER_ADMIN') return true;
-      
+
       // ADMINs can see everything except user management
       if (userRole === 'ADMIN' && item.requiresRole !== 'SUPER_ADMIN') return true;
-      
+
       // VIEWERs can see viewer-level items
       if (userRole === 'VIEWER' && item.requiresRole === 'VIEWER') return true;
-      
+
+      // DEVELOPERs can see viewer-level items and developer-specific items
+      if (userRole === 'DEVELOPER' && (item.requiresRole === 'VIEWER' || item.requiresRole === 'DEVELOPER')) return true;
+
       return false;
     });
   }, [isLoading, userRole]);

@@ -18,7 +18,7 @@ interface SystemUser {
   id: number;
   username: string;
   email: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER';
   isActive: boolean;
   createdAt: string;
 }
@@ -35,7 +35,7 @@ export default function UsersPage() {
     username: '',
     email: '',
     password: '',
-    role: 'ADMIN' as 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'
+    role: 'ADMIN' as 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER'
   });
 
   // Redirect if not super admin - but only after auth is loaded
@@ -257,6 +257,12 @@ export default function UsersPage() {
                             <span>Харагч</span>
                           </div>
                         </SelectItem>
+                        <SelectItem value="DEVELOPER" className="cursor-pointer">
+                          <div className="flex items-center space-x-2">
+                            <Icons.user className="h-4 w-4 text-purple-500" />
+                            <span>Хөгжүүлэгч</span>
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -265,7 +271,7 @@ export default function UsersPage() {
                   </div>
                 </div>
               </div>
-              
+
               <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
                 <Button
                   variant="outline"
@@ -317,10 +323,12 @@ export default function UsersPage() {
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       user.role === 'SUPER_ADMIN' ? 'bg-red-100 text-red-800' :
                       user.role === 'ADMIN' ? 'bg-blue-100 text-blue-800' :
+                      user.role === 'DEVELOPER' ? 'bg-purple-100 text-purple-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
                       {user.role === 'SUPER_ADMIN' ? 'SUPER_ADMIN' :
-                       user.role === 'ADMIN' ? 'ADMIN' : 'VIEWER'}
+                       user.role === 'ADMIN' ? 'ADMIN' :
+                       user.role === 'DEVELOPER' ? 'DEVELOPER' : 'VIEWER'}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -444,6 +452,12 @@ export default function UsersPage() {
                       <div className="flex items-center space-x-2">
                         <Icons.user className="h-4 w-4 text-gray-500" />
                         <span>Харагч</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="DEVELOPER" className="cursor-pointer">
+                      <div className="flex items-center space-x-2">
+                        <Icons.user className="h-4 w-4 text-purple-500" />
+                        <span>Хөгжүүлэгч</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
