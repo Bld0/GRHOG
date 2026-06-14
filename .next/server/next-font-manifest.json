@@ -1,6 +1,30 @@
 {
   "app": {
-    "[project]/src/app/auth/sign-in/page": [
+    "[project]/src/app/dashboard/overview/page": [
+      "static/media/b0a57561b6cb5495-s.p.d06edde1.woff2",
+      "static/media/8ee3a1ba4ed5baee-s.p.9593fb78.woff2",
+      "static/media/e21d16ba801d4115-s.p.818a91ab.woff2",
+      "static/media/80caf739cce25032-s.p.2dea3710.woff2",
+      "static/media/7380723fb1ff782d-s.p.211e7ae2.woff2",
+      "static/media/06ba6ef833b337bc-s.p.0faac26c.woff2"
+    ],
+    "[project]/src/app/dashboard/raw-data/page": [
+      "static/media/b0a57561b6cb5495-s.p.d06edde1.woff2",
+      "static/media/8ee3a1ba4ed5baee-s.p.9593fb78.woff2",
+      "static/media/e21d16ba801d4115-s.p.818a91ab.woff2",
+      "static/media/80caf739cce25032-s.p.2dea3710.woff2",
+      "static/media/7380723fb1ff782d-s.p.211e7ae2.woff2",
+      "static/media/06ba6ef833b337bc-s.p.0faac26c.woff2"
+    ],
+    "[project]/src/app/dashboard/transactions/page": [
+      "static/media/b0a57561b6cb5495-s.p.d06edde1.woff2",
+      "static/media/8ee3a1ba4ed5baee-s.p.9593fb78.woff2",
+      "static/media/e21d16ba801d4115-s.p.818a91ab.woff2",
+      "static/media/80caf739cce25032-s.p.2dea3710.woff2",
+      "static/media/7380723fb1ff782d-s.p.211e7ae2.woff2",
+      "static/media/06ba6ef833b337bc-s.p.0faac26c.woff2"
+    ],
+    "[project]/src/app/dashboard/users/page": [
       "static/media/b0a57561b6cb5495-s.p.d06edde1.woff2",
       "static/media/8ee3a1ba4ed5baee-s.p.9593fb78.woff2",
       "static/media/e21d16ba801d4115-s.p.818a91ab.woff2",

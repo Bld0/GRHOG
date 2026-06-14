@@ -40,7 +40,8 @@ import {
   IconEye,
   IconEyeOff,
   IconChartBar,
-  IconChartPie
+  IconChartPie,
+  IconSearch
 } from '@tabler/icons-react';
 
 export type Icon = React.ComponentType<IconProps>;
@@ -85,5 +86,6 @@ export const Icons = {
   analytics: IconChartBar,
   eye: IconEye,
   eyeOff: IconEyeOff,
-  rawData: IconDatabase
+  rawData: IconDatabase,
+  search: IconSearch
 };
