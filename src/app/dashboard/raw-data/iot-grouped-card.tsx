@@ -316,7 +316,7 @@ function BinDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-h-[90vh] w-full max-w-5xl overflow-hidden flex flex-col gap-0 p-0'>
+      <DialogContent className='max-h-[90vh] w-[95vw] max-w-[1400px] overflow-hidden flex flex-col gap-0 p-0'>
         <DialogHeader className='px-6 pt-6 pb-4 border-b'>
           <DialogTitle className='font-mono text-lg'>
             {group?.binId ?? '—'} — Дэлгэрэнгүй уншуулалт
@@ -387,8 +387,8 @@ function BinDetailDialog({
         </div>
 
         {/* Table */}
-        <div className='flex-1 overflow-auto px-6 py-3'>
-          <div className='overflow-auto rounded-lg border'>
+        <div className='flex-1 overflow-y-auto px-6 py-3'>
+          <div className='rounded-lg border'>
             <Table>
               <TableHeader>
                 <TableRow>
