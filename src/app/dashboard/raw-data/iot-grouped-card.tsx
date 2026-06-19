@@ -137,7 +137,7 @@ function ReadsTable({ reads }: { reads: Read[] }) {
     return (
       <TableRow>
         <TableCell
-          colSpan={6}
+          colSpan={5}
           className='text-muted-foreground text-center text-sm'
         >
           Илэрц алга.
@@ -155,21 +155,20 @@ function ReadsTable({ reads }: { reads: Read[] }) {
           <TableCell className='font-mono text-xs whitespace-nowrap'>
             {fmtTime(r.at)}
           </TableCell>
-          <TableCell className='font-mono text-xs font-medium'>
-            {r.binId}
-          </TableCell>
-          <TableCell>
+          <TableCell className='truncate'>
             <SlotCell slot={r.battery} label='battery' />
           </TableCell>
-          <TableCell>
+          <TableCell className='truncate'>
             <SlotCell slot={r.storage} label='storage' />
           </TableCell>
           <TableCell>
-            <div className='flex items-center gap-1.5'>
-              <SlotCell slot={r.card} label='card' />
+            <div className='flex min-w-0 items-center gap-1.5'>
+              <span className='truncate'>
+                <SlotCell slot={r.card} label='card' />
+              </span>
               {r.duplicates > 0 && (
-                <Badge variant='outline' className='h-5 px-1.5 text-[10px]'>
-                  +{r.duplicates} retry
+                <Badge variant='outline' className='h-5 shrink-0 px-1.5 text-[10px]'>
+                  +{r.duplicates}
                 </Badge>
               )}
             </div>
@@ -181,7 +180,7 @@ function ReadsTable({ reads }: { reads: Read[] }) {
               </Badge>
             ) : (
               <Badge className='bg-red-600 text-white hover:bg-red-700'>
-                {r.presentCount}/3 ({r.missing.length} дутуу)
+                {r.presentCount}/3
               </Badge>
             )}
           </TableCell>
@@ -389,15 +388,14 @@ function BinDetailDialog({
         {/* Table */}
         <div className='flex-1 overflow-y-auto px-6 py-3'>
           <div className='rounded-lg border'>
-            <Table>
+            <table className='w-full table-fixed caption-bottom text-sm'>
               <TableHeader>
                 <TableRow>
-                  <TableHead className='w-[140px]'>Цаг</TableHead>
-                  <TableHead className='w-[90px]'>Сав</TableHead>
-                  <TableHead>Battery</TableHead>
-                  <TableHead>Storage</TableHead>
-                  <TableHead>Card</TableHead>
-                  <TableHead className='w-[120px] text-right'>
+                  <TableHead className='w-[15%]'>Цаг</TableHead>
+                  <TableHead className='w-[22%]'>Battery</TableHead>
+                  <TableHead className='w-[24%]'>Storage</TableHead>
+                  <TableHead className='w-[24%]'>Card</TableHead>
+                  <TableHead className='w-[15%] text-right'>
                     Бүрэн бүтэн
                   </TableHead>
                 </TableRow>
@@ -405,7 +403,7 @@ function BinDetailDialog({
               <TableBody>
                 <ReadsTable reads={paginated} />
               </TableBody>
-            </Table>
+            </table>
           </div>
 
           <PaginationBar page={page} pageCount={pageCount} onPage={setPage} />
