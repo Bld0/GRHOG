@@ -315,7 +315,7 @@ function BinDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-h-[90vh] w-[95vw] max-w-[1400px] overflow-hidden flex flex-col gap-0 p-0'>
+      <DialogContent className='flex max-h-[90vh] w-[95vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1400px]'>
         <DialogHeader className='px-6 pt-6 pb-4 border-b'>
           <DialogTitle className='font-mono text-lg'>
             {group?.binId ?? '—'} — Дэлгэрэнгүй уншуулалт
