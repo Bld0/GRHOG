@@ -251,3 +251,83 @@ export function groupReads(
 
   return { reads, stats };
 }
+
+// ---------------------------------------------------------------------------
+// Per-bin grouping — returns each bin's latest read + all reads for that bin
+// ---------------------------------------------------------------------------
+
+export interface BinGroup {
+  binId: string;
+  /** Most recent read for this bin (by `at` timestamp). */
+  latest: Read;
+  /** All reads for this bin, sorted newest-first. */
+  reads: Read[];
+  /** Stats computed only over this bin's reads. */
+  stats: GroupStats;
+}
+
+/**
+ * Takes the already-grouped read list and organises it by binId.
+ * Returns an array of BinGroup sorted by binId alphabetically.
+ */
+export function groupByBin(
+  reads: Read[],
+  allRows: IotRow[]
+): BinGroup[] {
+  // Bucket reads by binId
+  const buckets = new Map<string, Read[]>();
+  for (const r of reads) {
+    if (!buckets.has(r.binId)) buckets.set(r.binId, []);
+    buckets.get(r.binId)!.push(r);
+  }
+
+  // For per-bin parse-failure / corrupted counts we need the matching raw rows
+  const rowsByBin = new Map<string, IotRow[]>();
+  for (const row of allRows) {
+    // We don't re-parse here; attribute each raw row to a bin via its
+    // parsed_data / raw_body JSON binId field — same logic as toEv().
+    const tryGet = (s: string | null): string | null => {
+      if (!s) return null;
+      try {
+        const o = JSON.parse(s);
+        if (o && typeof o === 'object') {
+          const v = o.binId ?? o.binID;
+          return v != null ? String(v).trim().toUpperCase() : null;
+        }
+      } catch { /* ignore */ }
+      return null;
+    };
+    const raw = row.raw_body ?? '';
+    const s = raw.indexOf('{');
+    const e = raw.lastIndexOf('}');
+    const fromRaw = s >= 0 && e > s ? tryGet(raw.slice(s, e + 1)) : null;
+    const binId = tryGet(row.parsed_data) ?? fromRaw ?? 'UNKNOWN';
+    if (!rowsByBin.has(binId)) rowsByBin.set(binId, []);
+    rowsByBin.get(binId)!.push(row);
+  }
+
+  const truthyParsed = (r: IotRow) => r.parsed === true || r.parsed === 1;
+
+  const groups: BinGroup[] = [];
+  for (const [binId, binReads] of buckets) {
+    // Already sorted newest-first by groupReads()
+    const latest = binReads[0];
+    const binRows = rowsByBin.get(binId) ?? [];
+    const stats: GroupStats = {
+      totalReads: binReads.length,
+      complete: binReads.filter((r) => r.complete).length,
+      missingBattery: binReads.filter((r) => r.card.received && !r.battery.received).length,
+      missingStorage: binReads.filter((r) => r.card.received && !r.storage.received).length,
+      missingCard: binReads.filter((r) => !r.card.received).length,
+      duplicateCards: binReads.reduce((n, r) => n + r.duplicates, 0),
+      parseFailures: binRows.filter((r) => !truthyParsed(r)).length,
+      corrupted: binRows.filter((r) => ((r.raw_body ?? '').trim()[0] ?? '') !== '{').length,
+      totalRows: binRows.length
+    };
+    groups.push({ binId, latest, reads: binReads, stats });
+  }
+
+  // Sort by binId alphabetically
+  groups.sort((a, b) => a.binId.localeCompare(b.binId));
+  return groups;
+}
