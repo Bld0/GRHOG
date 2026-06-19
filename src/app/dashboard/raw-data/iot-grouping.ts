@@ -309,7 +309,7 @@ export function groupByBin(
   const truthyParsed = (r: IotRow) => r.parsed === true || r.parsed === 1;
 
   const groups: BinGroup[] = [];
-  for (const [binId, binReads] of buckets) {
+  for (const [binId, binReads] of Array.from(buckets.entries())) {
     // Already sorted newest-first by groupReads()
     const latest = binReads[0];
     const binRows = rowsByBin.get(binId) ?? [];
