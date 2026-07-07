@@ -1,1 +1,12 @@
-{}
+{
+  "/api/auth/refresh/route": "app/api/auth/refresh/route.js",
+  "/api/auth/signin/route": "app/api/auth/signin/route.js",
+  "/auth/sign-in/page": "app/auth/sign-in/page.js",
+  "/dashboard/bins/[id]/page": "app/dashboard/bins/[id]/page.js",
+  "/dashboard/bins/page": "app/dashboard/bins/page.js",
+  "/dashboard/card/page": "app/dashboard/card/page.js",
+  "/dashboard/overview/page": "app/dashboard/overview/page.js",
+  "/dashboard/raw-data/page": "app/dashboard/raw-data/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/page": "app/page.js"
+}

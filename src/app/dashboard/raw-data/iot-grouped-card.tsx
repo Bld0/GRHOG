@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -83,6 +83,19 @@ function SlotCell({ slot, label }: { slot: Slot; label: string }) {
       <div className='flex items-center gap-1.5'>
         <Icons.check className='h-3.5 w-3.5 shrink-0 text-green-500' />
         <span className='font-mono text-xs'>{slot.value || '—'}</span>
+        {/* Ingestion төлөв: DONE бол цэггүй, PENDING шар, FAILED улаан */}
+        {slot.status === 'PENDING' && (
+          <span
+            title='PENDING — queue-д хүлээгдэж байна'
+            className='h-2 w-2 shrink-0 rounded-full bg-amber-500'
+          />
+        )}
+        {slot.status === 'FAILED' && (
+          <span
+            title='FAILED — боловсруулалт бүтэлгүйтсэн'
+            className='h-2 w-2 shrink-0 rounded-full bg-red-500'
+          />
+        )}
       </div>
     );
   }
@@ -133,6 +146,9 @@ function rowTone(r: Read): string {
 }
 
 function ReadsTable({ reads }: { reads: Read[] }) {
+  // "+N" badge дээр дарахад тухайн уншуулалтын хураагдсан retry-үүд дэлгэгдэнэ
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
   if (reads.length === 0) {
     return (
       <TableRow>
@@ -145,47 +161,84 @@ function ReadsTable({ reads }: { reads: Read[] }) {
       </TableRow>
     );
   }
+
+  const toggle = (key: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
   return (
     <>
-      {reads.map((r, i) => (
-        <TableRow
-          key={`${r.binId}-${r.at}-${i}`}
-          className={rowTone(r)}
-        >
-          <TableCell className='font-mono text-xs whitespace-nowrap'>
-            {fmtTime(r.at)}
-          </TableCell>
-          <TableCell className='truncate'>
-            <SlotCell slot={r.battery} label='battery' />
-          </TableCell>
-          <TableCell className='truncate'>
-            <SlotCell slot={r.storage} label='storage' />
-          </TableCell>
-          <TableCell>
-            <div className='flex min-w-0 items-center gap-1.5'>
-              <span className='truncate'>
-                <SlotCell slot={r.card} label='card' />
-              </span>
-              {r.duplicates > 0 && (
-                <Badge variant='outline' className='h-5 shrink-0 px-1.5 text-[10px]'>
-                  +{r.duplicates}
-                </Badge>
-              )}
-            </div>
-          </TableCell>
-          <TableCell className='text-right'>
-            {r.complete ? (
-              <Badge className='bg-green-500/15 text-green-600 hover:bg-green-500/15'>
-                3/3
-              </Badge>
-            ) : (
-              <Badge className='bg-red-600 text-white hover:bg-red-700'>
-                {r.presentCount}/3
-              </Badge>
-            )}
-          </TableCell>
-        </TableRow>
-      ))}
+      {reads.map((r, i) => {
+        const key = `${r.binId}-${r.at}-${i}`;
+        const isOpen = expanded.has(key);
+        return (
+          <React.Fragment key={key}>
+            <TableRow className={rowTone(r)}>
+              <TableCell className='font-mono text-xs whitespace-nowrap'>
+                {fmtTime(r.at)}
+              </TableCell>
+              <TableCell className='truncate'>
+                <SlotCell slot={r.battery} label='battery' />
+              </TableCell>
+              <TableCell className='truncate'>
+                <SlotCell slot={r.storage} label='storage' />
+              </TableCell>
+              <TableCell>
+                <div className='flex min-w-0 items-center gap-1.5'>
+                  <span className='truncate'>
+                    <SlotCell slot={r.card} label='card' />
+                  </span>
+                  {r.duplicates > 0 && (
+                    <Badge
+                      variant='outline'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggle(key);
+                      }}
+                      title='Дарж давхар уншуулалтуудыг харах'
+                      className='h-5 shrink-0 cursor-pointer px-1.5 text-[10px]'
+                    >
+                      +{r.duplicates} {isOpen ? '▾' : '▸'}
+                    </Badge>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell className='text-right'>
+                {r.complete ? (
+                  <Badge className='bg-green-500/15 text-green-600 hover:bg-green-500/15'>
+                    3/3
+                  </Badge>
+                ) : (
+                  <Badge className='bg-red-600 text-white hover:bg-red-700'>
+                    {r.presentCount}/3
+                  </Badge>
+                )}
+              </TableCell>
+            </TableRow>
+            {isOpen &&
+              r.retries.map((rt) => (
+                <TableRow key={`${key}-retry-${rt.id}`} className='bg-muted/30'>
+                  <TableCell className='text-muted-foreground pl-6 font-mono text-xs whitespace-nowrap'>
+                    {fmtTime(rt.at)}
+                  </TableCell>
+                  <TableCell colSpan={2} className='text-muted-foreground text-xs'>
+                    давхар уншуулалт (retry)
+                  </TableCell>
+                  <TableCell className='font-mono text-xs'>{rt.value || '—'}</TableCell>
+                  <TableCell className='text-right'>
+                    <Badge variant='outline' className='h-5 px-1.5 text-[10px]'>
+                      retry
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+          </React.Fragment>
+        );
+      })}
     </>
   );
 }

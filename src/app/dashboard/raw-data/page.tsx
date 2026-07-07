@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import PageContainer from '@/components/layout/page-container';
 import { IotGroupedCard } from './iot-grouped-card';
+import { IngestionTable } from './ingestion-table';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
@@ -38,12 +39,18 @@ const TABS: TabDef[] = [
   {
     value: 'iot',
     label: 'Карт уншилт',
+    // iot_request_log-ийг түүхий JSON-оор биш IngestionTable-ээр үзүүлнэ
+    datasets: []
+  },
+  {
+    value: 'raw-log',
+    label: 'Түүхий лог (raw)',
     datasets: [
       {
         key: 'iot_request_log',
         label: 'IOT хүсэлтийн лог (iot_request_log)',
         description:
-          'GET /api/raw-data/iot-request-log — iot_request_log хүснэгтийн түүхий мөрүүд',
+          'GET /api/raw-data/iot-request-log — бүх мөр түүхийгээрээ, бүх төлөвтэйгөө (status, attempts, last_error, processed_at)',
         url: '/api/raw-data/iot-request-log'
       }
     ]
@@ -354,7 +361,12 @@ export default function RawDataPage() {
                 value={tab.value}
                 className='space-y-6'
               >
-                {tab.value === 'iot' && <IotGroupedCard />}
+                {tab.value === 'iot' && (
+                  <>
+                    <IotGroupedCard />
+                    <IngestionTable />
+                  </>
+                )}
                 {tab.value === 'bin' ? (
                   <>
                     {/* Хогийн сав (bin) болон Ашиглалт (bin_usage)-ийг зэрэгцүүлж харуулна */}

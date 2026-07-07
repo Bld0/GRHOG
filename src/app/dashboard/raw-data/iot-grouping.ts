@@ -17,10 +17,22 @@ export interface IotRow {
   received_at: string;
   parsed: boolean | number | null;
   parsed_data: string | null;
+  // Durable-queue fields (null on rows that were never queued)
+  status: 'PENDING' | 'DONE' | 'FAILED' | null;
+  attempts: number | null;
+  last_error: string | null;
+  processed_at: string | null;
 }
 
 export type Slot =
-  | { received: true; value: string; id: number; at: string; parsed: boolean }
+  | {
+      received: true;
+      value: string;
+      id: number;
+      at: string;
+      parsed: boolean;
+      status?: IotRow['status'];
+    }
   | { received: false };
 
 export interface Read {
@@ -31,6 +43,7 @@ export interface Read {
   storage: Slot;
   card: (Slot & { cardId?: string });
   duplicates: number; // нэг болгож хураасан card retry-ийн тоо
+  retries: { id: number; at: string; value: string }[]; // хураагдсан retry-үүд өөрсдөө
   presentCount: number; // 0..3
   missing: string[]; // ['battery'|'storage'|'card']-ийн дэд олонлог
   complete: boolean;
@@ -54,29 +67,46 @@ const ENDPOINT_KIND: Record<string, 'battery' | 'storage' | 'card'> = {
   '/on-read-card': 'card'
 };
 
-function parseTime(s: string): number {
+export function parseTime(s: string): number {
   if (!s) return NaN;
   const t = s.includes('T') ? s : s.replace(' ', 'T');
   return Date.parse(t);
 }
 
-function extractJson(row: IotRow): Record<string, unknown> | null {
-  const tryParse = (str: string | null): Record<string, unknown> | null => {
-    if (!str) return null;
-    try {
-      const o = JSON.parse(str);
-      return o && typeof o === 'object' ? (o as Record<string, unknown>) : null;
-    } catch {
-      return null;
-    }
-  };
-  const fromParsed = tryParse(row.parsed_data);
+/**
+ * Гажуудсан raw_body доторх жинхэнэ JSON-ий байрлал. Модемын шуугиан урд нь
+ * `{` тэмдэгт агуулж болдог тул эхлэлийг `{"`-ээр хайна (олдохгүй бол `{`).
+ */
+export function jsonBounds(
+  raw: string | null
+): { start: number; end: number } | null {
+  if (!raw) return null;
+  const q = raw.indexOf('{"');
+  const start = q >= 0 ? q : raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start < 0 || end <= start) return null;
+  return { start, end: end + 1 };
+}
+
+export function tryParseJson(
+  str: string | null
+): Record<string, unknown> | null {
+  if (!str) return null;
+  try {
+    const o = JSON.parse(str);
+    return o && typeof o === 'object' ? (o as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function extractJson(row: IotRow): Record<string, unknown> | null {
+  const fromParsed = tryParseJson(row.parsed_data);
   if (fromParsed) return fromParsed;
   // fallback: гажуудсан raw_body дотроос {...}-г сугалах
   const raw = row.raw_body ?? '';
-  const s = raw.indexOf('{');
-  const e = raw.lastIndexOf('}');
-  if (s >= 0 && e > s) return tryParse(raw.slice(s, e + 1));
+  const b = jsonBounds(raw);
+  if (b) return tryParseJson(raw.slice(b.start, b.end));
   return null;
 }
 
@@ -89,6 +119,7 @@ interface Ev {
   parsed: boolean;
   value: string;
   cardId?: string;
+  status: IotRow['status'];
 }
 
 function toEv(row: IotRow): Ev | null {
@@ -114,12 +145,20 @@ function toEv(row: IotRow): Ev | null {
     atMs,
     parsed: row.parsed === true || row.parsed === 1,
     value,
-    cardId
+    cardId,
+    status: row.status ?? null
   };
 }
 
 function slot(e: Ev): Slot {
-  return { received: true, value: e.value, id: e.id, at: e.at, parsed: e.parsed };
+  return {
+    received: true,
+    value: e.value,
+    id: e.id,
+    at: e.at,
+    parsed: e.parsed,
+    status: e.status
+  };
 }
 
 function finalize(r: Read): void {
@@ -143,6 +182,7 @@ function makeOrphan(bin: string, b?: Ev, s?: Ev): Read {
     storage: s ? slot(s) : { received: false },
     card: { received: false },
     duplicates: 0,
+    retries: [],
     presentCount: 0,
     missing: [],
     complete: false
@@ -183,6 +223,7 @@ export function groupReads(
     const cur = current[bin];
     if (cur && (ev.atMs - cur.cardMs) / 1000 <= retrySec) {
       cur.read.duplicates += 1;
+      cur.read.retries.push({ id: ev.id, at: ev.at, value: ev.value });
       cur.cardMs = ev.atMs;
       continue;
     }
@@ -192,8 +233,9 @@ export function groupReads(
       cardAt: ev.at,
       battery: { received: false },
       storage: { received: false },
-      card: { received: true, value: ev.value, id: ev.id, at: ev.at, parsed: ev.parsed, cardId: ev.cardId },
+      card: { received: true, value: ev.value, id: ev.id, at: ev.at, parsed: ev.parsed, cardId: ev.cardId, status: ev.status },
       duplicates: 0,
+      retries: [],
       presentCount: 0,
       missing: [],
       complete: false
@@ -298,9 +340,8 @@ export function groupByBin(
       return null;
     };
     const raw = row.raw_body ?? '';
-    const s = raw.indexOf('{');
-    const e = raw.lastIndexOf('}');
-    const fromRaw = s >= 0 && e > s ? tryGet(raw.slice(s, e + 1)) : null;
+    const b = jsonBounds(raw);
+    const fromRaw = b ? tryGet(raw.slice(b.start, b.end)) : null;
     const binId = tryGet(row.parsed_data) ?? fromRaw ?? 'UNKNOWN';
     if (!rowsByBin.has(binId)) rowsByBin.set(binId, []);
     rowsByBin.get(binId)!.push(row);
