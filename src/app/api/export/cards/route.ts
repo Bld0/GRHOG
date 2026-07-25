@@ -43,7 +43,18 @@ export async function GET(request: NextRequest) {
         statusText: response.statusText,
         errorText: errorText
       });
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      // Propagate the backend's real status/body instead of masking every
+      // failure as a generic 500 — a 401/403 here needs to reach the browser
+      // as 401/403 so apiClient.fetchWithAuth's token-refresh-and-retry logic
+      // (api-client.ts:220-228) actually triggers instead of silently failing.
+      return NextResponse.json(
+        {
+          error: 'Failed to export cards',
+          backendStatus: response.status,
+          backendError: errorText || response.statusText
+        },
+        { status: response.status }
+      );
     }
 
     // Get the Excel file as blob
@@ -62,7 +73,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error exporting cards:', error);
     return NextResponse.json(
-      { error: 'Failed to export cards' },
+      {
+        error: 'Failed to export cards',
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
