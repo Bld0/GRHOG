@@ -27,7 +27,12 @@ export async function GET(request: NextRequest) {
       headers.Authorization = authHeader;
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    // Same scheme-normalization as next.config.ts's rewrite destination:
+    // Vercel's BACKEND_URL env var has been observed set WITHOUT a scheme
+    // (bare hostname), which makes fetch() throw "Failed to parse URL" since
+    // it requires an absolute URL. Prepend https:// when missing.
+    const rawBackendUrl = (process.env.BACKEND_URL || 'http://device.grhog.mn').replace(/\/$/, '');
+    const backendUrl = /^https?:\/\//.test(rawBackendUrl) ? rawBackendUrl : `https://${rawBackendUrl}`;
     const url = `${backendUrl}/export/cards/excel${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     console.log('Calling backend export URL:', url);
     
