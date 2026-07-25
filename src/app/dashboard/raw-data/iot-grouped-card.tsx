@@ -50,6 +50,8 @@ import {
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
 const PAGE_SIZE = 20;
+// Real-time: энэ интервалаар автоматаар дахин татна (IngestionTable-тэй адил)
+const AUTO_REFRESH_MS = 10 * 1000;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -605,9 +607,13 @@ export function IotGroupedCard() {
   const [search, setSearch] = useState('');
   const [selectedBin, setSelectedBin] = useState<BinGroup | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastFetchedAt, setLastFetchedAt] = useState<number | null>(null);
 
-  const fetchRows = useCallback(async () => {
-    setStatus('loading');
+  // silent = true үед spinner үзүүлэхгүй чимээгүй шинэчилнэ (auto-refresh),
+  // ингэснээр 10 сек тутамд бүх хүснэгт дахин ачаалагдаж байгаа мэт анивчихгүй.
+  const fetchRows = useCallback(async (silent = false) => {
+    if (!silent) setStatus('loading');
     try {
       const res = await apiClient.fetchWithAuth(
         '/api/raw-data/iot-request-log?limit=2000'
@@ -615,17 +621,30 @@ export function IotGroupedCard() {
       if (res.ok) {
         setRows((await res.json()) as IotRow[]);
         setStatus('success');
-      } else {
+        setLastFetchedAt(Date.now());
+      } else if (!silent) {
         setStatus('error');
       }
     } catch {
-      setStatus('error');
+      if (!silent) setStatus('error');
     }
   }, []);
 
   useEffect(() => {
     fetchRows();
   }, [fetchRows]);
+
+  // Real-time auto-refresh — идэвхтэй tab дээр л ажиллана, сая уншуулсан сав
+  // groupByBin-ийн шинэ эрэмбээр (хамгийн сүүлийн нь эхэнд) автоматаар дээшээ гарна.
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = setInterval(() => {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        fetchRows(true);
+      }
+    }, AUTO_REFRESH_MS);
+    return () => clearInterval(id);
+  }, [autoRefresh, fetchRows]);
 
   const { reads, stats } = useMemo(() => groupReads(rows ?? []), [rows]);
   const binGroups = useMemo(() => groupByBin(reads, rows ?? []), [reads, rows]);
@@ -651,8 +670,10 @@ export function IotGroupedCard() {
                 Бүлэглэсэн уншуулалт (нэг карт = 3 хүсэлт)
               </CardTitle>
               <CardDescription className='text-xs'>
-                Савнууд бүлэглэгдсэн — хамгийн сүүлийн уншуулалт харагдана.
-                Савын мөрийг дарж дэлгэрэнгүй бүх уншуулалтыг харна уу.
+                Хамгийн сүүлд уншуулсан сав хүснэгтийн хамгийн дээр (real-time,
+                {' '}
+                {AUTO_REFRESH_MS / 1000} сек тутам). Савын мөрийг дарж
+                дэлгэрэнгүй бүх уншуулалтыг харна уу.
               </CardDescription>
             </div>
             <div className='flex items-center gap-2'>
@@ -665,10 +686,35 @@ export function IotGroupedCard() {
               {status === 'error' && (
                 <Icons.warning className='h-4 w-4 text-red-500' />
               )}
+              {lastFetchedAt && status === 'success' && (
+                <span className='text-muted-foreground text-xs whitespace-nowrap'>
+                  {new Date(lastFetchedAt).toLocaleTimeString('mn-MN', {
+                    hour12: false
+                  })}
+                </span>
+              )}
+              <Button
+                variant={autoRefresh ? 'default' : 'outline'}
+                size='sm'
+                onClick={() => setAutoRefresh((v) => !v)}
+                title={
+                  autoRefresh
+                    ? `${AUTO_REFRESH_MS / 1000} сек тутам автоматаар шинэчилж байна — дарж зогсооно`
+                    : 'Автомат шинэчлэлт зогссон — дарж асаана'
+                }
+                className='gap-1.5'
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    autoRefresh ? 'animate-pulse bg-green-400' : 'bg-muted-foreground'
+                  }`}
+                />
+                Live
+              </Button>
               <Button
                 variant='outline'
                 size='sm'
-                onClick={fetchRows}
+                onClick={() => fetchRows()}
                 disabled={status === 'loading'}
               >
                 Татах

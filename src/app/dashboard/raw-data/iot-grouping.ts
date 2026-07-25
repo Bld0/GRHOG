@@ -310,7 +310,8 @@ export interface BinGroup {
 
 /**
  * Takes the already-grouped read list and organises it by binId.
- * Returns an array of BinGroup sorted by binId alphabetically.
+ * Returns an array of BinGroup sorted newest-first by each bin's latest
+ * read time, so a bin that was just scanned jumps to the top of the table.
  */
 export function groupByBin(
   reads: Read[],
@@ -368,7 +369,7 @@ export function groupByBin(
     groups.push({ binId, latest, reads: binReads, stats });
   }
 
-  // Sort by binId alphabetically
-  groups.sort((a, b) => a.binId.localeCompare(b.binId));
+  // Хамгийн сүүлд уншуулсан сав хамгийн дээр (real-time харагдах зорилготой)
+  groups.sort((a, b) => parseTime(b.latest.at) - parseTime(a.latest.at));
   return groups;
 }
