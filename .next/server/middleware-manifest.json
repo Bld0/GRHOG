@@ -3,38 +3,35 @@
   "middleware": {
     "/": {
       "files": [
-        "server/edge/chunks/node_modules_@sentry_d46b9e5d._.js",
-        "server/edge/chunks/_2ccad757._.js",
-        "server/edge/chunks/edge-wrapper_67fd01f9.js",
-        "server/edge/chunks/_15d43ebc._.js",
-        "server/edge/chunks/[root-of-the-server]__dc15d093._.js",
-        "server/edge/chunks/edge-wrapper_cdfd2b0d.js"
+        "server/edge-instrumentation.js",
+        "server/edge-runtime-webpack.js",
+        "server/src/middleware.js"
       ],
-      "name": "middleware",
+      "name": "src/middleware",
       "page": "/",
       "matchers": [
         {
-          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*))(\\\\.json)?[\\/#\\?]?$",
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*))(\\.json)?[\\/#\\?]?$",
           "originalSource": "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)"
         },
         {
-          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/(api|trpc))(.*)(\\\\.json)?[\\/#\\?]?$",
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/(api|trpc))(.*)(\\.json)?[\\/#\\?]?$",
           "originalSource": "/(api|trpc)(.*)"
         }
       ],
       "wasm": [],
       "assets": [],
       "env": {
-        "__NEXT_BUILD_ID": "development",
-        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "Sh6KwR1fgHGBadyahjZgaBrf9zWa9KfcObG2Ro3IpYY=",
-        "__NEXT_PREVIEW_MODE_ID": "685b81a4233f461aa8305ff873ab7bdd",
-        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "7499958ba24226908def96967e79a6451dd51e6128c71083ed20f7b5fb07fbba",
-        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "04fabfbb0a6ae3916eba96af10e06b7a54cdccf27a2117811bfaaca5f0b480c9"
+        "__NEXT_BUILD_ID": "VP7890eRQLf8oVcuVVzjH",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "MK25fbdQmB/u/tIoox6LYkW8piDYiv3XNolSYkCLWjE=",
+        "__NEXT_PREVIEW_MODE_ID": "47cac9d5d66522d8eaff2f322c14c1a6",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "6fd230d2bdecd617cbd18b9fcc62deb14f92484393c0ac11fedf676af1183e19",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "3ebced02bdb795f7c5eb6c51383a196fe7ec1f852837695a2197f46815ca4153"
       }
     }
   },
+  "functions": {},
   "sortedMiddleware": [
     "/"
-  ],
-  "functions": {}
+  ]
 }

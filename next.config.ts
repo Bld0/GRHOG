@@ -44,8 +44,13 @@ const baseConfig: NextConfig = {
           // segment array instead of a single string with embedded slashes.
           // The custom regex excludes `/api/auth` and `/api/auth/*` so those
           // still flow through the local route handlers (which set the
-          // `auth-token` cookie that middleware.ts checks).
-          source: '/api/:path((?!auth$|auth/).+)+',
+          // `auth-token` cookie that middleware.ts checks). `/api/export/*`
+          // is excluded too: those local handlers translate the request onto
+          // a different backend path (e.g. `/api/export/cards` ->
+          // `${BACKEND_URL}/export/cards/excel`, note the added `/excel`) and
+          // return a file blob — forwarding the raw path here 404s against
+          // the backend, which has no bare `/export/cards` route.
+          source: '/api/:path((?!auth$|auth/|export/).+)+',
           destination: `${BACKEND_URL}/:path*`
         }
       ],
