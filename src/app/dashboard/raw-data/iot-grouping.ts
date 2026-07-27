@@ -132,12 +132,8 @@ function toEv(row: IotRow): Ev | null {
   let value = '';
   let cardId: string | undefined;
   if (kind === 'battery') value = obj?.battery_Level != null ? String(obj.battery_Level) : '';
-  else if (kind === 'storage') {
-    // storageLevel:null — сенсоргүй сав эсвэл сенсорын алдаа. Хүсэлт нь ирсэн ч
-    // ашиглах утгагүй тул уншуулалтын хувьд "ирээгүй" (✗ storage) гэж тооцно.
-    if (obj?.storageLevel == null) return null;
-    value = String(obj.storageLevel);
-  } else {
+  else if (kind === 'storage') value = obj?.storageLevel != null ? String(obj.storageLevel) : '';
+  else {
     cardId = obj?.cardId != null ? String(obj.cardId) : undefined;
     value = cardId ?? '';
   }
