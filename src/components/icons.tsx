@@ -36,6 +36,7 @@ import {
   IconUsers,
   IconReceipt,
   IconChartLine,
+  IconMessageReport,
   IconNfc,
   IconEye,
   IconEyeOff,
@@ -87,5 +88,6 @@ export const Icons = {
   eye: IconEye,
   eyeOff: IconEyeOff,
   rawData: IconDatabase,
+  complaint: IconMessageReport,
   search: IconSearch
 };

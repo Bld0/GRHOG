@@ -50,6 +50,15 @@ export const navItems: NavItem[] = [
     requiresRole: 'VIEWER' // All roles can view transactions
   },
   {
+    title: 'Санал гомдол',
+    url: '/dashboard/complaints',
+    icon: 'complaint',
+    shortcut: ['c', 'c'],
+    isActive: false,
+    items: [], // No child items
+    requiresRole: 'VIEWER' // All roles can view complaints
+  },
+  {
     title: 'Системийн хэрэглэгчид',
     url: '/dashboard/users',
     icon: 'users',
