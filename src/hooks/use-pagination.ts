@@ -24,9 +24,13 @@ export interface PaginationParams {
   size?: number;
   sortBy?: string;
   sortDirection?: 'asc' | 'desc';
-  
+
   // Filter parameters for clients/cards
   search?: string;
+  // Free-text search bar term (bins): matches binId, binName, location,
+  // district and khoroo. Kept separate from `search`, which carries the
+  // structured column-filter query.
+  keyword?: string;
   isActive?: boolean;
   cardId?: string;
   name?: string;
@@ -41,7 +45,7 @@ export interface PaginationParams {
   type?: string;
   totalAccess?: number;
   cardUsedAt?: string;
-  
+
   // Filter parameters for bins
   location?: string;
   binId?: string;
@@ -51,7 +55,7 @@ export interface PaginationParams {
   batteryLevel?: string;
   minBatteryLevel?: number;
   maxBatteryLevel?: number;
-  
+
   // Filter parameters for bin usages/transactions
   binIdFilter?: number;
   cardIdFilter?: string;
@@ -61,62 +65,71 @@ export interface PaginationParams {
   clientType?: string;
   storageLevel?: number;
   statistics?: any;
-  
+
   // Filter parameters for clearings
   clearingBinId?: number;
   minFillLevel?: number;
   maxFillLevel?: number;
-  
+
   // Advanced filter operators
   [key: string]: any; // Allow dynamic filter fields for advanced filtering
 }
 
-export function usePagination(initialPage: number = 0, initialSize: number = 20) {
+export function usePagination(
+  initialPage: number = 0,
+  initialSize: number = 20
+) {
   const [pagination, setPagination] = useState<PaginationState>({
     page: initialPage,
     size: initialSize,
     totalElements: 0,
     totalPages: 0,
     hasNext: false,
-    hasPrevious: false,
+    hasPrevious: false
   });
 
-  const updatePagination = useCallback((data: {
-    page: number;
-    size: number;
-    totalElements: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrevious: boolean;
-  }) => {
-    setPagination(data);
-  }, []);
+  const updatePagination = useCallback(
+    (data: {
+      page: number;
+      size: number;
+      totalElements: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrevious: boolean;
+    }) => {
+      setPagination(data);
+    },
+    []
+  );
 
   const setPage = useCallback((page: number) => {
-    setPagination(prev => ({ ...prev, page }));
+    setPagination((prev) => ({ ...prev, page }));
   }, []);
 
   const setSize = useCallback((size: number) => {
-    setPagination(prev => ({ ...prev, size, page: 0 })); // Reset to first page when changing size
+    setPagination((prev) => ({ ...prev, size, page: 0 })); // Reset to first page when changing size
   }, []);
 
   const nextPage = useCallback(() => {
     if (pagination.hasNext) {
-      setPagination(prev => ({ ...prev, page: prev.page + 1 }));
+      setPagination((prev) => ({ ...prev, page: prev.page + 1 }));
     }
   }, [pagination.hasNext]);
 
   const previousPage = useCallback(() => {
     if (pagination.hasPrevious) {
-      setPagination(prev => ({ ...prev, page: prev.page - 1 }));
+      setPagination((prev) => ({ ...prev, page: prev.page - 1 }));
     }
   }, [pagination.hasPrevious]);
 
-  const goToPage = useCallback((page: number) => {
-    if (page >= 0 && page < pagination.totalPages) {
-      setPagination(prev => ({ ...prev, page }));
-    }
-  }, [pagination.totalPages]);
+  const goToPage = useCallback(
+    (page: number) => {
+      if (page >= 0 && page < pagination.totalPages) {
+        setPagination((prev) => ({ ...prev, page }));
+      }
+    },
+    [pagination.totalPages]
+  );
 
   const resetPagination = useCallback(() => {
     setPagination({
@@ -125,7 +138,7 @@ export function usePagination(initialPage: number = 0, initialSize: number = 20)
       totalElements: 0,
       totalPages: 0,
       hasNext: false,
-      hasPrevious: false,
+      hasPrevious: false
     });
   }, [initialPage, initialSize]);
 
@@ -137,6 +150,6 @@ export function usePagination(initialPage: number = 0, initialSize: number = 20)
     nextPage,
     previousPage,
     goToPage,
-    resetPagination,
+    resetPagination
   };
-} 
+}

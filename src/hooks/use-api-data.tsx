@@ -145,6 +145,9 @@ const buildQueryParams = (
   if (paginationParams?.search) {
     queryParams.append('search', paginationParams.search);
   }
+  if (paginationParams?.keyword) {
+    queryParams.append('keyword', paginationParams.keyword);
+  }
   if (paginationParams?.isActive !== undefined) {
     queryParams.append('isActive', paginationParams.isActive.toString());
   }

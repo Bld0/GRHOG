@@ -50,8 +50,10 @@ import {
   IconAlertTriangle,
   IconChevronDown,
   IconChevronUp,
-  IconTrash
+  IconTrash,
+  IconX
 } from '@tabler/icons-react';
+import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
@@ -82,6 +84,11 @@ export function BinsViewGrouped() {
   const [selectedBins, setSelectedBins] = useState<Set<number>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  // Free-text search bar: `searchInput` is what the user is typing, `searchTerm`
+  // is what has actually been submitted (Enter or the "Хайх" button), so we do
+  // not refetch on every keystroke.
+  const [searchInput, setSearchInput] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Enhanced filter system state
   const {
@@ -101,6 +108,12 @@ export function BinsViewGrouped() {
       sortBy: sortConfig?.field || 'district',
       sortDirection: sortConfig?.direction || 'asc'
     };
+
+    // Free-text search bar term. Sent as its own `keyword` param so it keeps
+    // working alongside the structured column filters packed into `search`.
+    if (searchTerm) {
+      params.keyword = searchTerm;
+    }
 
     // Build search query from advanced filters
     const searchParts: string[] = [];
@@ -150,7 +163,7 @@ export function BinsViewGrouped() {
       }
     }
     return params;
-  }, [currentPage, itemsPerPage, activeFilters, sortConfig]);
+  }, [currentPage, itemsPerPage, activeFilters, sortConfig, searchTerm]);
 
   // Fetch grouped bins data
   const {
@@ -167,7 +180,16 @@ export function BinsViewGrouped() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(0);
-  }, [activeFilters, sortConfig]);
+  }, [activeFilters, sortConfig, searchTerm]);
+
+  const handleSearch = () => {
+    setSearchTerm(searchInput.trim());
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearchTerm('');
+  };
 
   // Generate page numbers for pagination
   const getPageNumbers = () => {
@@ -282,6 +304,11 @@ export function BinsViewGrouped() {
     try {
       const queryParams = new URLSearchParams();
 
+      // Export the same rows the table is showing, search bar included.
+      if (searchTerm) {
+        queryParams.append('keyword', searchTerm);
+      }
+
       if (activeFilters.length > 0) {
         const searchParts: string[] = [];
 
@@ -362,7 +389,7 @@ export function BinsViewGrouped() {
     } catch (error) {
       toast.error(
         'Экспорт хийхэд алдаа гарлаа: ' +
-        (error instanceof Error ? error.message : 'Unknown error')
+          (error instanceof Error ? error.message : 'Unknown error')
       );
     }
   };
@@ -523,15 +550,50 @@ export function BinsViewGrouped() {
         {/* Bins Table */}
         <Card>
           <CardHeader>
-            <div className='flex items-center justify-between'>
-              <div>
-                <CardTitle>
-                  Дүүрэг & Хороогоор ангилсан савны жагсаалт
-                </CardTitle>
-                <CardDescription>
-                  {pagination.totalElements} бүлэг • {totalActiveBins} идэвхтэй
-                  сав • Хуудаслалт {currentPage + 1}/{pagination.totalPages}
-                </CardDescription>
+            <div className='flex flex-wrap items-center justify-between gap-4'>
+              <div className='flex flex-wrap items-center gap-4'>
+                <div>
+                  <CardTitle>
+                    Дүүрэг & Хороогоор ангилсан савны жагсаалт
+                  </CardTitle>
+                  <CardDescription>
+                    {pagination.totalElements} бүлэг • {totalActiveBins}{' '}
+                    идэвхтэй сав • Хуудаслалт {currentPage + 1}/
+                    {pagination.totalPages}
+                  </CardDescription>
+                </div>
+
+                {/* Free-text search over khoroo / district / location / binName / binId */}
+                <div className='flex items-center gap-2'>
+                  <div className='relative'>
+                    <IconSearch className='text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2' />
+                    <Input
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSearch();
+                        }
+                      }}
+                      placeholder='Хороо, дүүрэг, байршил, савны нэр, ID...'
+                      className='w-[280px] pl-8'
+                    />
+                    {searchInput && (
+                      <button
+                        type='button'
+                        onClick={handleClearSearch}
+                        className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2'
+                        aria-label='Хайлт цэвэрлэх'
+                      >
+                        <IconX className='h-4 w-4' />
+                      </button>
+                    )}
+                  </div>
+                  <Button onClick={handleSearch} size='sm'>
+                    Хайх
+                  </Button>
+                </div>
               </div>
               <div className='flex items-center gap-2'>
                 <Select
@@ -724,7 +786,9 @@ export function BinsViewGrouped() {
                                     router.push(`/dashboard/bins/${bin.id}`)
                                   }
                                 >
-                                  <TableCell onClick={(e) => e.stopPropagation()}>
+                                  <TableCell
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     <Checkbox
                                       checked={selectedBins.has(bin.id)}
                                       onCheckedChange={() =>
@@ -806,7 +870,7 @@ export function BinsViewGrouped() {
                           <div className='flex flex-col items-center gap-2'>
                             <IconSearch className='text-muted-foreground h-8 w-8' />
                             <p className='text-muted-foreground'>
-                              {activeFilters.length > 0
+                              {activeFilters.length > 0 || searchTerm
                                 ? 'Хайлтын үр дүн олдсонгүй'
                                 : 'Бүртгэлтэй сав байхгүй'}
                             </p>
