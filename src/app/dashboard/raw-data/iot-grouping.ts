@@ -300,6 +300,11 @@ export function groupReads(
 
 export interface BinGroup {
   binId: string;
+  /**
+   * Савны хүний уншиж ойлгох нэр (bin.bin_name), binId-аар хайж олсон.
+   * bin хүснэгтэд бүртгэлгүй төхөөрөмжөөс өгөгдөл ирвэл null.
+   */
+  binName: string | null;
   /** Most recent read for this bin (by `at` timestamp). */
   latest: Read;
   /** All reads for this bin, sorted newest-first. */
@@ -312,10 +317,14 @@ export interface BinGroup {
  * Takes the already-grouped read list and organises it by binId.
  * Returns an array of BinGroup sorted newest-first by each bin's latest
  * read time, so a bin that was just scanned jumps to the top of the table.
+ *
+ * @param binNames binId (ИХ үсгээр) → binName lookup. Дамжуулаагүй эсвэл
+ *                 тухайн binId олдоогүй бол group.binName нь null болно.
  */
 export function groupByBin(
   reads: Read[],
-  allRows: IotRow[]
+  allRows: IotRow[],
+  binNames?: Map<string, string>
 ): BinGroup[] {
   // Bucket reads by binId
   const buckets = new Map<string, Read[]>();
@@ -366,7 +375,13 @@ export function groupByBin(
       corrupted: binRows.filter((r) => ((r.raw_body ?? '').trim()[0] ?? '') !== '{').length,
       totalRows: binRows.length
     };
-    groups.push({ binId, latest, reads: binReads, stats });
+    groups.push({
+      binId,
+      binName: binNames?.get(binId) ?? null,
+      latest,
+      reads: binReads,
+      stats
+    });
   }
 
   // Хамгийн сүүлд уншуулсан сав хамгийн дээр (real-time харагдах зорилготой)

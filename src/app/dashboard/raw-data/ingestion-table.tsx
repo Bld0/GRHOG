@@ -315,7 +315,7 @@ export function IngestionTable() {
     if (!silent) setStatus('loading');
     try {
       const res = await apiClient.fetchWithAuth(
-        '/api/raw-data/iot-request-log?limit=2000'
+        '/api/raw-data/iot-request-log?limit=5000'
       );
       if (res.ok) {
         const json = (await res.json()) as IotRow[];

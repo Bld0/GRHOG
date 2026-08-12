@@ -373,7 +373,11 @@ function BinDetailDialog({
       <DialogContent className='flex max-h-[90vh] w-[95vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1400px]'>
         <DialogHeader className='px-6 pt-6 pb-4 border-b'>
           <DialogTitle className='font-mono text-lg'>
-            {group?.binId ?? '—'} — Дэлгэрэнгүй уншуулалт
+            {group?.binId ?? '—'}
+            {group?.binName ? (
+              <span className='text-muted-foreground'> ({group.binName})</span>
+            ) : null}
+            {' — Дэлгэрэнгүй уншуулалт'}
           </DialogTitle>
           <DialogDescription>
             Бүх уншуулалт (хамгийн шинэ нь эхэнд). Хайх эсвэл хуудаслан
@@ -485,7 +489,7 @@ function BinSummaryRow({
   group: BinGroup;
   onClick: () => void;
 }) {
-  const { binId, latest, stats } = group;
+  const { binId, binName, latest, stats } = group;
   const completePct = pct(stats.complete, stats.totalReads);
   const healthTone =
     stats.complete === stats.totalReads
@@ -499,9 +503,12 @@ function BinSummaryRow({
       className='cursor-pointer hover:bg-muted/60 transition-colors'
       onClick={onClick}
     >
-      {/* Bin ID */}
-      <TableCell className='font-mono text-sm font-semibold'>
-        {binId}
+      {/* Bin ID + савны нэр (bin.bin_name) */}
+      <TableCell>
+        <div className='font-mono text-sm font-semibold'>{binId}</div>
+        <div className='text-muted-foreground font-mono text-xs'>
+          {binName ?? '—'}
+        </div>
       </TableCell>
       {/* Latest reading time */}
       <TableCell className='font-mono text-xs whitespace-nowrap'>
@@ -609,6 +616,9 @@ export function IotGroupedCard() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastFetchedAt, setLastFetchedAt] = useState<number | null>(null);
+  // binId → binName. IoT лог дотор зөвхөн binId ирдэг тул савны нэрийг bin
+  // хүснэгтээс тусад нь татаж авна.
+  const [binNames, setBinNames] = useState<Map<string, string>>(new Map());
 
   // silent = true үед spinner үзүүлэхгүй чимээгүй шинэчилнэ (auto-refresh),
   // ингэснээр 10 сек тутамд бүх хүснэгт дахин ачаалагдаж байгаа мэт анивчихгүй.
@@ -616,7 +626,7 @@ export function IotGroupedCard() {
     if (!silent) setStatus('loading');
     try {
       const res = await apiClient.fetchWithAuth(
-        '/api/raw-data/iot-request-log?limit=2000'
+        '/api/raw-data/iot-request-log?limit=5000'
       );
       if (res.ok) {
         setRows((await res.json()) as IotRow[]);
@@ -630,9 +640,32 @@ export function IotGroupedCard() {
     }
   }, []);
 
+  // Савны нэрийг ганц удаа татна — bin бүртгэл 10 сек тутам өөрчлөгддөггүй тул
+  // auto-refresh-д оруулах шаардлагагүй. Амжилтгүй болбол binName зүгээр л
+  // хоосон үлдэнэ, хүснэгт binId-гаараа хэвийн ажиллана.
+  const fetchBinNames = useCallback(async () => {
+    try {
+      const res = await apiClient.fetchWithAuth('/api/raw-data/bin');
+      if (!res.ok) return;
+      const bins = (await res.json()) as Record<string, unknown>[];
+      const map = new Map<string, string>();
+      for (const b of bins) {
+        const id = b.bin_id;
+        const name = b.bin_name;
+        if (id != null && name != null && String(name).trim()) {
+          map.set(String(id).trim().toUpperCase(), String(name).trim());
+        }
+      }
+      setBinNames(map);
+    } catch {
+      /* нэр татагдаагүй нь хүснэгтийг блоклохгүй */
+    }
+  }, []);
+
   useEffect(() => {
     fetchRows();
-  }, [fetchRows]);
+    fetchBinNames();
+  }, [fetchRows, fetchBinNames]);
 
   // Real-time auto-refresh — идэвхтэй tab дээр л ажиллана, сая уншуулсан сав
   // groupByBin-ийн шинэ эрэмбээр (хамгийн сүүлийн нь эхэнд) автоматаар дээшээ гарна.
@@ -647,12 +680,19 @@ export function IotGroupedCard() {
   }, [autoRefresh, fetchRows]);
 
   const { reads, stats } = useMemo(() => groupReads(rows ?? []), [rows]);
-  const binGroups = useMemo(() => groupByBin(reads, rows ?? []), [reads, rows]);
+  const binGroups = useMemo(
+    () => groupByBin(reads, rows ?? [], binNames),
+    [reads, rows, binNames]
+  );
 
   const filteredGroups = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return binGroups;
-    return binGroups.filter((g) => g.binId.toLowerCase().includes(q));
+    return binGroups.filter(
+      (g) =>
+        g.binId.toLowerCase().includes(q) ||
+        (g.binName ?? '').toLowerCase().includes(q)
+    );
   }, [binGroups, search]);
 
   const handleBinClick = (group: BinGroup) => {
@@ -729,7 +769,7 @@ export function IotGroupedCard() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder='binId-аар хайх...'
+              placeholder='binId эсвэл савны нэрээр хайх...'
               className='pl-8'
               disabled={status !== 'success'}
             />
@@ -758,7 +798,7 @@ export function IotGroupedCard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className='w-[90px]'>Сав</TableHead>
+                    <TableHead className='w-[130px]'>Сав</TableHead>
                     <TableHead className='w-[140px]'>Сүүлийн цаг</TableHead>
                     <TableHead>Battery</TableHead>
                     <TableHead>Storage</TableHead>
