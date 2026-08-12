@@ -305,26 +305,49 @@ export interface BinGroup {
    * bin хүснэгтэд бүртгэлгүй төхөөрөмжөөс өгөгдөл ирвэл null.
    */
   binName: string | null;
-  /** Most recent read for this bin (by `at` timestamp). */
-  latest: Read;
-  /** All reads for this bin, sorted newest-first. */
+  /** bin.is_active — бүртгэлгүй (лог дотор л байгаа) сав дээр null. */
+  isActive: boolean | null;
+  /** bin хүснэгтэд бүртгэлтэй эсэх. */
+  registered: boolean;
+  /** Most recent read for this bin, or null when the bin has no reads at all. */
+  latest: Read | null;
+  /** This bin's reads, newest-first, capped at `maxReads`. */
   reads: Read[];
-  /** Stats computed only over this bin's reads. */
+  /** Уншуулалтын бодит нийт тоо (таслахаас өмнөх). */
+  totalReadCount: number;
+  /** `reads` нь maxReads-ээр таслагдсан эсэх. */
+  truncated: boolean;
+  /** Stats computed only over this bin's (capped) reads. */
   stats: GroupStats;
+}
+
+/** bin хүснэгтээс ирсэн бүртгэлтэй савны мэдээлэл. */
+export interface BinRef {
+  binId: string;
+  binName: string | null;
+  isActive: boolean | null;
 }
 
 /**
  * Takes the already-grouped read list and organises it by binId.
- * Returns an array of BinGroup sorted newest-first by each bin's latest
- * read time, so a bin that was just scanned jumps to the top of the table.
  *
- * @param binNames binId (ИХ үсгээр) → binName lookup. Дамжуулаагүй эсвэл
- *                 тухайн binId олдоогүй бол group.binName нь null болно.
+ * Бүртгэлтэй БҮХ сав (`bins`) мөр болж гарна — идэвхгүй болсон, эсвэл сүүлийн
+ * лог цонхонд огт өгөгдөлгүй сав ч "өгөгдөл алга" төлөвтэйгөөр харагдана.
+ * Ингэснээр идэвхтэй савууд идэвхгүйг нь дарж нуухгүй.
+ *
+ * Эрэмбэ: өгөгдөлтэй савууд сүүлийн уншуулалтаараа (шинэ нь дээр), дараа нь
+ * огт өгөгдөлгүй савууд binId-гаараа.
+ *
+ * @param bins     bin хүснэгтийн бүртгэл (binId ИХ үсгээр). Дамжуулаагүй бол
+ *                 зөвхөн лог дотор өгөгдөлтэй савууд гарна.
+ * @param maxReads нэг савын `reads`-ийн дээд хязгаар (дэлгэрэнгүйд харуулах
+ *                 хамгийн сүүлийн N уншуулалт).
  */
 export function groupByBin(
   reads: Read[],
   allRows: IotRow[],
-  binNames?: Map<string, string>
+  bins?: Map<string, BinRef>,
+  maxReads = 100
 ): BinGroup[] {
   // Bucket reads by binId
   const buckets = new Map<string, Read[]>();
@@ -359,11 +382,19 @@ export function groupByBin(
 
   const truthyParsed = (r: IotRow) => r.parsed === true || r.parsed === 1;
 
+  // Бүртгэлтэй бүх сав + логт таарсан бүртгэлгүй binId-ууд
+  const allBinIds = new Set<string>([
+    ...Array.from(bins?.keys() ?? []),
+    ...Array.from(buckets.keys())
+  ]);
+
   const groups: BinGroup[] = [];
-  for (const [binId, binReads] of Array.from(buckets.entries())) {
+  for (const binId of Array.from(allBinIds)) {
+    const allReads = buckets.get(binId) ?? [];
     // Already sorted newest-first by groupReads()
-    const latest = binReads[0];
+    const binReads = allReads.slice(0, Math.max(1, maxReads));
     const binRows = rowsByBin.get(binId) ?? [];
+    const ref = bins?.get(binId);
     const stats: GroupStats = {
       totalReads: binReads.length,
       complete: binReads.filter((r) => r.complete).length,
@@ -377,14 +408,24 @@ export function groupByBin(
     };
     groups.push({
       binId,
-      binName: binNames?.get(binId) ?? null,
-      latest,
+      binName: ref?.binName ?? null,
+      isActive: ref?.isActive ?? null,
+      registered: !!ref,
+      latest: binReads[0] ?? null,
       reads: binReads,
+      totalReadCount: allReads.length,
+      truncated: allReads.length > binReads.length,
       stats
     });
   }
 
-  // Хамгийн сүүлд уншуулсан сав хамгийн дээр (real-time харагдах зорилготой)
-  groups.sort((a, b) => parseTime(b.latest.at) - parseTime(a.latest.at));
+  // Хамгийн сүүлд уншуулсан сав хамгийн дээр (real-time харагдах зорилготой),
+  // огт өгөгдөлгүй савууд хамгийн доор binId-гаараа эрэмбэлэгдэнэ.
+  groups.sort((a, b) => {
+    if (!a.latest && !b.latest) return a.binId.localeCompare(b.binId);
+    if (!a.latest) return 1;
+    if (!b.latest) return -1;
+    return parseTime(b.latest.at) - parseTime(a.latest.at);
+  });
   return groups;
 }

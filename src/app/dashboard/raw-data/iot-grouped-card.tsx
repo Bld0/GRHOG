@@ -43,6 +43,7 @@ import {
   type IotRow,
   type Read,
   type Slot,
+  type BinRef,
   type BinGroup,
   type GroupStats
 } from './iot-grouping';
@@ -52,6 +53,13 @@ type Status = 'idle' | 'loading' | 'success' | 'error';
 const PAGE_SIZE = 20;
 // Real-time: энэ интервалаар автоматаар дахин татна (IngestionTable-тэй адил)
 const AUTO_REFRESH_MS = 10 * 1000;
+// Нэг савд харуулах уншуулалтын дээд хязгаар (дэлгэрэнгүй цонх).
+const MAX_READS_PER_BIN = 100;
+// Backend-ээс сав тус бүрд татах түүхий мөрийн хязгаар. Нэг уншуулалт = 3
+// хүсэлт (battery + storage + card) тул 100 уншуулалтад ~300 мөр хэрэгтэй.
+const PER_BIN_ROWS = MAX_READS_PER_BIN * 3;
+// Auto-refresh дээр зөвхөн сүүлийн мөрүүдийг татаж, snapshot дээр нэмнэ.
+const TAIL_ROWS = 500;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -73,6 +81,14 @@ function fmtTime(iso: string): string {
 
 const pct = (n: number, total: number) =>
   total ? `${Math.round((n / total) * 100)}%` : '0%';
+
+/** Шинэ мөрүүдийг хуучин дээр нэмж нэгтгэнэ (id-гаар давхардлыг арилгана). */
+function mergeRows(prev: IotRow[] | null, incoming: IotRow[]): IotRow[] {
+  const byId = new Map<number, IotRow>();
+  for (const r of prev ?? []) byId.set(r.id, r);
+  for (const r of incoming) byId.set(r.id, r);
+  return Array.from(byId.values()).sort((a, b) => b.id - a.id);
+}
 
 // ---------------------------------------------------------------------------
 // Shared sub-components
@@ -147,7 +163,14 @@ function rowTone(r: Read): string {
   return 'bg-amber-500/5';
 }
 
-function ReadsTable({ reads }: { reads: Read[] }) {
+function ReadsTable({
+  reads,
+  startIndex = 0
+}: {
+  reads: Read[];
+  /** Хуудаслалтын эхний дугаар — жагсаалт хуудсаар тасрахгүй үргэлжилнэ. */
+  startIndex?: number;
+}) {
   // "+N" badge дээр дарахад тухайн уншуулалтын хураагдсан retry-үүд дэлгэгдэнэ
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -155,7 +178,7 @@ function ReadsTable({ reads }: { reads: Read[] }) {
     return (
       <TableRow>
         <TableCell
-          colSpan={5}
+          colSpan={6}
           className='text-muted-foreground text-center text-sm'
         >
           Илэрц алга.
@@ -180,6 +203,9 @@ function ReadsTable({ reads }: { reads: Read[] }) {
         return (
           <React.Fragment key={key}>
             <TableRow className={rowTone(r)}>
+              <TableCell className='text-muted-foreground font-mono text-xs'>
+                {startIndex + i + 1}
+              </TableCell>
               <TableCell className='font-mono text-xs whitespace-nowrap'>
                 {fmtTime(r.at)}
               </TableCell>
@@ -224,6 +250,7 @@ function ReadsTable({ reads }: { reads: Read[] }) {
             {isOpen &&
               r.retries.map((rt) => (
                 <TableRow key={`${key}-retry-${rt.id}`} className='bg-muted/30'>
+                  <TableCell />
                   <TableCell className='text-muted-foreground pl-6 font-mono text-xs whitespace-nowrap'>
                     {fmtTime(rt.at)}
                   </TableCell>
@@ -380,8 +407,12 @@ function BinDetailDialog({
             {' — Дэлгэрэнгүй уншуулалт'}
           </DialogTitle>
           <DialogDescription>
-            Бүх уншуулалт (хамгийн шинэ нь эхэнд). Хайх эсвэл хуудаслан
-            харна уу.
+            {group?.isActive === false && 'Идэвхгүй бүртгэлтэй сав. '}
+            Сүүлийн {MAX_READS_PER_BIN} уншуулалт (хамгийн шинэ нь эхэнд).
+            {group?.truncated
+              ? ' Үүнээс өмнөх уншуулалтууд энд харагдахгүй.'
+              : ''}{' '}
+            Хайх эсвэл хуудаслан харна уу.
           </DialogDescription>
         </DialogHeader>
 
@@ -440,7 +471,11 @@ function BinDetailDialog({
           <p className='text-muted-foreground mt-1.5 text-xs'>
             {search.trim()
               ? `${filtered.length} / ${group?.reads.length ?? 0} мөр тохирлоо`
-              : `Нийт ${group?.reads.length ?? 0} уншуулалт`}
+              : `${group?.reads.length ?? 0} уншуулалт харуулж байна${
+                  group?.truncated
+                    ? ` (хамгийн сүүлийн ${MAX_READS_PER_BIN}-аар хязгаарласан)`
+                    : ''
+                }`}
           </p>
         </div>
 
@@ -450,17 +485,21 @@ function BinDetailDialog({
             <table className='w-full table-fixed caption-bottom text-sm'>
               <TableHeader>
                 <TableRow>
-                  <TableHead className='w-[15%]'>Цаг</TableHead>
-                  <TableHead className='w-[22%]'>Battery</TableHead>
-                  <TableHead className='w-[24%]'>Storage</TableHead>
-                  <TableHead className='w-[24%]'>Card</TableHead>
+                  <TableHead className='w-[5%]'>№</TableHead>
+                  <TableHead className='w-[14%]'>Цаг</TableHead>
+                  <TableHead className='w-[21%]'>Battery</TableHead>
+                  <TableHead className='w-[22%]'>Storage</TableHead>
+                  <TableHead className='w-[23%]'>Card</TableHead>
                   <TableHead className='w-[15%] text-right'>
                     Бүрэн бүтэн
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <ReadsTable reads={paginated} />
+                <ReadsTable
+                  reads={paginated}
+                  startIndex={(page - 1) * PAGE_SIZE}
+                />
               </TableBody>
             </table>
           </div>
@@ -484,12 +523,15 @@ function BinDetailDialog({
 
 function BinSummaryRow({
   group,
+  index,
   onClick
 }: {
   group: BinGroup;
+  /** Жагсаалтын дугаар (1-ээс эхэлнэ). */
+  index: number;
   onClick: () => void;
 }) {
-  const { binId, binName, latest, stats } = group;
+  const { binId, binName, isActive, registered, latest, stats } = group;
   const completePct = pct(stats.complete, stats.totalReads);
   const healthTone =
     stats.complete === stats.totalReads
@@ -500,52 +542,94 @@ function BinSummaryRow({
 
   return (
     <TableRow
-      className='cursor-pointer hover:bg-muted/60 transition-colors'
+      className={`cursor-pointer hover:bg-muted/60 transition-colors ${
+        latest ? '' : 'opacity-60'
+      }`}
       onClick={onClick}
     >
+      {/* Жагсаалтын дугаар */}
+      <TableCell className='text-muted-foreground font-mono text-xs'>
+        {index}
+      </TableCell>
       {/* Bin ID + савны нэр (bin.bin_name) */}
       <TableCell>
-        <div className='font-mono text-sm font-semibold'>{binId}</div>
+        <div className='flex items-center gap-1.5'>
+          <span className='font-mono text-sm font-semibold'>{binId}</span>
+          {isActive === false && (
+            <Badge
+              variant='outline'
+              className='text-muted-foreground h-4 shrink-0 px-1 text-[10px]'
+              title='bin.is_active = false — идэвхгүй бүртгэлтэй сав'
+            >
+              идэвхгүй
+            </Badge>
+          )}
+          {!registered && (
+            <Badge
+              variant='outline'
+              className='h-4 shrink-0 px-1 text-[10px] text-amber-500'
+              title='bin хүснэгтэд бүртгэлгүй — зөвхөн IoT лог дотор байна'
+            >
+              бүртгэлгүй
+            </Badge>
+          )}
+        </div>
         <div className='text-muted-foreground font-mono text-xs'>
           {binName ?? '—'}
         </div>
       </TableCell>
       {/* Latest reading time */}
       <TableCell className='font-mono text-xs whitespace-nowrap'>
-        {fmtTime(latest.at)}
+        {latest ? fmtTime(latest.at) : '—'}
       </TableCell>
-      {/* Latest battery */}
-      <TableCell>
-        <SlotCell slot={latest.battery} label='battery' />
-      </TableCell>
-      {/* Latest storage */}
-      <TableCell>
-        <SlotCell slot={latest.storage} label='storage' />
-      </TableCell>
-      {/* Latest card */}
-      <TableCell>
-        <SlotCell slot={latest.card} label='card' />
-      </TableCell>
-      {/* Latest integrity */}
-      <TableCell>
-        {latest.complete ? (
-          <Badge className='bg-green-500/15 text-green-600 hover:bg-green-500/15'>
-            Бүрэн
-          </Badge>
-        ) : (
-          <Badge className='bg-red-600 text-white hover:bg-red-700'>
-            {latest.presentCount}/3
-          </Badge>
-        )}
-      </TableCell>
+      {latest ? (
+        <>
+          {/* Latest battery */}
+          <TableCell>
+            <SlotCell slot={latest.battery} label='battery' />
+          </TableCell>
+          {/* Latest storage */}
+          <TableCell>
+            <SlotCell slot={latest.storage} label='storage' />
+          </TableCell>
+          {/* Latest card */}
+          <TableCell>
+            <SlotCell slot={latest.card} label='card' />
+          </TableCell>
+          {/* Latest integrity */}
+          <TableCell>
+            {latest.complete ? (
+              <Badge className='bg-green-500/15 text-green-600 hover:bg-green-500/15'>
+                Бүрэн
+              </Badge>
+            ) : (
+              <Badge className='bg-red-600 text-white hover:bg-red-700'>
+                {latest.presentCount}/3
+              </Badge>
+            )}
+          </TableCell>
+        </>
+      ) : (
+        <TableCell colSpan={4} className='text-muted-foreground text-xs'>
+          Уншсан лог алга (хамрагдсан хугацаанд өгөгдөл ирээгүй)
+        </TableCell>
+      )}
       {/* Total reads + health */}
       <TableCell className='text-right'>
-        <span className='text-muted-foreground text-xs'>
-          {stats.totalReads} удаа
-        </span>
-        <span className={`ml-2 text-xs font-medium ${healthTone}`}>
-          {completePct} бүрэн
-        </span>
+        {latest ? (
+          <>
+            <span className='text-muted-foreground text-xs'>
+              {group.truncated
+                ? `${stats.totalReads}+ удаа`
+                : `${stats.totalReads} удаа`}
+            </span>
+            <span className={`ml-2 text-xs font-medium ${healthTone}`}>
+              {completePct} бүрэн
+            </span>
+          </>
+        ) : (
+          <span className='text-muted-foreground text-xs'>0 удаа</span>
+        )}
       </TableCell>
       {/* Action hint */}
       <TableCell className='text-right'>
@@ -612,24 +696,60 @@ export function IotGroupedCard() {
   const [rows, setRows] = useState<IotRow[] | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [search, setSearch] = useState('');
-  const [selectedBin, setSelectedBin] = useState<BinGroup | null>(null);
+  // Зөвхөн binId-г хадгална — ингэснээр auto-refresh дээр нээлттэй байгаа
+  // дэлгэрэнгүй цонх хуучин snapshot дээр гацахгүй, шинэ өгөгдлөө дагана.
+  const [selectedBinId, setSelectedBinId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastFetchedAt, setLastFetchedAt] = useState<number | null>(null);
-  // binId → binName. IoT лог дотор зөвхөн binId ирдэг тул савны нэрийг bin
-  // хүснэгтээс тусад нь татаж авна.
-  const [binNames, setBinNames] = useState<Map<string, string>>(new Map());
+  // binId → бүртгэлийн мэдээлэл. IoT лог дотор зөвхөн binId ирдэг тул савны
+  // нэр/идэвхтэй эсэхийг bin хүснэгтээс тусад нь татаж авна.
+  const [bins, setBins] = useState<Map<string, BinRef>>(new Map());
+  // by-bin snapshot-ийн мета (хэдэн мөр уншсан, гүйцэд хамарсан эсэх)
+  const [meta, setMeta] = useState<{
+    scanned: number;
+    exhausted: boolean;
+    perBin: number;
+  } | null>(null);
 
-  // silent = true үед spinner үзүүлэхгүй чимээгүй шинэчилнэ (auto-refresh),
-  // ингэснээр 10 сек тутамд бүх хүснэгт дахин ачаалагдаж байгаа мэт анивчихгүй.
-  const fetchRows = useCallback(async (silent = false) => {
+  /**
+   * Бүрэн snapshot — сав тус бүрээр цонхолсон (by-bin) таталт.
+   * Энгийн "сүүлийн 5000 мөр" таталтад идэвхтэй савууд бүх мөрийг эзэлдэг тул
+   * чимээгүй болсон/идэвхгүй савууд цонхноос гарч, хүснэгтээс алга болдог.
+   * by-bin нь сав бүрд өөрийн хэсгийг баталгаажуулна.
+   */
+  const fetchSnapshot = useCallback(async (silent = false) => {
     if (!silent) setStatus('loading');
     try {
       const res = await apiClient.fetchWithAuth(
-        '/api/raw-data/iot-request-log?limit=5000'
+        `/api/raw-data/iot-request-log/by-bin?perBin=${PER_BIN_ROWS}`
       );
       if (res.ok) {
-        setRows((await res.json()) as IotRow[]);
+        const json = (await res.json()) as
+          | IotRow[]
+          | { rows: IotRow[]; scanned: number; exhausted: boolean; perBin: number };
+        if (Array.isArray(json)) {
+          setRows(json);
+          setMeta(null);
+        } else {
+          setRows(json.rows ?? []);
+          setMeta({
+            scanned: json.scanned ?? 0,
+            exhausted: json.exhausted ?? false,
+            perBin: json.perBin ?? PER_BIN_ROWS
+          });
+        }
+        setStatus('success');
+        setLastFetchedAt(Date.now());
+        return;
+      }
+      // by-bin-гүй хуучин backend дээр ажиллаж байвал хуучин байдлаар татна.
+      const legacy = await apiClient.fetchWithAuth(
+        '/api/raw-data/iot-request-log?limit=5000'
+      );
+      if (legacy.ok) {
+        setRows((await legacy.json()) as IotRow[]);
+        setMeta(null);
         setStatus('success');
         setLastFetchedAt(Date.now());
       } else if (!silent) {
@@ -640,32 +760,54 @@ export function IotGroupedCard() {
     }
   }, []);
 
-  // Савны нэрийг ганц удаа татна — bin бүртгэл 10 сек тутам өөрчлөгддөггүй тул
-  // auto-refresh-д оруулах шаардлагагүй. Амжилтгүй болбол binName зүгээр л
-  // хоосон үлдэнэ, хүснэгт binId-гаараа хэвийн ажиллана.
-  const fetchBinNames = useCallback(async () => {
+  /**
+   * Real-time шинэчлэлт — зөвхөн хамгийн сүүлийн мөрүүдийг татаад snapshot
+   * дээр нэмнэ. Ингэснээр 10 сек тутамд бүх түүхийг дахин татахгүй.
+   */
+  const fetchTail = useCallback(async () => {
     try {
-      const res = await apiClient.fetchWithAuth('/api/raw-data/bin');
+      const res = await apiClient.fetchWithAuth(
+        `/api/raw-data/iot-request-log?limit=${TAIL_ROWS}`
+      );
       if (!res.ok) return;
-      const bins = (await res.json()) as Record<string, unknown>[];
-      const map = new Map<string, string>();
-      for (const b of bins) {
-        const id = b.bin_id;
-        const name = b.bin_name;
-        if (id != null && name != null && String(name).trim()) {
-          map.set(String(id).trim().toUpperCase(), String(name).trim());
-        }
-      }
-      setBinNames(map);
+      const tail = (await res.json()) as IotRow[];
+      setRows((prev) => mergeRows(prev, tail));
+      setLastFetchedAt(Date.now());
     } catch {
-      /* нэр татагдаагүй нь хүснэгтийг блоклохгүй */
+      /* чимээгүй шинэчлэлт унавал өмнөх өгөгдөл хэвээр үлдэнэ */
+    }
+  }, []);
+
+  // Савны бүртгэлийг ганц удаа татна — bin бүртгэл 10 сек тутам өөрчлөгддөггүй
+  // тул auto-refresh-д оруулах шаардлагагүй. Амжилтгүй болбол хүснэгт зөвхөн
+  // логт таарсан савуудаар binId-гаараа хэвийн ажиллана.
+  const fetchBins = useCallback(async () => {
+    try {
+      const res = await apiClient.fetchWithAuth('/api/raw-data/bin?limit=1000');
+      if (!res.ok) return;
+      const list = (await res.json()) as Record<string, unknown>[];
+      const map = new Map<string, BinRef>();
+      for (const b of list) {
+        const id = b.bin_id;
+        if (id == null || !String(id).trim()) continue;
+        const name = b.bin_name;
+        const active = b.is_active ?? b.isActive ?? b.active;
+        map.set(String(id).trim().toUpperCase(), {
+          binId: String(id).trim().toUpperCase(),
+          binName: name != null && String(name).trim() ? String(name).trim() : null,
+          isActive: active == null ? null : active === true || active === 1
+        });
+      }
+      setBins(map);
+    } catch {
+      /* бүртгэл татагдаагүй нь хүснэгтийг блоклохгүй */
     }
   }, []);
 
   useEffect(() => {
-    fetchRows();
-    fetchBinNames();
-  }, [fetchRows, fetchBinNames]);
+    fetchSnapshot();
+    fetchBins();
+  }, [fetchSnapshot, fetchBins]);
 
   // Real-time auto-refresh — идэвхтэй tab дээр л ажиллана, сая уншуулсан сав
   // groupByBin-ийн шинэ эрэмбээр (хамгийн сүүлийн нь эхэнд) автоматаар дээшээ гарна.
@@ -673,16 +815,16 @@ export function IotGroupedCard() {
     if (!autoRefresh) return;
     const id = setInterval(() => {
       if (typeof document === 'undefined' || document.visibilityState === 'visible') {
-        fetchRows(true);
+        fetchTail();
       }
     }, AUTO_REFRESH_MS);
     return () => clearInterval(id);
-  }, [autoRefresh, fetchRows]);
+  }, [autoRefresh, fetchTail]);
 
   const { reads, stats } = useMemo(() => groupReads(rows ?? []), [rows]);
   const binGroups = useMemo(
-    () => groupByBin(reads, rows ?? [], binNames),
-    [reads, rows, binNames]
+    () => groupByBin(reads, rows ?? [], bins, MAX_READS_PER_BIN),
+    [reads, rows, bins]
   );
 
   const filteredGroups = useMemo(() => {
@@ -695,8 +837,22 @@ export function IotGroupedCard() {
     );
   }, [binGroups, search]);
 
+  const binCounts = useMemo(
+    () => ({
+      inactive: binGroups.filter((g) => g.isActive === false).length,
+      noData: binGroups.filter((g) => !g.latest).length,
+      unregistered: binGroups.filter((g) => !g.registered).length
+    }),
+    [binGroups]
+  );
+
+  const selectedBin = useMemo(
+    () => binGroups.find((g) => g.binId === selectedBinId) ?? null,
+    [binGroups, selectedBinId]
+  );
+
   const handleBinClick = (group: BinGroup) => {
-    setSelectedBin(group);
+    setSelectedBinId(group.binId);
     setDialogOpen(true);
   };
 
@@ -710,10 +866,10 @@ export function IotGroupedCard() {
                 Бүлэглэсэн уншуулалт (нэг карт = 3 хүсэлт)
               </CardTitle>
               <CardDescription className='text-xs'>
-                Хамгийн сүүлд уншуулсан сав хүснэгтийн хамгийн дээр (real-time,
-                {' '}
-                {AUTO_REFRESH_MS / 1000} сек тутам). Савын мөрийг дарж
-                дэлгэрэнгүй бүх уншуулалтыг харна уу.
+                Бүртгэлтэй БҮХ сав жагсаана (идэвхгүй болон өгөгдөлгүй нь ч
+                орно). Хамгийн сүүлд уншуулсан сав хүснэгтийн хамгийн дээр
+                (real-time, {AUTO_REFRESH_MS / 1000} сек тутам). Савын мөрийг
+                дарж сүүлийн {MAX_READS_PER_BIN} уншуулалтыг харна уу.
               </CardDescription>
             </div>
             <div className='flex items-center gap-2'>
@@ -754,7 +910,7 @@ export function IotGroupedCard() {
               <Button
                 variant='outline'
                 size='sm'
-                onClick={() => fetchRows()}
+                onClick={() => fetchSnapshot()}
                 disabled={status === 'loading'}
               >
                 Татах
@@ -774,6 +930,20 @@ export function IotGroupedCard() {
               disabled={status !== 'success'}
             />
           </div>
+
+          {status === 'success' && (
+            <p className='text-muted-foreground text-xs'>
+              {search.trim()
+                ? `${filteredGroups.length} / ${binGroups.length} сав тохирлоо · `
+                : `Нийт ${binGroups.length} сав · `}
+              {binCounts.inactive} идэвхгүй · {binCounts.noData} өгөгдөлгүй
+              {binCounts.unregistered > 0 &&
+                ` · ${binCounts.unregistered} бүртгэлгүй`}
+              {meta &&
+                ` · ${meta.scanned.toLocaleString('mn-MN')} мөр шалгав (сав тус бүр ≤${meta.perBin} мөр)`}
+              {meta && !meta.exhausted && ' · хязгаарт хүрсэн'}
+            </p>
+          )}
         </CardHeader>
 
         <CardContent>
@@ -798,6 +968,7 @@ export function IotGroupedCard() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className='w-[52px]'>№</TableHead>
                     <TableHead className='w-[130px]'>Сав</TableHead>
                     <TableHead className='w-[140px]'>Сүүлийн цаг</TableHead>
                     <TableHead>Battery</TableHead>
@@ -809,17 +980,18 @@ export function IotGroupedCard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredGroups.map((g) => (
+                  {filteredGroups.map((g, i) => (
                     <BinSummaryRow
                       key={g.binId}
                       group={g}
+                      index={i + 1}
                       onClick={() => handleBinClick(g)}
                     />
                   ))}
                   {filteredGroups.length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={8}
+                        colSpan={9}
                         className='text-muted-foreground text-center text-sm'
                       >
                         Илэрц алга.

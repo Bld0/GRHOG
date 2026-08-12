@@ -557,6 +557,7 @@ export function IngestionTable() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className='w-[52px]'>№</TableHead>
                       <TableHead className='w-[70px]'>ID</TableHead>
                       <TableHead className='w-[140px]'>Ирсэн цаг</TableHead>
                       <TableHead className='w-[90px]'>Endpoint</TableHead>
@@ -572,7 +573,7 @@ export function IngestionTable() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginated.map((row) => {
+                    {paginated.map((row, i) => {
                       const { binId, value } = rowValue(row);
                       return (
                         <TableRow
@@ -589,6 +590,10 @@ export function IngestionTable() {
                                 : ''
                           }`}
                         >
+                          {/* Жагсаалтын дугаар — хуудсаар үргэлжилнэ */}
+                          <TableCell className='text-muted-foreground font-mono text-xs'>
+                            {(page - 1) * PAGE_SIZE + i + 1}
+                          </TableCell>
                           <TableCell className='font-mono text-xs'>
                             {row.id}
                           </TableCell>
@@ -623,7 +628,7 @@ export function IngestionTable() {
                     {paginated.length === 0 && (
                       <TableRow>
                         <TableCell
-                          colSpan={8}
+                          colSpan={9}
                           className='text-muted-foreground text-center text-sm'
                         >
                           Илэрц алга.
