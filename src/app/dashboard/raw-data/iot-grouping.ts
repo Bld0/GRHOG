@@ -415,12 +415,16 @@ export interface BinRef {
  *                 зөвхөн лог дотор өгөгдөлтэй савууд гарна.
  * @param maxReads нэг савын `reads`-ийн дээд хязгаар (дэлгэрэнгүйд харуулах
  *                 хамгийн сүүлийн N уншуулалт).
+ * @param batteryChanges backend-ийн бүх түүхээр илрүүлсэн баттерей солилт.
+ *                 Дамжуулаагүй (эсвэл тухайн сав нь дотор нь байхгүй) бол
+ *                 зөвхөн энд татсан `maxReads` уншуулалтаар илрүүлнэ.
  */
 export function groupByBin(
   reads: Read[],
   allRows: IotRow[],
   bins?: Map<string, BinRef>,
-  maxReads = 100
+  maxReads = 100,
+  batteryChanges?: Map<string, BatteryChange>
 ): BinGroup[] {
   // Bucket reads by binId
   const buckets = new Map<string, Read[]>();
@@ -485,7 +489,9 @@ export function groupByBin(
       isActive: ref?.isActive ?? null,
       registered: !!ref,
       latest: binReads[0] ?? null,
-      batteryChange: detectBatteryChange(binReads),
+      // Backend нь бүх түүхийг хардаг тул түүнийг эрхэмлэнэ; хүрэлцэхгүй бол
+      // (хуучин backend / шинэ сав) татсан цонхон дотроос өөрөө илрүүлнэ.
+      batteryChange: batteryChanges?.get(binId) ?? detectBatteryChange(binReads),
       reads: binReads,
       totalReadCount: allReads.length,
       truncated: allReads.length > binReads.length,

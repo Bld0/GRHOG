@@ -41,6 +41,7 @@ import {
   groupReads,
   groupByBin,
   BATTERY_JUMP_V,
+  type BatteryChange,
   type IotRow,
   type Read,
   type Slot,
@@ -733,6 +734,11 @@ export function IotGroupedCard() {
   // binId → бүртгэлийн мэдээлэл. IoT лог дотор зөвхөн binId ирдэг тул савны
   // нэр/идэвхтэй эсэхийг bin хүснэгтээс тусад нь татаж авна.
   const [bins, setBins] = useState<Map<string, BinRef>>(new Map());
+  // binId → сүүлийн баттерей солилт. Backend нь бүх түүхээр хайдаг тул энд
+  // татсан цонхноос эрт болсон солилтыг ч олдог.
+  const [batteryChanges, setBatteryChanges] = useState<
+    Map<string, BatteryChange>
+  >(new Map());
   // by-bin snapshot-ийн мета (хэдэн мөр уншсан, гүйцэд хамарсан эсэх)
   const [meta, setMeta] = useState<{
     scanned: number;
@@ -832,10 +838,39 @@ export function IotGroupedCard() {
     }
   }, []);
 
+  /**
+   * Баттерей солилтыг backend-ээс татна — тэнд бүх түүхээр хайдаг тул
+   * дэлгэцэнд татсан {MAX_READS_PER_BIN} уншуулалтаас эрт солигдсон савууд ч
+   * олдоно. Backend дээр 5 минут cache-тэй, солилт ховор тул нэг л удаа татна.
+   * Амжилтгүй болбол хүснэгт client-side илрүүлэлтээрээ хэвийн ажиллана.
+   */
+  const fetchBatteryChanges = useCallback(async () => {
+    try {
+      const res = await apiClient.fetchWithAuth('/api/raw-data/battery-changes');
+      if (!res.ok) return;
+      const json = (await res.json()) as {
+        changes?: Record<string, { at: string; fromV: number; toV: number }>;
+      };
+      const map = new Map<string, BatteryChange>();
+      for (const [binId, c] of Object.entries(json.changes ?? {})) {
+        if (!c?.at || c.fromV == null || c.toV == null) continue;
+        map.set(binId.trim().toUpperCase(), {
+          at: c.at,
+          fromV: Number(c.fromV),
+          toV: Number(c.toV)
+        });
+      }
+      setBatteryChanges(map);
+    } catch {
+      /* client-side илрүүлэлт fallback болно */
+    }
+  }, []);
+
   useEffect(() => {
     fetchSnapshot();
     fetchBins();
-  }, [fetchSnapshot, fetchBins]);
+    fetchBatteryChanges();
+  }, [fetchSnapshot, fetchBins, fetchBatteryChanges]);
 
   // Real-time auto-refresh — идэвхтэй tab дээр л ажиллана, сая уншуулсан сав
   // groupByBin-ийн шинэ эрэмбээр (хамгийн сүүлийн нь эхэнд) автоматаар дээшээ гарна.
@@ -851,8 +886,8 @@ export function IotGroupedCard() {
 
   const { reads, stats } = useMemo(() => groupReads(rows ?? []), [rows]);
   const binGroups = useMemo(
-    () => groupByBin(reads, rows ?? [], bins, MAX_READS_PER_BIN),
-    [reads, rows, bins]
+    () => groupByBin(reads, rows ?? [], bins, MAX_READS_PER_BIN, batteryChanges),
+    [reads, rows, bins, batteryChanges]
   );
 
   const filteredGroups = useMemo(() => {
