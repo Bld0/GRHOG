@@ -314,10 +314,18 @@ export interface BatteryChange {
   toV: number;
 }
 
-/** Уншуулалтын battery вольт — мэдрэгчийн алдаатай утгыг хаяна. */
+/**
+ * Уншуулалтын battery вольт.
+ *
+ * ⚠️ Firmware нь вольтыг ТООГООР бус, нэгжтэй тэмдэгт мөрөөр илгээдэг:
+ * `{"binId":"BIN072","battery_Level":"12.36V"}`. Тиймээс `Number()` шууд
+ * ажиллахгүй — эхний тоог нь сугалж авна.
+ */
 function batteryVolts(read: Read): number | null {
   if (!read.battery.received) return null;
-  const v = Number(read.battery.value);
+  const m = /-?\d+(?:[.,]\d+)?/.exec(String(read.battery.value));
+  if (!m) return null;
+  const v = Number(m[0].replace(',', '.'));
   // 0 / сөрөг / утгагүй өндөр = мэдрэгч уншаагүй, тооцоонд оруулахгүй.
   if (!Number.isFinite(v) || v <= 1 || v > 30) return null;
   return v;
