@@ -295,6 +295,66 @@ export function groupReads(
 }
 
 // ---------------------------------------------------------------------------
+// Battery солилт — вольтын огцом өсөлтөөр илрүүлнэ
+// ---------------------------------------------------------------------------
+
+/**
+ * Battery солигдсон гэж үзэх хамгийн бага үсрэлт (вольт).
+ * Уншуулалт бүрт вольт аажим буурч ирдэг; огцом өсөх нь зөвхөн цэнэгтэй
+ * баттерей тавьсны шинж. Хэмжилтийн шуугиан/сэргэлт ихдээ ~0.5V тул 1.0V.
+ */
+export const BATTERY_JUMP_V = 1.0;
+
+export interface BatteryChange {
+  /** Үсрэлт гарсан (шинэ баттерейгаар ирсэн эхний) уншуулалтын цаг. */
+  at: string;
+  /** Түүний өмнөх уншуулалтын вольт. */
+  fromV: number;
+  /** Үсрэлт гарсан уншуулалтын вольт. */
+  toV: number;
+}
+
+/** Уншуулалтын battery вольт — мэдрэгчийн алдаатай утгыг хаяна. */
+function batteryVolts(read: Read): number | null {
+  if (!read.battery.received) return null;
+  const v = Number(read.battery.value);
+  // 0 / сөрөг / утгагүй өндөр = мэдрэгч уншаагүй, тооцоонд оруулахгүй.
+  if (!Number.isFinite(v) || v <= 1 || v > 30) return null;
+  return v;
+}
+
+/**
+ * Хамгийн сүүлийн баттерей солилтыг олно.
+ *
+ * @param reads   нэг савны уншуулалтууд, ШИНЭ нь эхэндээ (groupByBin-ийн эрэмбэ)
+ * @param minJumpV солилт гэж үзэх хамгийн бага өсөлт
+ */
+export function detectBatteryChange(
+  reads: Read[],
+  minJumpV = BATTERY_JUMP_V
+): BatteryChange | null {
+  // Хугацааны дарааллаар (хуучин → шинэ) вольтын цуваа болгоно.
+  const series: { at: string; v: number }[] = [];
+  for (let i = reads.length - 1; i >= 0; i--) {
+    const v = batteryVolts(reads[i]);
+    if (v != null) series.push({ at: reads[i].at, v });
+  }
+
+  // Сүүлийн үсрэлтийг хайх тул хойноос нь урагшаа шалгана.
+  for (let i = series.length - 1; i >= 1; i--) {
+    const prev = series[i - 1];
+    const cur = series[i];
+    if (cur.v - prev.v < minJumpV) continue;
+    // Ганц удаагийн мэдрэгчийн үсрэлтийг хасна: дараагийн уншуулалт бас
+    // өндөр хэвээр байж байж л баттерей үнэхээр солигдсон гэж үзнэ.
+    const next = series[i + 1];
+    if (next && next.v < prev.v + minJumpV / 2) continue;
+    return { at: cur.at, fromV: prev.v, toV: cur.v };
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Per-bin grouping — returns each bin's latest read + all reads for that bin
 // ---------------------------------------------------------------------------
 
@@ -311,6 +371,11 @@ export interface BinGroup {
   registered: boolean;
   /** Most recent read for this bin, or null when the bin has no reads at all. */
   latest: Read | null;
+  /**
+   * Хамгийн сүүлд баттерей солигдсон гэж таамаглаж буй үе (вольт огцом өссөн).
+   * Хамрагдсан уншуулалтуудад ийм үсрэлт байхгүй бол null.
+   */
+  batteryChange: BatteryChange | null;
   /** This bin's reads, newest-first, capped at `maxReads`. */
   reads: Read[];
   /** Уншуулалтын бодит нийт тоо (таслахаас өмнөх). */
@@ -412,6 +477,7 @@ export function groupByBin(
       isActive: ref?.isActive ?? null,
       registered: !!ref,
       latest: binReads[0] ?? null,
+      batteryChange: detectBatteryChange(binReads),
       reads: binReads,
       totalReadCount: allReads.length,
       truncated: allReads.length > binReads.length,

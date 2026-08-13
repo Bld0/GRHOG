@@ -40,6 +40,7 @@ import { apiClient } from '@/lib/api-client';
 import {
   groupReads,
   groupByBin,
+  BATTERY_JUMP_V,
   type IotRow,
   type Read,
   type Slot,
@@ -531,7 +532,8 @@ function BinSummaryRow({
   index: number;
   onClick: () => void;
 }) {
-  const { binId, binName, isActive, registered, latest, stats } = group;
+  const { binId, binName, isActive, registered, latest, batteryChange, stats } =
+    group;
   const completePct = pct(stats.complete, stats.totalReads);
   const healthTone =
     stats.complete === stats.totalReads
@@ -588,6 +590,32 @@ function BinSummaryRow({
           <TableCell>
             <SlotCell slot={latest.battery} label='battery' />
           </TableCell>
+          {/* Battery сольсон огноо — вольт хамгийн сүүлд огцом өссөн үе */}
+          <TableCell className='whitespace-nowrap'>
+            {batteryChange ? (
+              <div
+                title={`${batteryChange.fromV.toFixed(2)}V → ${batteryChange.toV.toFixed(
+                  2
+                )}V (+${(batteryChange.toV - batteryChange.fromV).toFixed(
+                  2
+                )}V) — цэнэгтэй баттерей тавьсан гэж үзэв`}
+              >
+                <div className='font-mono text-xs'>
+                  {fmtTime(batteryChange.at)}
+                </div>
+                <div className='text-muted-foreground font-mono text-[10px]'>
+                  {batteryChange.fromV.toFixed(2)} → {batteryChange.toV.toFixed(2)}V
+                </div>
+              </div>
+            ) : (
+              <span
+                className='text-muted-foreground text-xs'
+                title={`Сүүлийн ${MAX_READS_PER_BIN} уншуулалтад вольтын огцом өсөлт (≥${BATTERY_JUMP_V}V) илрээгүй`}
+              >
+                —
+              </span>
+            )}
+          </TableCell>
           {/* Latest storage */}
           <TableCell>
             <SlotCell slot={latest.storage} label='storage' />
@@ -610,7 +638,7 @@ function BinSummaryRow({
           </TableCell>
         </>
       ) : (
-        <TableCell colSpan={4} className='text-muted-foreground text-xs'>
+        <TableCell colSpan={5} className='text-muted-foreground text-xs'>
           Уншсан лог алга (хамрагдсан хугацаанд өгөгдөл ирээгүй)
         </TableCell>
       )}
@@ -972,6 +1000,12 @@ export function IotGroupedCard() {
                     <TableHead className='w-[130px]'>Сав</TableHead>
                     <TableHead className='w-[140px]'>Сүүлийн цаг</TableHead>
                     <TableHead>Battery</TableHead>
+                    <TableHead
+                      className='w-[150px]'
+                      title={`Вольт хамгийн сүүлд огцом (≥${BATTERY_JUMP_V}V) өссөн үе — цэнэгтэй баттерей тавьсан гэж үзнэ`}
+                    >
+                      Battery сольсон огноо
+                    </TableHead>
                     <TableHead>Storage</TableHead>
                     <TableHead>Card</TableHead>
                     <TableHead className='w-[100px]'>Бүрэн бүтэн</TableHead>
@@ -991,7 +1025,7 @@ export function IotGroupedCard() {
                   {filteredGroups.length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={9}
+                        colSpan={10}
                         className='text-muted-foreground text-center text-sm'
                       >
                         Илэрц алга.
