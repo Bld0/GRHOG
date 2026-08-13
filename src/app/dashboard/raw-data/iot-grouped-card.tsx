@@ -63,6 +63,13 @@ const PER_BIN_ROWS = MAX_READS_PER_BIN * 3;
 // Auto-refresh дээр зөвхөн сүүлийн мөрүүдийг татаж, snapshot дээр нэмнэ.
 const TAIL_ROWS = 500;
 
+// "Battery" ба "Battery сольсон огноо" нь нэг сэдвийн хос багана: вольт ба
+// тэр вольт хамгийн сүүлд үсэрсэн үе. Дотор талаараа наалдаж, гадна талдаа
+// өргөн зай + босоо зураас авснаар бусад баганаас тусдаа бүлэг мэт уншигдана.
+// Толгой болон мөрийн нүд ижил утга авч байж зураас нь босоогоороо эгнэнэ.
+const BATTERY_GROUP_LEFT = 'border-l pr-1 pl-5';
+const BATTERY_GROUP_RIGHT = 'border-r pr-5 pl-1';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -587,19 +594,19 @@ function BinSummaryRow({
       </TableCell>
       {latest ? (
         <>
-          {/* Latest battery */}
-          <TableCell className='whitespace-nowrap'>
+          {/* Latest battery — доорх "сольсон огноо"-той нэг бүлэг (BATTERY_GROUP_*) */}
+          <TableCell className={`whitespace-nowrap ${BATTERY_GROUP_LEFT}`}>
             <SlotCell slot={latest.battery} label='battery' />
           </TableCell>
           {/* Battery сольсон огноо — вольт хамгийн сүүлд огцом өссөн үе */}
-          <TableCell className='whitespace-nowrap'>
+          <TableCell className={`whitespace-nowrap ${BATTERY_GROUP_RIGHT}`}>
             {batteryChange ? (
               <div
                 title={`${batteryChange.fromV.toFixed(2)}V → ${batteryChange.toV.toFixed(
                   2
-                )}V (+${(batteryChange.toV - batteryChange.fromV).toFixed(
-                  2
-                )}V) — цэнэгтэй баттерей тавьсан гэж үзэв`}
+                )}V — баттерей сольсон (+${(
+                  batteryChange.toV - batteryChange.fromV
+                ).toFixed(2)}V)`}
               >
                 <div className='font-mono text-sm'>
                   {fmtTime(batteryChange.at)}
@@ -639,7 +646,11 @@ function BinSummaryRow({
           </TableCell>
         </>
       ) : (
-        <TableCell colSpan={5} className='text-muted-foreground text-sm'>
+        // Battery-гээс эхэлдэг тул бүлгийн зүүн зураас нь тасрахгүй үргэлжилнэ
+        <TableCell
+          colSpan={5}
+          className='text-muted-foreground border-l pl-5 text-sm'
+        >
           Уншсан лог алга (хамрагдсан хугацаанд өгөгдөл ирээгүй)
         </TableCell>
       )}
@@ -1034,11 +1045,13 @@ export function IotGroupedCard() {
                     <TableHead className='w-[52px]'>№</TableHead>
                     <TableHead className='w-[150px]'>Сав</TableHead>
                     <TableHead className='w-[150px]'>Сүүлийн цаг</TableHead>
-                    {/* Battery-г агуулгад нь багтаан хумиж, "сольсон огноо"-г
-                        зэрэгцүүлэн уншихад ойр байлгана. */}
-                    <TableHead className='w-[110px]'>Battery</TableHead>
+                    {/* Battery-г агуулгад нь багтаан хумьсан тул "сольсон
+                        огноо" нь тайлбарлаж буй вольтныхоо хажууд наалдана. */}
+                    <TableHead className={`w-[110px] ${BATTERY_GROUP_LEFT}`}>
+                      Battery
+                    </TableHead>
                     <TableHead
-                      className='w-[150px]'
+                      className={`w-[150px] ${BATTERY_GROUP_RIGHT}`}
                       title={`Вольт хамгийн сүүлд огцом (≥${BATTERY_JUMP_V}V) өссөн үе — цэнэгтэй баттерей тавьсан гэж үзнэ`}
                     >
                       Battery сольсон огноо
