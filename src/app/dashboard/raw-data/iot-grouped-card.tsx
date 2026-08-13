@@ -102,7 +102,7 @@ function SlotCell({ slot, label }: { slot: Slot; label: string }) {
     return (
       <div className='flex items-center gap-1.5'>
         <Icons.check className='h-3.5 w-3.5 shrink-0 text-green-500' />
-        <span className='font-mono text-xs'>{slot.value || '—'}</span>
+        <span className='font-mono text-sm'>{slot.value || '—'}</span>
         {/* Ingestion төлөв: DONE бол цэггүй, PENDING шар, FAILED улаан */}
         {slot.status === 'PENDING' && (
           <span
@@ -122,7 +122,7 @@ function SlotCell({ slot, label }: { slot: Slot; label: string }) {
   return (
     <div className='flex items-center gap-1.5 text-red-500'>
       <Icons.close className='h-3.5 w-3.5 shrink-0' />
-      <span className='text-xs'>{label}</span>
+      <span className='text-sm'>{label}</span>
     </div>
   );
 }
@@ -205,10 +205,10 @@ function ReadsTable({
         return (
           <React.Fragment key={key}>
             <TableRow className={rowTone(r)}>
-              <TableCell className='text-muted-foreground font-mono text-xs'>
+              <TableCell className='text-muted-foreground font-mono text-sm'>
                 {startIndex + i + 1}
               </TableCell>
-              <TableCell className='font-mono text-xs whitespace-nowrap'>
+              <TableCell className='font-mono text-sm whitespace-nowrap'>
                 {fmtTime(r.at)}
               </TableCell>
               <TableCell className='truncate'>
@@ -230,7 +230,7 @@ function ReadsTable({
                         toggle(key);
                       }}
                       title='Дарж давхар уншуулалтуудыг харах'
-                      className='h-5 shrink-0 cursor-pointer px-1.5 text-[10px]'
+                      className='h-5 shrink-0 cursor-pointer px-1.5 text-xs'
                     >
                       +{r.duplicates} {isOpen ? '▾' : '▸'}
                     </Badge>
@@ -253,15 +253,15 @@ function ReadsTable({
               r.retries.map((rt) => (
                 <TableRow key={`${key}-retry-${rt.id}`} className='bg-muted/30'>
                   <TableCell />
-                  <TableCell className='text-muted-foreground pl-6 font-mono text-xs whitespace-nowrap'>
+                  <TableCell className='text-muted-foreground pl-6 font-mono text-sm whitespace-nowrap'>
                     {fmtTime(rt.at)}
                   </TableCell>
-                  <TableCell colSpan={2} className='text-muted-foreground text-xs'>
+                  <TableCell colSpan={2} className='text-muted-foreground text-sm'>
                     давхар уншуулалт (retry)
                   </TableCell>
-                  <TableCell className='font-mono text-xs'>{rt.value || '—'}</TableCell>
+                  <TableCell className='font-mono text-sm'>{rt.value || '—'}</TableCell>
                   <TableCell className='text-right'>
-                    <Badge variant='outline' className='h-5 px-1.5 text-[10px]'>
+                    <Badge variant='outline' className='h-5 px-1.5 text-xs'>
                       retry
                     </Badge>
                   </TableCell>
@@ -551,7 +551,7 @@ function BinSummaryRow({
       onClick={onClick}
     >
       {/* Жагсаалтын дугаар */}
-      <TableCell className='text-muted-foreground font-mono text-xs'>
+      <TableCell className='text-muted-foreground font-mono text-sm'>
         {index}
       </TableCell>
       {/* Bin ID + савны нэр (bin.bin_name) */}
@@ -561,7 +561,7 @@ function BinSummaryRow({
           {isActive === false && (
             <Badge
               variant='outline'
-              className='text-muted-foreground h-4 shrink-0 px-1 text-[10px]'
+              className='text-muted-foreground h-4 shrink-0 px-1 text-xs'
               title='bin.is_active = false — идэвхгүй бүртгэлтэй сав'
             >
               идэвхгүй
@@ -570,25 +570,25 @@ function BinSummaryRow({
           {!registered && (
             <Badge
               variant='outline'
-              className='h-4 shrink-0 px-1 text-[10px] text-amber-500'
+              className='h-4 shrink-0 px-1 text-xs text-amber-500'
               title='bin хүснэгтэд бүртгэлгүй — зөвхөн IoT лог дотор байна'
             >
               бүртгэлгүй
             </Badge>
           )}
         </div>
-        <div className='text-muted-foreground font-mono text-xs'>
+        <div className='text-muted-foreground font-mono text-sm'>
           {binName ?? '—'}
         </div>
       </TableCell>
       {/* Latest reading time */}
-      <TableCell className='font-mono text-xs whitespace-nowrap'>
+      <TableCell className='font-mono text-sm whitespace-nowrap'>
         {latest ? fmtTime(latest.at) : '—'}
       </TableCell>
       {latest ? (
         <>
           {/* Latest battery */}
-          <TableCell>
+          <TableCell className='whitespace-nowrap'>
             <SlotCell slot={latest.battery} label='battery' />
           </TableCell>
           {/* Battery сольсон огноо — вольт хамгийн сүүлд огцом өссөн үе */}
@@ -601,16 +601,16 @@ function BinSummaryRow({
                   2
                 )}V) — цэнэгтэй баттерей тавьсан гэж үзэв`}
               >
-                <div className='font-mono text-xs'>
+                <div className='font-mono text-sm'>
                   {fmtTime(batteryChange.at)}
                 </div>
-                <div className='text-muted-foreground font-mono text-[10px]'>
+                <div className='text-muted-foreground font-mono text-xs'>
                   {batteryChange.fromV.toFixed(2)} → {batteryChange.toV.toFixed(2)}V
                 </div>
               </div>
             ) : (
               <span
-                className='text-muted-foreground text-xs'
+                className='text-muted-foreground text-sm'
                 title={`Сүүлийн ${MAX_READS_PER_BIN} уншуулалтад вольтын огцом өсөлт (≥${BATTERY_JUMP_V}V) илрээгүй`}
               >
                 —
@@ -639,7 +639,7 @@ function BinSummaryRow({
           </TableCell>
         </>
       ) : (
-        <TableCell colSpan={5} className='text-muted-foreground text-xs'>
+        <TableCell colSpan={5} className='text-muted-foreground text-sm'>
           Уншсан лог алга (хамрагдсан хугацаанд өгөгдөл ирээгүй)
         </TableCell>
       )}
@@ -647,22 +647,22 @@ function BinSummaryRow({
       <TableCell className='text-right'>
         {latest ? (
           <>
-            <span className='text-muted-foreground text-xs'>
+            <span className='text-muted-foreground text-sm'>
               {group.truncated
                 ? `${stats.totalReads}+ удаа`
                 : `${stats.totalReads} удаа`}
             </span>
-            <span className={`ml-2 text-xs font-medium ${healthTone}`}>
+            <span className={`ml-2 text-sm font-medium ${healthTone}`}>
               {completePct} бүрэн
             </span>
           </>
         ) : (
-          <span className='text-muted-foreground text-xs'>0 удаа</span>
+          <span className='text-muted-foreground text-sm'>0 удаа</span>
         )}
       </TableCell>
       {/* Action hint */}
       <TableCell className='text-right'>
-        <Button variant='ghost' size='sm' className='h-7 px-2 text-xs'>
+        <Button variant='ghost' size='sm' className='h-7 px-2 text-sm'>
           Дэлгэрэнгүй
           <Icons.chevronRight className='ml-1 h-3.5 w-3.5' />
         </Button>
@@ -1032,9 +1032,11 @@ export function IotGroupedCard() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className='w-[52px]'>№</TableHead>
-                    <TableHead className='w-[130px]'>Сав</TableHead>
-                    <TableHead className='w-[140px]'>Сүүлийн цаг</TableHead>
-                    <TableHead>Battery</TableHead>
+                    <TableHead className='w-[150px]'>Сав</TableHead>
+                    <TableHead className='w-[150px]'>Сүүлийн цаг</TableHead>
+                    {/* Battery-г агуулгад нь багтаан хумиж, "сольсон огноо"-г
+                        зэрэгцүүлэн уншихад ойр байлгана. */}
+                    <TableHead className='w-[110px]'>Battery</TableHead>
                     <TableHead
                       className='w-[150px]'
                       title={`Вольт хамгийн сүүлд огцом (≥${BATTERY_JUMP_V}V) өссөн үе — цэнэгтэй баттерей тавьсан гэж үзнэ`}
