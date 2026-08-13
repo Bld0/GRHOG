@@ -173,6 +173,14 @@
         "nxtPid": "nxtPid"
       },
       "namedRegex": "^/dashboard/card/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/dashboard/complaints/[id]",
+      "regex": "^/dashboard/complaints/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/dashboard/complaints/(?<nxtPid>[^/]+?)(?:/)?$"
     }
   ],
   "staticRoutes": [
@@ -223,6 +231,12 @@
       "regex": "^/dashboard/card(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/dashboard/card(?:/)?$"
+    },
+    {
+      "page": "/dashboard/complaints",
+      "regex": "^/dashboard/complaints(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/complaints(?:/)?$"
     },
     {
       "page": "/dashboard/overview",
