@@ -22,6 +22,8 @@ import {
   TableRow
 } from '@/components/ui/table';
 import {
+  IconAlertTriangle,
+  IconRefresh,
   IconSearch,
   IconUsersGroup,
   IconUserOff,
@@ -30,6 +32,7 @@ import {
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useRolePermissions } from '@/hooks/use-role-permissions';
 import {
   BUCKET_LABEL,
   ClientActivityReport as ActivityReport,
@@ -79,6 +82,8 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
   const [listLoading, setListLoading] = useState(false);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 400);
+  const [isBackfilling, setIsBackfilling] = useState(false);
+  const { isSuperAdmin } = useRolePermissions();
 
   const fetchReport = useCallback(async () => {
     setIsLoading(true);
@@ -142,6 +147,44 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
     setPage(0);
   }, [bucket, khorooFilter, debouncedSearch, filters]);
 
+  /**
+   * Хадгалагдсан `card_used_at` талбарыг bin_usage-аас нөхнө.
+   *
+   * Ангиллын тоонууд (7/14/30/хэзээ ч) нь тэр талбараар хийгддэг тул зөвхөн
+   * харагдах утгыг эх сурвалжаас тооцоолоод хангалтгүй — ангилал зөв болохын
+   * тулд талбарыг өөрийг нь нөхөх ёстой.
+   */
+  const runBackfill = async () => {
+    setIsBackfilling(true);
+    try {
+      const response = await apiClient.fetchWithAuth(
+        '/api/users/clients/update-total-access',
+        { method: 'POST' }
+      );
+      if (!response.ok) {
+        throw new Error('Дахин тооцоолоход алдаа гарлаа');
+      }
+      const data = await response.json();
+      toast.success(
+        `${data.updatedClients ?? 0} хэрэглэгчийн хэрэглээ шинэчлэгдлээ` +
+          (data.clientsGainedLastUsed
+            ? ` (${data.clientsGainedLastUsed} нь "уншуулаагүй" гэж буруу бүртгэгдсэн байсан)`
+            : '')
+      );
+      fetchReport();
+      fetchClients();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Дахин тооцоолоход алдаа гарлаа'
+      );
+    } finally {
+      setIsBackfilling(false);
+    }
+  };
+
+  const outOfSyncCount = clients.filter((c) => c.usageOutOfSync).length;
   const totalPages = Math.max(1, Math.ceil(totalClients / PAGE_SIZE));
   const formatDate = (value: string | null) =>
     value ? new Date(value).toLocaleDateString('mn-MN') : '—';
@@ -290,7 +333,9 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
             <CardTitle>Идэвхгүй хэрэглэгчид</CardTitle>
             <CardDescription>
               Хамгийн удаан ашиглаагүй нь эхэнд. Мөр дээр дарж дэлгэрэнгүй рүү
-              орно
+              орно. &quot;Ашиглаагүй хоног&quot; нь сүүлд уншуулснаас хойшхи
+              хугацаа — хэзээ ч уншуулаагүй хэрэглэгчид энэ утга байхгүй тул
+              &quot;Бүртгэлээс хойш&quot; баганаар харна
             </CardDescription>
           </div>
 
@@ -342,6 +387,41 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
         </CardHeader>
 
         <CardContent>
+          {outOfSyncCount > 0 && (
+            <div className='mb-4 flex flex-col gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm sm:flex-row sm:items-center sm:justify-between dark:border-amber-900 dark:bg-amber-950/40'>
+              <div className='flex items-start gap-2'>
+                <IconAlertTriangle className='mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400' />
+                <div>
+                  <div className='font-medium'>
+                    Энэ хуудсан дээрх {outOfSyncCount} мөрийн хэрэглээ бүртгэлд
+                    дутуу тэмдэглэгдсэн байна
+                  </div>
+                  <div className='text-muted-foreground text-xs'>
+                    Огноог савны уншилтын түүхээс (bin_usage) олов. Ангиллын
+                    тоонууд хэрэглэгчийн бүртгэл дэх талбараар бодогддог тул
+                    эдгээр мөр буруу ангилалд орсон байж болно —
+                    {isSuperAdmin
+                      ? ' дахин тооцоолж залруулна уу.'
+                      : ' супер админаар дахин тооцоолуулна уу.'}
+                  </div>
+                </div>
+              </div>
+              {isSuperAdmin && (
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='shrink-0'
+                  disabled={isBackfilling}
+                  onClick={runBackfill}
+                >
+                  <IconRefresh
+                    className={`mr-2 h-4 w-4 ${isBackfilling ? 'animate-spin' : ''}`}
+                  />
+                  {isBackfilling ? 'Тооцоолж байна...' : 'Дахин тооцоолох'}
+                </Button>
+              )}
+            </div>
+          )}
           {listLoading ? (
             <div className='space-y-2'>
               {Array.from({ length: 5 }).map((_, index) => (
@@ -363,6 +443,9 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
                     <TableHead>Сүүлд ашигласан</TableHead>
                     <TableHead className='text-right'>
                       Ашиглаагүй хоног
+                    </TableHead>
+                    <TableHead className='text-right'>
+                      Бүртгэлээс хойш
                     </TableHead>
                     <TableHead className='text-right'>Нийт хэрэглээ</TableHead>
                   </TableRow>
@@ -396,19 +479,36 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {client.neverUsed ? (
-                          <Badge
-                            variant='outline'
-                            className='border-transparent bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
-                          >
-                            Хэзээ ч
-                          </Badge>
-                        ) : (
-                          formatDate(client.lastUsedAt)
-                        )}
+                        <div className='flex items-center gap-1.5'>
+                          {client.neverUsed ? (
+                            <Badge
+                              variant='outline'
+                              className='border-transparent bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
+                            >
+                              Уншуулж байгаагүй
+                            </Badge>
+                          ) : (
+                            formatDate(client.lastUsedAt)
+                          )}
+                          {client.usageOutOfSync && (
+                            <IconAlertTriangle
+                              className='h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400'
+                              title='Энэ огноог bin_usage-аас олов — client хүснэгтэд бүртгэгдээгүй байна. Тиймээс энэ мөр ангилалдаа буруу орсон байж болно.'
+                            />
+                          )}
+                        </div>
                       </TableCell>
+                      {/*
+                        Хэзээ ч уншуулаагүй хэрэглэгчид "ашиглаагүй хоног" гэж
+                        байхгүй — түүнийг зөвхөн бүртгэлээс хойшхи хугацаагаар
+                        хэмжинэ. Хоёуланг нэг баганад нийлүүлбэл "Хэзээ ч / 749
+                        хоног" гэсэн зөрчилтэй хос харагдана.
+                      */}
                       <TableCell className='text-right font-medium tabular-nums'>
                         {client.daysInactive ?? '—'}
+                      </TableCell>
+                      <TableCell className='text-muted-foreground text-right tabular-nums'>
+                        {client.daysSinceRegistered ?? '—'}
                       </TableCell>
                       <TableCell className='text-muted-foreground text-right tabular-nums'>
                         {client.totalAccess}

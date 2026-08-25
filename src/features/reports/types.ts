@@ -66,8 +66,17 @@ export interface InactiveClient {
   lastUsedAt: string | null;
   totalAccess: number;
   createdAt: string | null;
+  /** Сүүлд уншуулснаас хойшхи хоног. Хэзээ ч уншуулаагүй бол null. */
   daysInactive: number | null;
+  /** Бүртгүүлснээс хойшхи хоног — уншуулаагүй хэрэглэгчийг хэмжих цорын ганц хэмжүүр. */
+  daysSinceRegistered: number | null;
   neverUsed: boolean;
+  /**
+   * Тайлан bin_usage-аас олсон хэрэглээ нь `client` хүснэгтэд хадгалагдсанаас
+   * зөрж байна. Ангилал (7/14/30/хэзээ ч) нь хадгалагдсан утгаар хийгддэг тул
+   * ийм мөр буруу ангилалд орсон байх магадлалтай — нөхөх ажиллагаа хэрэгтэй.
+   */
+  usageOutOfSync: boolean;
 }
 
 /** Идэвхгүй байдлын ангилал — backend-ийн `bucket` параметртэй тохирно. */
