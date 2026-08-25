@@ -50,6 +50,15 @@ export const navItems: NavItem[] = [
     requiresRole: 'VIEWER' // All roles can view transactions
   },
   {
+    title: 'Тайлан',
+    url: '/dashboard/reports',
+    icon: 'lineChart',
+    shortcut: ['t', 't'],
+    isActive: false,
+    items: [], // No child items
+    requiresRole: 'VIEWER' // All roles can view reports
+  },
+  {
     title: 'Санал гомдол',
     url: '/dashboard/complaints',
     icon: 'complaint',
@@ -57,6 +66,15 @@ export const navItems: NavItem[] = [
     isActive: false,
     items: [], // No child items
     requiresRole: 'VIEWER' // All roles can view complaints
+  },
+  {
+    title: 'Засвар үйлчилгээ',
+    url: '/dashboard/maintenance',
+    icon: 'settings',
+    shortcut: ['z', 'z'],
+    isActive: false,
+    items: [], // No child items
+    requiresRole: 'VIEWER' // Харах эрх бүгдэд, бүртгэх эрх ADMIN+
   },
   {
     title: 'Системийн хэрэглэгчид',
@@ -75,7 +93,7 @@ export const navItems: NavItem[] = [
     isActive: false,
     items: [], // No child items
     requiresRole: 'DEVELOPER' // Only visible to developer and super admin
-  },
+  }
 ];
 
 export interface SaleUser {
