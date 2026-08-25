@@ -87,20 +87,18 @@ export function formatBytes(
 }
 
 /**
- * Normalizes storage level from the range 30-100 to 0-100
- * @param storageLevel - The original storage level (30-100)
- * @returns The normalized storage level (0-100)
+ * Clamps a storage level into the 0-100 range it is already expressed in.
+ * @param storageLevel - Fill level as sent by the backend (0-100)
+ * @returns The fill level, clamped to 0-100
  */
 export function normalizeStorageLevel(storageLevel: number): number {
   if (storageLevel === null || storageLevel === undefined || storageLevel === -1) {
     return 0;
   }
   
-  // Map 30-100 to 0-100
-  // Formula: (value - min) / (max - min) * new_max
-  // (storageLevel - 30) / (100 - 30) * 100
-  const normalized = ((storageLevel - 30) / 70) * 100;
-  
-  // Clamp to 0-100 range
-  return Math.max(0, Math.min(100, normalized));
+  // The backend stores the storage level AS the fill percentage (0 = empty,
+  // 100 = full) — the old 30 = 0% floor is gone, so there is nothing left to
+  // rescale here. Only the clamp remains, to keep an out-of-range reading from
+  // rendering as a 130%-wide bar.
+  return Math.max(0, Math.min(100, storageLevel));
 }

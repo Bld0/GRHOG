@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
+import { BinClearing } from '@/types';
+import { BinBatteryHistory } from './bin-battery-history';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -109,6 +111,47 @@ const LeafletMap = dynamic(() => import('@/components/leaflet-map'), {
 
 interface BinDetailViewProps {
   id: string;
+}
+
+/**
+ * Ачилтын мэдээллийн төлөв.
+ *
+ * Чип уншуулах нь "ачилт хийлээ" гэсэн мэдүүлэг тул савны дүүрэлтийн заалттай
+ * харьцуулж баталгаажуулна — зөрүүтэй мэдээлэл эндээс шууд харагдана.
+ */
+function ClearingStatusBadge({ clearing }: { clearing: BinClearing }) {
+  // Мэдрэгчээр илэрсэн ачилтыг мэдрэгч өөрөө нотолж байгаа тул нэмэлт төлөвгүй.
+  // Хуучин мөрүүд (төлөвгүй) мөн адил.
+  const status = clearing.verificationStatus ?? 'CONFIRMED';
+
+  const styles: Record<string, string> = {
+    CONFIRMED:
+      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    PENDING: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    NOT_CONFIRMED: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    ALREADY_EMPTY:
+      'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+    NO_TELEMETRY:
+      'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+  };
+
+  const labels: Record<string, string> = {
+    CONFIRMED: 'Баталгаажсан',
+    PENDING: 'Шалгаж байна',
+    NOT_CONFIRMED: 'Зөрүүтэй',
+    ALREADY_EMPTY: 'Хоосон сав байсан',
+    NO_TELEMETRY: 'Мэдээлэлгүй'
+  };
+
+  return (
+    <Badge
+      variant='outline'
+      className={`border-transparent ${styles[status]}`}
+      title={clearing.verificationNote || undefined}
+    >
+      {labels[status]}
+    </Badge>
+  );
 }
 
 export function BinDetailView({ id }: BinDetailViewProps) {
@@ -702,6 +745,9 @@ export function BinDetailView({ id }: BinDetailViewProps) {
           </Card>
         </div>
 
+        {/* Батерейн түүх — цэнэглэлт ба зарцуулалтын хурд харагдана */}
+        <BinBatteryHistory binId={id} />
+
         {/* Bin Clearing History Table */}
         <Card>
           <CardHeader>
@@ -837,15 +883,17 @@ export function BinDetailView({ id }: BinDetailViewProps) {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Хоослосон огноо</TableHead>
+                      <TableHead>Ачилт хийсэн</TableHead>
                       <TableHead>Нэвтрэлтийн тоо</TableHead>
-                      <TableHead>Дүүргэлтийн түвшин</TableHead>
+                      <TableHead>Дүүргэлт (өмнө → дараа)</TableHead>
+                      <TableHead>Төлөв</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {getPaginatedClearings().length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={3}
+                          colSpan={5}
                           className='text-muted-foreground py-8 text-center'
                         >
                           Сонгосон хугацаанд хоослох түүх байхгүй
@@ -856,6 +904,22 @@ export function BinDetailView({ id }: BinDetailViewProps) {
                         <TableRow key={clearing.id || index}>
                           <TableCell>
                             {formatDate(new Date(clearing.clearedAt))}
+                          </TableCell>
+                          <TableCell>
+                            {clearing.source === 'CARD' ? (
+                              <div>
+                                <div className='text-sm font-medium'>
+                                  {clearing.clearedByName || 'Жолооч'}
+                                </div>
+                                <div className='text-muted-foreground text-xs'>
+                                  чип уншуулсан
+                                </div>
+                              </div>
+                            ) : (
+                              <span className='text-muted-foreground text-sm'>
+                                Мэдрэгчээр илэрсэн
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell>
                             <span className='text-sm font-medium'>
@@ -878,7 +942,17 @@ export function BinDetailView({ id }: BinDetailViewProps) {
                                 ).toFixed(2)}
                                 %
                               </span>
+                              {/* Ачилтын дараах заалт ирсэн бол харьцуулж харуулна */}
+                              {clearing.fillLevelAfterClear !== undefined &&
+                                clearing.fillLevelAfterClear >= 0 && (
+                                  <span className='text-muted-foreground text-sm'>
+                                    → {clearing.fillLevelAfterClear.toFixed(2)}%
+                                  </span>
+                                )}
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <ClearingStatusBadge clearing={clearing} />
                           </TableCell>
                         </TableRow>
                       ))

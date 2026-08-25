@@ -191,6 +191,20 @@ export interface BinUsage {
 }
 
 // New types for clearing functionality
+/** Ачилтын мэдээлэл хаанаас үүссэн: жолоочийн чип уу, мэдрэгч үү. */
+export type ClearingSource = 'CARD' | 'SENSOR';
+
+/**
+ * Чипээр мэдүүлсэн ачилтыг савны дүүрэлттэй харьцуулсан дүн.
+ * Мэдрэгчээр илэрсэн ачилт үргэлж CONFIRMED.
+ */
+export type ClearingVerificationStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'NOT_CONFIRMED'
+  | 'ALREADY_EMPTY'
+  | 'NO_TELEMETRY';
+
 export interface BinClearing {
   id: number;
   bin: Bin;
@@ -200,6 +214,15 @@ export interface BinClearing {
   createdAt: string;
   // Percentage fields from backend
   fillLevelBeforeClearPercent?: number;
+  // Ачилтыг хэн мэдэгдсэн ба баталгаажуулалтын дүн
+  clearedByCardId?: string | null;
+  clearedByName?: string | null;
+  source?: ClearingSource | null;
+  verificationStatus?: ClearingVerificationStatus | null;
+  /** Ачилтын дараах дүүрэлт; мэдээлэл ирээгүй бол -1 */
+  fillLevelAfterClear?: number;
+  verifiedAt?: string | null;
+  verificationNote?: string | null;
 }
 
 export interface BinStatistics {

@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { getUser, updateUser } from '@/lib/api';
 import { User } from '@/types';
 import { toast } from 'sonner';
+import { CollectorCardsCard } from '@/features/profile/components/collector-cards-card';
 
 interface UserProfile {
   id: number;
@@ -212,6 +213,9 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Хогийн сав хоослогчийн карт — зөвхөн супер админ бүртгэнэ */}
+      {profile.role === 'SUPER_ADMIN' && <CollectorCardsCard />}
 
       {/* Action Buttons */}
       <div className="flex justify-end space-x-4">
