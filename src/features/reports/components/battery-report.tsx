@@ -309,6 +309,7 @@ export function BatteryReport({ filters }: { filters: ReportFilters }) {
                     <TableHead className='text-right'>Дундаж</TableHead>
                     <TableHead className='text-right'>Зарцуулалт</TableHead>
                     <TableHead className='text-right'>Цэнэг барьсан</TableHead>
+                    <TableHead className='text-right'>Сольсноос хойш</TableHead>
                     <TableHead className='text-right'>Цэнэглэлт</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -348,6 +349,32 @@ export function BatteryReport({ filters }: { filters: ReportFilters }) {
                           <Badge variant='secondary' className='ml-2'>
                             хамгийн багадаа
                           </Badge>
+                        )}
+                      </TableCell>
+                      {/*
+                        "Цэнэг барьсан"-аас өөр тоо: тэр нь нэг цэнэг хэдэн
+                        хоног хүрснийг (мөчлөгийн урт), энэ нь батерейг
+                        сольсноос хойш хэдэн хоног болсныг (эд ангийн нас)
+                        хэлнэ. Хоёулаа хоногоор хэмжигддэг тул баганын нэрээр
+                        нь ялгаж байна.
+                      */}
+                      <TableCell className='text-right'>
+                        {row.daysSinceBatteryChange != null ? (
+                          <>
+                            <div className='tabular-nums'>
+                              {row.daysSinceBatteryChange} хоног
+                            </div>
+                            <div className='text-muted-foreground text-xs'>
+                              {formatDate(row.batteryReplacedAt)}
+                            </div>
+                          </>
+                        ) : (
+                          <span
+                            className='text-muted-foreground'
+                            title='Түүхэнд батерей сольсон шинж (нэг хэмжилтээр 15 нэгжээс дээш өссөн) олдсонгүй'
+                          >
+                            —
+                          </span>
                         )}
                       </TableCell>
                       <TableCell className='text-right tabular-nums'>

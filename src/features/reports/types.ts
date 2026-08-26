@@ -173,6 +173,14 @@ export interface BatteryBinRow {
   completeCycle: boolean;
   rechargeCount: number;
   dayCount: number;
+  /**
+   * Батерейг сүүлд сольсон огноо — нэг хэмжилтээр цэнэг 15 нэгжээс дээш
+   * үсэрсэн үе. Тайлангийн хугацааны мужаас хамаарахгүй: солилт мужаас өмнө
+   * болсон байж болно.
+   */
+  batteryReplacedAt: string | null;
+  /** Сольсноос хойшхи хоног. holdDays-тэй хольж болохгүй — тэр нь мөчлөгийн урт. */
+  daysSinceBatteryChange: number | null;
 }
 
 export interface BatteryReport {
