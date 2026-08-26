@@ -30,6 +30,7 @@ import {
 import { navItems } from '@/constants/data';
 import { useRolePermissions } from '@/hooks/use-role-permissions';
 import { useAuth } from '@/hooks/use-auth';
+import { filterNavItemsByRole } from '@/lib/nav-permissions';
 import { ClientOnly } from '@/components/auth/client-only';
 import {
   IconChevronRight,
@@ -50,13 +51,11 @@ export const company = {
   plan: 'Enterprise'
 };
 
-const tenants = [
-  { id: '1', name: 'Grhog' },
-];
+const tenants = [{ id: '1', name: 'Grhog' }];
 
 export default function AppSidebar() {
   const { user, logout, isLoading } = useAuth();
-  const { userRole, hasPermission } = useRolePermissions();
+  const { userRole } = useRolePermissions();
   const router = useRouter();
 
   const handleSwitchTenant = (_tenantId: string) => {
@@ -70,28 +69,11 @@ export default function AppSidebar() {
 
   const activeTenant = tenants[0];
 
-  // Filter nav items based on user permissions
+  // Цэсийг эрхээр шүүнэ. Дүрэм нь командын хайлттай (kbar) хуваалцсан —
+  // нэг газарт л байх ёстой, эс бөгөөс хоёулангийнх нь зөрөх эрсдэлтэй.
   const filteredNavItems = React.useMemo(() => {
     if (isLoading) return [];
-    
-    return navItems.filter(item => {
-      // If no role requirement, show to all authenticated users
-      if (!item.requiresRole) return true;
-
-      // Role-based access: SUPER_ADMIN can see everything
-      if (userRole === 'SUPER_ADMIN') return true;
-
-      // ADMINs can see everything except user management
-      if (userRole === 'ADMIN' && item.requiresRole !== 'SUPER_ADMIN') return true;
-
-      // VIEWERs can see viewer-level items
-      if (userRole === 'VIEWER' && item.requiresRole === 'VIEWER') return true;
-
-      // DEVELOPERs can see viewer-level items and developer-specific items
-      if (userRole === 'DEVELOPER' && (item.requiresRole === 'VIEWER' || item.requiresRole === 'DEVELOPER')) return true;
-
-      return false;
-    });
+    return filterNavItemsByRole(navItems, userRole);
   }, [isLoading, userRole]);
 
   return (
@@ -107,12 +89,14 @@ export default function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Overview</SidebarGroupLabel>
           <SidebarMenu>
-            <ClientOnly fallback={
-              // Loading state for navigation items
-              <div className="flex items-center justify-center p-4">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-              </div>
-            }>
+            <ClientOnly
+              fallback={
+                // Loading state for navigation items
+                <div className='flex items-center justify-center p-4'>
+                  <div className='border-primary h-4 w-4 animate-spin rounded-full border-b-2'></div>
+                </div>
+              }
+            >
               {filteredNavItems.map((item) => {
                 const Icon = item.icon ? Icons[item.icon] : Icons.logo;
                 return item?.items && item?.items?.length > 0 ? (
@@ -128,7 +112,9 @@ export default function AppSidebar() {
                       <CollapsibleContent>
                         <SidebarMenuSub>
                           {item.items?.map((subItem) => {
-                            const SubIcon = subItem.icon ? Icons[subItem.icon] : Icons.logo;
+                            const SubIcon = subItem.icon
+                              ? Icons[subItem.icon]
+                              : Icons.logo;
                             return (
                               <SidebarMenuSubItem key={subItem.title}>
                                 <SidebarMenuSubButton asChild>
@@ -164,12 +150,14 @@ export default function AppSidebar() {
           <SidebarGroupLabel>User</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <ClientOnly fallback={
-                <SidebarMenuButton>
-                  <IconUserCircle className='h-4 w-4' />
-                  <span>Loading...</span>
-                </SidebarMenuButton>
-              }>
+              <ClientOnly
+                fallback={
+                  <SidebarMenuButton>
+                    <IconUserCircle className='h-4 w-4' />
+                    <span>Loading...</span>
+                  </SidebarMenuButton>
+                }
+              >
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <SidebarMenuButton>
@@ -185,11 +173,13 @@ export default function AppSidebar() {
                   >
                     <DropdownMenuLabel>
                       <div className='flex flex-col space-y-1'>
-                        <p className='text-sm font-medium leading-none'>{user?.username}</p>
-                        <p className='text-xs leading-none text-muted-foreground'>
+                        <p className='text-sm leading-none font-medium'>
+                          {user?.username}
+                        </p>
+                        <p className='text-muted-foreground text-xs leading-none'>
                           {user?.email}
                         </p>
-                        <p className='text-xs leading-none text-muted-foreground'>
+                        <p className='text-muted-foreground text-xs leading-none'>
                           Role: {user?.role}
                         </p>
                       </div>

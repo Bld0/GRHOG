@@ -56,7 +56,7 @@ export const navItems: NavItem[] = [
     shortcut: ['t', 't'],
     isActive: false,
     items: [], // No child items
-    requiresRole: 'VIEWER' // All roles can view reports
+    requiresRole: 'SUPER_ADMIN' // Зөвхөн супер админ тайлан харна
   },
   {
     title: 'Санал гомдол',
