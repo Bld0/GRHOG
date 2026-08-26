@@ -27,9 +27,23 @@ import {
 } from '@tabler/icons-react';
 import { toast } from 'sonner';
 
-/** yyyy-MM-dd — <input type="date"> болон backend хоёулаа хүлээж авна. */
+/**
+ * yyyy-MM-dd — <input type="date"> болон backend хоёулаа хүлээж авна.
+ *
+ * toISOString() ашиглаж болохгүй: тэр нь UTC руу шилжүүлдэг тул Улаанбаатарын
+ * (UTC+8) шөнө дунд хүртэлх цагт өмнөх өдөр болж унана. Өдрийн мужид энэ нь
+ * анзаарагдахгүй ч "Өнөөдөр" гэсэн нэг өдрийн сонголтод шууд хоосон тайлан
+ * болж харагдана.
+ */
 function isoDate(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function today(): string {
+  return isoDate(new Date());
 }
 
 function daysAgo(days: number): string {
@@ -39,6 +53,7 @@ function daysAgo(days: number): string {
 }
 
 const QUICK_RANGES = [
+  { label: 'Өнөөдөр', days: 0 },
   { label: '7 хоног', days: 7 },
   { label: '30 хоног', days: 30 },
   { label: '90 хоног', days: 90 }
@@ -53,8 +68,9 @@ const QUICK_RANGES = [
 export function ReportsView() {
   const [tab, setTab] = useState<ReportType>('client-activity');
   const [downloading, setDownloading] = useState<'excel' | 'pdf' | null>(null);
-  const [startDate, setStartDate] = useState(daysAgo(30));
-  const [endDate, setEndDate] = useState(isoDate(new Date()));
+  // Өгөгдмөл нь өнөөдөр: ихэнх асуулт "яг одоо юу болж байна" гэсэн байдаг.
+  const [startDate, setStartDate] = useState(today());
+  const [endDate, setEndDate] = useState(today());
   const [district, setDistrict] = useState('all');
   const [khoroo, setKhoroo] = useState('all');
 
@@ -64,8 +80,8 @@ export function ReportsView() {
   // Хэрэглэгч бичиж дуусаагүй байхад тайлан дахин татагдахгүйн тулд
   // шүүлтүүрийг "Тайлан гаргах" дарахад л хэрэглэнэ.
   const [applied, setApplied] = useState<ReportFilters>({
-    startDate: daysAgo(30),
-    endDate: isoDate(new Date()),
+    startDate: today(),
+    endDate: today(),
     district: '',
     khoroo: ''
   });
@@ -115,8 +131,9 @@ export function ReportsView() {
   };
 
   const applyQuickRange = (days: number) => {
+    // days = 0 бол эхлэл ба төгсгөл хоёулаа өнөөдөр — нэг өдрийн муж.
     const from = daysAgo(days);
-    const to = isoDate(new Date());
+    const to = today();
     setStartDate(from);
     setEndDate(to);
     setApplied({
@@ -164,8 +181,14 @@ export function ReportsView() {
 
         <Card>
           <CardContent className='flex flex-col gap-4 pt-6'>
-            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5'>
-              <div className='space-y-1'>
+            {/*
+              Дөрвөн шүүлтүүр тэнцүү хуваагдаж, товч нь өөрийн өргөнөөр
+              (auto) сууна — 5 тэнцүү багана хийвэл товч талбаруудаас илүү
+              өргөн авч, огнооны нүд шахагдана. Дунд өргөнд товч ганцаараа
+              хагас багана эзэлж өнчрөхгүйн тулд хоёр багана дамжина.
+            */}
+            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]'>
+              <div className='min-w-0 space-y-1'>
                 <Label className='text-xs'>Эхлэх огноо</Label>
                 <Input
                   type='date'
@@ -174,7 +197,7 @@ export function ReportsView() {
                   onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
-              <div className='space-y-1'>
+              <div className='min-w-0 space-y-1'>
                 <Label className='text-xs'>Дуусах огноо</Label>
                 <Input
                   type='date'
@@ -183,7 +206,7 @@ export function ReportsView() {
                   onChange={(e) => setEndDate(e.target.value)}
                 />
               </div>
-              <div className='space-y-1'>
+              <div className='min-w-0 space-y-1'>
                 <Label className='text-xs'>Дүүрэг</Label>
                 <Select value={district} onValueChange={setDistrict}>
                   <SelectTrigger>
@@ -199,7 +222,7 @@ export function ReportsView() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className='space-y-1'>
+              <div className='min-w-0 space-y-1'>
                 <Label className='text-xs'>Хороо</Label>
                 <Select value={khoroo} onValueChange={setKhoroo}>
                   <SelectTrigger>
@@ -215,7 +238,7 @@ export function ReportsView() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className='flex items-end'>
+              <div className='flex items-end sm:col-span-2 lg:col-span-1'>
                 <Button className='w-full' onClick={apply}>
                   Тайлан гаргах
                 </Button>
