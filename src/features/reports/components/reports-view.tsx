@@ -52,11 +52,22 @@ function daysAgo(days: number): string {
   return isoDate(date);
 }
 
-const QUICK_RANGES = [
+/**
+ * "Бүх цаг үе"-ийн эхлэл.
+ *
+ * Backend хугацааны мужгүй асуулт хүлээж авдаггүй — огноо өгөхгүй бол сүүлийн
+ * 30 хоног гэж үзнэ. Тиймээс системд өгөгдөл бүртгэгдэж эхлэхээс хамаагүй
+ * эрт тогтмол огноо өгч бүх мөрийг хамруулна.
+ */
+const ALL_TIME_START = '2000-01-01';
+
+/** days = null бол бүх цаг үе. */
+const QUICK_RANGES: { label: string; days: number | null }[] = [
   { label: 'Өнөөдөр', days: 0 },
   { label: '7 хоног', days: 7 },
   { label: '30 хоног', days: 30 },
-  { label: '90 хоног', days: 90 }
+  { label: '90 хоног', days: 90 },
+  { label: 'Бүх цаг үе', days: null }
 ];
 
 /**
@@ -130,9 +141,10 @@ export function ReportsView() {
     });
   };
 
-  const applyQuickRange = (days: number) => {
+  const applyQuickRange = (days: number | null) => {
     // days = 0 бол эхлэл ба төгсгөл хоёулаа өнөөдөр — нэг өдрийн муж.
-    const from = daysAgo(days);
+    // days = null бол бүх цаг үе.
+    const from = days === null ? ALL_TIME_START : daysAgo(days);
     const to = today();
     setStartDate(from);
     setEndDate(to);
@@ -164,7 +176,10 @@ export function ReportsView() {
   };
 
   const periodLabel = useMemo(
-    () => `${applied.startDate} — ${applied.endDate}`,
+    () =>
+      applied.startDate === ALL_TIME_START
+        ? `Бүх цаг үе (${applied.endDate} хүртэл)`
+        : `${applied.startDate} — ${applied.endDate}`,
     [applied.startDate, applied.endDate]
   );
 
@@ -251,7 +266,7 @@ export function ReportsView() {
               </span>
               {QUICK_RANGES.map((range) => (
                 <Button
-                  key={range.days}
+                  key={range.label}
                   variant='outline'
                   size='sm'
                   onClick={() => applyQuickRange(range.days)}

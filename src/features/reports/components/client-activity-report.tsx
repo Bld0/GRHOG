@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -34,9 +35,10 @@ import { apiClient } from '@/lib/api-client';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useRolePermissions } from '@/hooks/use-role-permissions';
 import {
+  ActivityClient,
+  ActivityTab,
   BUCKET_LABEL,
   ClientActivityReport as ActivityReport,
-  InactiveClient,
   InactivityBucket,
   ReportFilters,
   toQuery
@@ -74,9 +76,10 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
   const [report, setReport] = useState<ActivityReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [tab, setTab] = useState<ActivityTab>('inactive');
   const [bucket, setBucket] = useState<InactivityBucket>('all');
   const [khorooFilter, setKhorooFilter] = useState<number | null>(null);
-  const [clients, setClients] = useState<InactiveClient[]>([]);
+  const [clients, setClients] = useState<ActivityClient[]>([]);
   const [totalClients, setTotalClients] = useState(0);
   const [page, setPage] = useState(0);
   const [listLoading, setListLoading] = useState(false);
@@ -84,6 +87,8 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
   const debouncedSearch = useDebounce(search, 400);
   const [isBackfilling, setIsBackfilling] = useState(false);
   const { isSuperAdmin } = useRolePermissions();
+
+  const isActiveTab = tab === 'active';
 
   const fetchReport = useCallback(async () => {
     setIsLoading(true);
@@ -111,17 +116,21 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
           khoroo: khorooFilter != null ? String(khorooFilter) : filters.khoroo
         },
         {
-          bucket: bucket === 'all' ? undefined : bucket,
+          // Ангилал зөвхөн идэвхгүй жагсаалтад утгатай — идэвхтэй нь ганц
+          // нөхцөл: сонгосон хугацаанд уншуулсан эсэх.
+          bucket: isActiveTab || bucket === 'all' ? undefined : bucket,
           search: debouncedSearch.trim() || undefined,
           page,
           size: PAGE_SIZE
         }
       );
       const response = await apiClient.fetchWithAuth(
-        `/api/reports/client-activity/inactive?${query}`
+        `/api/reports/client-activity/${isActiveTab ? 'active' : 'inactive'}?${query}`
       );
       if (!response.ok)
-        throw new Error('Идэвхгүй хэрэглэгчийн жагсаалт татахад алдаа гарлаа');
+        throw new Error(
+          `${isActiveTab ? 'Идэвхтэй' : 'Идэвхгүй'} хэрэглэгчийн жагсаалт татахад алдаа гарлаа`
+        );
       const data = await response.json();
       setClients(data.content ?? []);
       setTotalClients(data.totalElements ?? 0);
@@ -132,7 +141,7 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
     } finally {
       setListLoading(false);
     }
-  }, [filters, khorooFilter, bucket, debouncedSearch, page]);
+  }, [filters, khorooFilter, bucket, debouncedSearch, page, isActiveTab]);
 
   useEffect(() => {
     fetchReport();
@@ -145,7 +154,7 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
   // Шүүлтүүр солигдвол эхний хуудас руу буцна.
   useEffect(() => {
     setPage(0);
-  }, [bucket, khorooFilter, debouncedSearch, filters]);
+  }, [tab, bucket, khorooFilter, debouncedSearch, filters]);
 
   /**
    * Хадгалагдсан `card_used_at` талбарыг bin_usage-аас нөхнө.
@@ -182,6 +191,13 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
     } finally {
       setIsBackfilling(false);
     }
+  };
+
+  /** Хорооны тоо дээр дарахад тухайн табыг нээж, шүүлтүүрийг сэлгэнэ. */
+  const selectKhoroo = (target: ActivityTab, khoroo: number | null) => {
+    const sameCell = tab === target && khorooFilter === khoroo;
+    setTab(target);
+    setKhorooFilter(sameCell ? null : khoroo);
   };
 
   const outOfSyncCount = clients.filter((c) => c.usageOutOfSync).length;
@@ -256,7 +272,8 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
         <CardHeader>
           <CardTitle>Хороогоор</CardTitle>
           <CardDescription>
-            Идэвхгүйн тоо дээр дарж тухайн хорооны хэрэглэгчдийг доор харна
+            Идэвхтэй/идэвхгүйн тоо дээр дарж тухайн хорооны хэрэглэгчдийг доор
+            харна
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -298,19 +315,22 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
                       <TableCell className='text-right tabular-nums'>
                         {row.total}
                       </TableCell>
-                      <TableCell className='text-right tabular-nums'>
-                        {row.active}
+                      <TableCell className='text-right'>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          className='h-7 px-2 font-semibold text-green-600 tabular-nums hover:text-green-700 dark:text-green-400'
+                          onClick={() => selectKhoroo('active', row.khoroo)}
+                        >
+                          {row.active}
+                        </Button>
                       </TableCell>
                       <TableCell className='text-right'>
                         <Button
                           variant='ghost'
                           size='sm'
                           className='h-7 px-2 font-semibold text-red-600 tabular-nums hover:text-red-700 dark:text-red-400'
-                          onClick={() =>
-                            setKhorooFilter(
-                              khorooFilter === row.khoroo ? null : row.khoroo
-                            )
-                          }
+                          onClick={() => selectKhoroo('inactive', row.khoroo)}
                         >
                           {row.inactive}
                         </Button>
@@ -329,39 +349,81 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
 
       <Card>
         <CardHeader className='space-y-4'>
+          {/*
+            Нэг хүснэгтийг хоёр таб хуваан ашиглана: мөрийн бүтэц ижил тул
+            зөвхөн эх сурвалж (endpoint), эрэмбэ, багануудын нэр л ялгаатай.
+          */}
+          <Tabs
+            value={tab}
+            onValueChange={(value) => setTab(value as ActivityTab)}
+          >
+            <TabsList>
+              <TabsTrigger value='inactive'>
+                <IconUserOff className='mr-2 h-4 w-4' />
+                Идэвхгүй
+                <Badge variant='secondary' className='ml-2 tabular-nums'>
+                  {report?.inactiveClients ?? 0}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value='active'>
+                <IconUserCheck className='mr-2 h-4 w-4' />
+                Идэвхтэй
+                <Badge variant='secondary' className='ml-2 tabular-nums'>
+                  {report?.activeClients ?? 0}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
           <div className='flex flex-col gap-1'>
-            <CardTitle>Идэвхгүй хэрэглэгчид</CardTitle>
+            <CardTitle>
+              {isActiveTab ? 'Идэвхтэй хэрэглэгчид' : 'Идэвхгүй хэрэглэгчид'}
+            </CardTitle>
             <CardDescription>
-              Хамгийн удаан ашиглаагүй нь эхэнд. Мөр дээр дарж дэлгэрэнгүй рүү
-              орно. &quot;Ашиглаагүй хоног&quot; нь сүүлд уншуулснаас хойшхи
-              хугацаа — хэзээ ч уншуулаагүй хэрэглэгчид энэ утга байхгүй тул
-              &quot;Бүртгэлээс хойш&quot; баганаар харна
+              {isActiveTab ? (
+                <>
+                  Сонгосон хугацаанд карт уншуулсан хэрэглэгчид — хамгийн сүүлд
+                  ашигласан нь эхэнд. Мөр дээр дарж дэлгэрэнгүй рүү орно
+                </>
+              ) : (
+                <>
+                  Хамгийн удаан ашиглаагүй нь эхэнд. Мөр дээр дарж дэлгэрэнгүй
+                  рүү орно. &quot;Ашиглаагүй хоног&quot; нь сүүлд уншуулснаас
+                  хойшхи хугацаа — хэзээ ч уншуулаагүй хэрэглэгчид энэ утга
+                  байхгүй тул &quot;Бүртгэлээс хойш&quot; баганаар харна
+                </>
+              )}
             </CardDescription>
           </div>
 
           <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-            <div className='flex flex-wrap gap-2'>
-              <Button
-                variant={bucket === 'all' ? 'default' : 'outline'}
-                size='sm'
-                onClick={() => setBucket('all')}
-              >
-                {BUCKET_LABEL.all}
-              </Button>
-              {buckets.map((item) => (
+            {/* Ангилал зөвхөн идэвхгүйд хамаатай. */}
+            {!isActiveTab ? (
+              <div className='flex flex-wrap gap-2'>
                 <Button
-                  key={item.key}
-                  variant={bucket === item.key ? 'default' : 'outline'}
+                  variant={bucket === 'all' ? 'default' : 'outline'}
                   size='sm'
-                  onClick={() => setBucket(item.key)}
+                  onClick={() => setBucket('all')}
                 >
-                  {BUCKET_LABEL[item.key]}
-                  <Badge variant='secondary' className='ml-2 tabular-nums'>
-                    {item.count}
-                  </Badge>
+                  {BUCKET_LABEL.all}
                 </Button>
-              ))}
-            </div>
+                {buckets.map((item) => (
+                  <Button
+                    key={item.key}
+                    variant={bucket === item.key ? 'default' : 'outline'}
+                    size='sm'
+                    onClick={() => setBucket(item.key)}
+                  >
+                    {BUCKET_LABEL[item.key]}
+                    <Badge variant='secondary' className='ml-2 tabular-nums'>
+                      {item.count}
+                    </Badge>
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <div />
+            )}
 
             <div className='flex items-center gap-2'>
               {khorooFilter != null && (
@@ -397,9 +459,10 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
                     дутуу тэмдэглэгдсэн байна
                   </div>
                   <div className='text-muted-foreground text-xs'>
-                    Огноог савны уншилтын түүхээс (bin_usage) олов. Ангиллын
-                    тоонууд хэрэглэгчийн бүртгэл дэх талбараар бодогддог тул
-                    эдгээр мөр буруу ангилалд орсон байж болно —
+                    Огноог савны уншилтын түүхээс (bin_usage) олов.
+                    {isActiveTab
+                      ? ' Жагсаалт хэрэглэгчийн бүртгэл дэх талбараар шүүгддэг тул зарим идэвхтэй хэрэглэгч энд огт харагдахгүй байж болно —'
+                      : ' Ангиллын тоонууд хэрэглэгчийн бүртгэл дэх талбараар бодогддог тул эдгээр мөр буруу ангилалд орсон байж болно —'}
                     {isSuperAdmin
                       ? ' дахин тооцоолж залруулна уу.'
                       : ' супер админаар дахин тооцоолуулна уу.'}
@@ -430,7 +493,9 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
             </div>
           ) : clients.length === 0 ? (
             <div className='text-muted-foreground py-8 text-center text-sm'>
-              Энэ ангилалд хэрэглэгч алга — бүгд саваа ашиглаж байна.
+              {isActiveTab
+                ? 'Сонгосон хугацаанд карт уншуулсан хэрэглэгч алга.'
+                : 'Энэ ангилалд хэрэглэгч алга — бүгд саваа ашиглаж байна.'}
             </div>
           ) : (
             <div className='overflow-x-auto'>
@@ -442,7 +507,7 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
                     <TableHead>Байршил</TableHead>
                     <TableHead>Сүүлд ашигласан</TableHead>
                     <TableHead className='text-right'>
-                      Ашиглаагүй хоног
+                      {isActiveTab ? 'Сүүлчээс хойш' : 'Ашиглаагүй хоног'}
                     </TableHead>
                     <TableHead className='text-right'>
                       Бүртгэлээс хойш

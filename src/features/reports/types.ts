@@ -52,7 +52,11 @@ export interface ClientActivityReport {
   };
 }
 
-export interface InactiveClient {
+/**
+ * Жагсаалтын нэг мөр. Идэвхтэй/идэвхгүй хоёр таб нэг л хэлбэртэй — backend
+ * (ReportService.toClientRows) хоёуланд ижил түлхүүрүүд буцаана.
+ */
+export interface ActivityClient {
   id: number;
   name: string | null;
   phone: string | null;
@@ -78,6 +82,9 @@ export interface InactiveClient {
    */
   usageOutOfSync: boolean;
 }
+
+/** Жагсаалтын таб: идэвхгүй эсвэл идэвхтэй хэрэглэгчид. */
+export type ActivityTab = 'inactive' | 'active';
 
 /** Идэвхгүй байдлын ангилал — backend-ийн `bucket` параметртэй тохирно. */
 export type InactivityBucket = '7' | '14' | '30' | 'never' | 'all';
