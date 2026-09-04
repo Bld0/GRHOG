@@ -42,6 +42,22 @@ import {
   toQuery
 } from '../types';
 
+/**
+ * Хоёр багана хоёулаа хоногоор/хувиар хэмжигддэг тул хооронд нь андуурахад
+ * амархан. Тодорхойлолтыг баганын толгойд наана — хүснэгтийн мөр бүрд
+ * тайлбарлах орон зай байхгүй.
+ */
+const DRAIN_HINT =
+  'Батерей хоногт хэдэн хувиар суудаг вэ. Цэнэглэлт хоорондын мөчлөг бүрийг ' +
+  'бодоод хамгийн муу мөчлөгийг харуулна. Сонгосон хугацааны өдрийн дунджаас ' +
+  'тооцдог тул нэг өдрийн мужид 0 гарна.';
+
+const HOLD_HINT =
+  'Нэг цэнэг хэдэн хоног хүрсэн бэ — цэнэглэлт (өдрийн дундаж 10%-иас дээш ' +
+  'үсэрсэн үе) хоорондын хамгийн урт хугацаа. Бүтэн мөчлөг ажиглагдаагүй бол ' +
+  'ажиглагдсан хугацааг «хамгийн багадаа» гэж өгнө — тэр тохиолдолд энэ нь ' +
+  'батерейны чанар биш, хугацааны мужийн урт.';
+
 /** Цэнэгийн хувийг өнгөт зурвасаар. */
 function BatteryBar({ percent }: { percent: number }) {
   const tone =
@@ -217,7 +233,9 @@ export function BatteryReport({ filters }: { filters: ReportFilters }) {
                     <TableHead>Байршил</TableHead>
                     <TableHead>Одоогийн цэнэг</TableHead>
                     <TableHead>Хүчдэл</TableHead>
-                    <TableHead className='text-right'>Зарцуулалт</TableHead>
+                    <TableHead className='text-right' title={DRAIN_HINT}>
+                      Зарцуулалт
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -263,7 +281,10 @@ export function BatteryReport({ filters }: { filters: ReportFilters }) {
             <div>
               <CardTitle>Савуудын батерейн ашиглалт</CardTitle>
               <CardDescription>
-                Мөр дээр дарж батерейн дэлгэрэнгүй түүхийг харна
+                Мөр дээр дарж батерейн дэлгэрэнгүй түүхийг харна.
+                &quot;Зарцуулалт&quot; = хоногт суух дундаж хувь, &quot;Цэнэг
+                барьсан&quot; = нэг цэнэг хүрсэн хоног. Хоёулаа сонгосон
+                хугацааны хэмжилтээс бодогддог тул нэг өдрийн мужид 0 гарна
               </CardDescription>
             </div>
             <Select value={sortBy} onValueChange={setSortBy}>
@@ -307,8 +328,12 @@ export function BatteryReport({ filters }: { filters: ReportFilters }) {
                     <TableHead>Байршил</TableHead>
                     <TableHead>Одоогийн цэнэг</TableHead>
                     <TableHead className='text-right'>Дундаж</TableHead>
-                    <TableHead className='text-right'>Зарцуулалт</TableHead>
-                    <TableHead className='text-right'>Цэнэг барьсан</TableHead>
+                    <TableHead className='text-right' title={DRAIN_HINT}>
+                      Зарцуулалт
+                    </TableHead>
+                    <TableHead className='text-right' title={HOLD_HINT}>
+                      Цэнэг барьсан
+                    </TableHead>
                     <TableHead className='text-right'>Сольсноос хойш</TableHead>
                     <TableHead className='text-right'>Цэнэглэлт</TableHead>
                   </TableRow>

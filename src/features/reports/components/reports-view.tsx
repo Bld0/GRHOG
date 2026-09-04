@@ -196,71 +196,66 @@ export function ReportsView() {
 
         <Card>
           <CardContent className='flex flex-col gap-4 pt-6'>
-            {/*
-              Дөрвөн шүүлтүүр тэнцүү хуваагдаж, товч нь өөрийн өргөнөөр
-              (auto) сууна — 5 тэнцүү багана хийвэл товч талбаруудаас илүү
-              өргөн авч, огнооны нүд шахагдана. Дунд өргөнд товч ганцаараа
-              хагас багана эзэлж өнчрөхгүйн тулд хоёр багана дамжина.
-            */}
-            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]'>
-              <div className='min-w-0 space-y-1'>
-                <Label className='text-xs'>Эхлэх огноо</Label>
-                <Input
-                  type='date'
-                  value={startDate}
-                  max={endDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
+            {/* Шүүлтүүрүүд болон Тайлан гаргах товчны эхлэл */}
+            <div className='flex flex-col gap-4 lg:flex-row lg:items-end'>
+              
+              {/* 1. Шүүлтүүрүүдийн багц (Хоорондоо ойрхон байрлана) */}
+              <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 lg:w-auto xl:gap-4'>
+                <div className='min-w-[140px] space-y-1'>
+                  <Label className='text-xs'>Эхлэх огноо</Label>
+                  <Input type='date' value={startDate} max={endDate} onChange={(e) => setStartDate(e.target.value)} />
+                </div>
+                
+                <div className='min-w-[140px] space-y-1'>
+                  <Label className='text-xs'>Дуусах огноо</Label>
+                  <Input type='date' value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)} />
+                </div>
+                
+                <div className='min-w-[140px] space-y-1'>
+                  <Label className='text-xs'>Дүүрэг</Label>
+                  <Select value={district} onValueChange={setDistrict}>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Бүх дүүрэг' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='all'>Бүх дүүрэг</SelectItem>
+                      {districts.map((item) => (
+                        <SelectItem key={item} value={item}>
+                          {item}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className='min-w-[140px] space-y-1'>
+                  <Label className='text-xs'>Хороо</Label>
+                  <Select value={khoroo} onValueChange={setKhoroo}>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Бүх хороо' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='all'>Бүх хороо</SelectItem>
+                      {khoroos.map((item) => (
+                        <SelectItem key={item} value={String(item)}>
+                          {item}-р хороо
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className='min-w-0 space-y-1'>
-                <Label className='text-xs'>Дуусах огноо</Label>
-                <Input
-                  type='date'
-                  value={endDate}
-                  min={startDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-              <div className='min-w-0 space-y-1'>
-                <Label className='text-xs'>Дүүрэг</Label>
-                <Select value={district} onValueChange={setDistrict}>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Бүх дүүрэг' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='all'>Бүх дүүрэг</SelectItem>
-                    {districts.map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className='min-w-0 space-y-1'>
-                <Label className='text-xs'>Хороо</Label>
-                <Select value={khoroo} onValueChange={setKhoroo}>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Бүх хороо' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='all'>Бүх хороо</SelectItem>
-                    {khoroos.map((item) => (
-                      <SelectItem key={item} value={String(item)}>
-                        {item}-р хороо
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className='flex items-end sm:col-span-2 lg:col-span-1'>
-                <Button className='w-full' onClick={apply}>
+
+              {/* 2. Тайлан гаргах товч (Шүүлтүүрүүдээс хол буюу баруун захад байрлана) */}
+              <div className='w-full sm:col-span-2 lg:ml-auto lg:w-auto'>
+                <Button className='w-full lg:px-6' onClick={apply}>
                   Тайлан гаргах
                 </Button>
               </div>
             </div>
 
-            <div className='flex flex-wrap items-center gap-2'>
+            {/* 3. Түргэн сонголт (Дээрх шүүлтүүрүүдийн яг доор байрлана) */}
+            <div className='flex flex-wrap items-center gap-2 border-t pt-2 dark:border-muted'>
               <span className='text-muted-foreground text-xs'>
                 Түргэн сонголт:
               </span>
@@ -280,6 +275,7 @@ export function ReportsView() {
             </div>
           </CardContent>
         </Card>
+
 
         <Tabs
           value={tab}
