@@ -50,6 +50,12 @@ export interface ClientActivityReport {
     days30: number;
     never: number;
   };
+  /** Идэвхтэй хэрэглэгчийг уншуулалтын тоогоор нь ангилсан тоо. */
+  usageBuckets: {
+    low: number;
+    mid: number;
+    high: number;
+  };
 }
 
 /**
@@ -95,6 +101,19 @@ export const BUCKET_LABEL: Record<InactivityBucket, string> = {
   '30': '30+ хоног',
   never: 'Хэзээ ч ашиглаагүй',
   all: 'Бүх идэвхгүй'
+};
+
+/**
+ * Идэвхтэй хэрэглэгчийн уншуулалтын ангилал — backend-ийн `usage` параметртэй
+ * тохирно. Мужууд давхцахгүй: 10 нь зөвхөн доод, 100 нь зөвхөн дунд ангилалд.
+ */
+export type UsageBucket = 'all' | 'low' | 'mid' | 'high';
+
+export const USAGE_BUCKET_LABEL: Record<UsageBucket, string> = {
+  all: 'Бүх идэвхтэй',
+  low: '1–10 удаа',
+  mid: '11–100 удаа',
+  high: '101+ удаа'
 };
 
 // ---------------- Хоослолт ----------------

@@ -41,6 +41,8 @@ import {
   ClientActivityReport as ActivityReport,
   InactivityBucket,
   ReportFilters,
+  UsageBucket,
+  USAGE_BUCKET_LABEL,
   toQuery
 } from '../types';
 
@@ -78,6 +80,7 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
 
   const [tab, setTab] = useState<ActivityTab>('inactive');
   const [bucket, setBucket] = useState<InactivityBucket>('all');
+  const [usageBucket, setUsageBucket] = useState<UsageBucket>('all');
   const [khorooFilter, setKhorooFilter] = useState<number | null>(null);
   const [clients, setClients] = useState<ActivityClient[]>([]);
   const [totalClients, setTotalClients] = useState(0);
@@ -116,9 +119,12 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
           khoroo: khorooFilter != null ? String(khorooFilter) : filters.khoroo
         },
         {
-          // Ангилал зөвхөн идэвхгүй жагсаалтад утгатай — идэвхтэй нь ганц
-          // нөхцөл: сонгосон хугацаанд уншуулсан эсэх.
+          // Хугацааны ангилал зөвхөн идэвхгүй жагсаалтад утгатай — идэвхтэй нь
+          // ганц нөхцөл: сонгосон хугацаанд уншуулсан эсэх. Харин уншуулалтын
+          // тоогоор шүүх нь эсрэгээрээ зөвхөн идэвхтэй жагсаалтад хамаатай.
           bucket: isActiveTab || bucket === 'all' ? undefined : bucket,
+          usage:
+            !isActiveTab || usageBucket === 'all' ? undefined : usageBucket,
           search: debouncedSearch.trim() || undefined,
           page,
           size: PAGE_SIZE
@@ -141,7 +147,15 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
     } finally {
       setListLoading(false);
     }
-  }, [filters, khorooFilter, bucket, debouncedSearch, page, isActiveTab]);
+  }, [
+    filters,
+    khorooFilter,
+    bucket,
+    usageBucket,
+    debouncedSearch,
+    page,
+    isActiveTab
+  ]);
 
   useEffect(() => {
     fetchReport();
@@ -154,7 +168,7 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
   // Шүүлтүүр солигдвол эхний хуудас руу буцна.
   useEffect(() => {
     setPage(0);
-  }, [tab, bucket, khorooFilter, debouncedSearch, filters]);
+  }, [tab, bucket, usageBucket, khorooFilter, debouncedSearch, filters]);
 
   /**
    * Хадгалагдсан `card_used_at` талбарыг bin_usage-аас нөхнө.
@@ -241,6 +255,12 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
     { key: '14', count: report?.buckets.days14 ?? 0 },
     { key: '30', count: report?.buckets.days30 ?? 0 },
     { key: 'never', count: report?.buckets.never ?? 0 }
+  ];
+
+  const usageBuckets: { key: UsageBucket; count: number }[] = [
+    { key: 'low', count: report?.usageBuckets?.low ?? 0 },
+    { key: 'mid', count: report?.usageBuckets?.mid ?? 0 },
+    { key: 'high', count: report?.usageBuckets?.high ?? 0 }
   ];
 
   return (
@@ -383,7 +403,9 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
               {isActiveTab ? (
                 <>
                   Сонгосон хугацаанд карт уншуулсан хэрэглэгчид — хамгийн сүүлд
-                  ашигласан нь эхэнд. Мөр дээр дарж дэлгэрэнгүй рүү орно
+                  ашигласан нь эхэнд. Мөр дээр дарж дэлгэрэнгүй рүү орно.
+                  Уншуулалтын ангилал нь &quot;Нийт хэрэглээ&quot; баганаар
+                  шүүнэ — тэр нь бүх хугацааны нийлбэр
                 </>
               ) : (
                 <>
@@ -397,7 +419,10 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
           </div>
 
           <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-            {/* Ангилал зөвхөн идэвхгүйд хамаатай. */}
+            {/*
+              Таб бүр өөрийн ангилалтай: идэвхгүй нь хэр удаан ашиглаагүйгээр,
+              идэвхтэй нь хэдэн удаа уншуулснаар.
+            */}
             {!isActiveTab ? (
               <div className='flex flex-wrap gap-2'>
                 <Button
@@ -422,7 +447,30 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
                 ))}
               </div>
             ) : (
-              <div />
+              /* Идэвхтэй табд уншуулалтын тоогоор шүүнэ — тоо нь хүснэгтийн
+                 "Нийт хэрэглээ" баганатай ижил утга. */
+              <div className='flex flex-wrap gap-2'>
+                <Button
+                  variant={usageBucket === 'all' ? 'default' : 'outline'}
+                  size='sm'
+                  onClick={() => setUsageBucket('all')}
+                >
+                  {USAGE_BUCKET_LABEL.all}
+                </Button>
+                {usageBuckets.map((item) => (
+                  <Button
+                    key={item.key}
+                    variant={usageBucket === item.key ? 'default' : 'outline'}
+                    size='sm'
+                    onClick={() => setUsageBucket(item.key)}
+                  >
+                    {USAGE_BUCKET_LABEL[item.key]}
+                    <Badge variant='secondary' className='ml-2 tabular-nums'>
+                      {item.count}
+                    </Badge>
+                  </Button>
+                ))}
+              </div>
             )}
 
             <div className='flex items-center gap-2'>
@@ -494,7 +542,9 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
           ) : clients.length === 0 ? (
             <div className='text-muted-foreground py-8 text-center text-sm'>
               {isActiveTab
-                ? 'Сонгосон хугацаанд карт уншуулсан хэрэглэгч алга.'
+                ? usageBucket === 'all'
+                  ? 'Сонгосон хугацаанд карт уншуулсан хэрэглэгч алга.'
+                  : `Сонгосон хугацаанд ${USAGE_BUCKET_LABEL[usageBucket].toLowerCase()} уншуулсан хэрэглэгч алга.`
                 : 'Энэ ангилалд хэрэглэгч алга — бүгд саваа ашиглаж байна.'}
             </div>
           ) : (
@@ -507,7 +557,9 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
                     <TableHead>Байршил</TableHead>
                     <TableHead>Сүүлд ашигласан</TableHead>
                     <TableHead className='text-right'>
-                      {isActiveTab ? 'Сүүлчээс хойш' : 'Ашиглаагүй хоног'}
+                      {isActiveTab
+                        ? 'Сүүлд уншуулсанаас хойш'
+                        : 'Ашиглаагүй хоног'}
                     </TableHead>
                     <TableHead className='text-right'>
                       Бүртгэлээс хойш
