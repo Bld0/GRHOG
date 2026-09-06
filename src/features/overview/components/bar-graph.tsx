@@ -33,6 +33,8 @@ import {
   ChartTooltipContent
 } from '@/components/ui/chart';
 import { BarGraphSkeleton } from './bar-graph-skeleton';
+import { LeaderAreaBadge } from '@/components/layout/leader-area-badge';
+import { useRolePermissions } from '@/hooks/use-role-permissions';
 
 export const description = 'Хорооны ашиглалтын график';
 
@@ -53,6 +55,7 @@ type ApiResponse = {
 };
 
 export function BarGraph() {
+  const { isKhorooLeader } = useRolePermissions();
   const [range, setRange] = React.useState<
     '12month' | 'month' | 'week' | 'today'
   >('month');
@@ -183,6 +186,12 @@ export function BarGraph() {
 
           {/* district select or input */}
           <div className='ml-3'>
+            {/* Дарга ганц дүүрэг/хороо хардаг — шүүлтүүрийн оронд статик
+                шошго (pie-graph, reports-view-тэй ижил зарчим). */}
+            {isKhorooLeader ? (
+              <LeaderAreaBadge />
+            ) : (
+              <>
             <label className='sr-only'>District</label>
             <Select
               value={district === '' ? '__all' : district}
@@ -200,6 +209,8 @@ export function BarGraph() {
                 ))}
               </SelectContent>
             </Select>
+              </>
+            )}
           </div>
         </div>
       </CardHeader>

@@ -134,6 +134,16 @@ export function useAuth() {
   };
 
   // Check if user is developer
+  /**
+   * Хорооны дарга — зөвхөн ӨӨРИЙН хорооны өгөгдлийг УНШИХ эрхтэй.
+   * Шүүлтийг backend хийнэ (CallerScope); веб талд энэ туг нь зөвхөн
+   * утгагүй болсон удирдлагыг (дүүрэг/хорооны шүүлтүүр) нуух, 403
+   * буцаах товчийг (экспорт, үүсгэх/засах) үзүүлэхгүй байхад хэрэгтэй.
+   */
+  const isKhorooLeader = (): boolean => {
+    return getUserRole() === 'KHOROO_LEADER';
+  };
+
   const isDeveloper = (): boolean => {
     return getUserRole() === 'DEVELOPER';
   };
@@ -151,6 +161,7 @@ export function useAuth() {
     isSuperAdmin,
     isAdmin,
     isViewer,
-    isDeveloper
+    isDeveloper,
+    isKhorooLeader
   };
 }

@@ -7,21 +7,31 @@ import { useRolePermissions } from '@/hooks/use-role-permissions';
 import { Icons } from '@/components/icons';
 
 /**
- * Тайлан — зөвхөн SUPER_ADMIN.
+ * Тайлан — SUPER_ADMIN ба хорооны дарга.
  *
  * Цэснээс нуух нь хангалтгүй: хаягаар нь шууд орж болно. Backend тал ч
  * (ReportController) татгалзах ба энэ хуудас нь эрхгүй хэрэглэгчийг хоосон
  * алдаанууд харуулахын оронд буцаана.
+ *
+ * Хорооны дарга нэмэгдэв: ReportController-ийн класс түвшний @PreAuthorize
+ * түүнийг нэрлэсэн ба доор нь зогсох ReportService/BatteryReportService/
+ * BatteryHistoryService гурав CallerScope-оор ӨӨРИЙНХ НЬ хорооны мөрөөр
+ * шүүдэг тул тайлан нь бүсийн хэмжээнд утгатай.
+ *
+ * ADMIN-ийг ЗОРИУД нэмээгүй: backend түүнд нээлттэй ч веб дээр тайлан нь
+ * цэсэндээ ч `requiresRole: 'SUPER_ADMIN'` — энэ нь бүтээгдэхүүний тусдаа
+ * шийдвэр бөгөөд энэ ажлын хүрээнд өөрчлөх зүйл биш.
  */
 export default function ReportsPage() {
   const router = useRouter();
-  const { isSuperAdmin, isLoading } = useRolePermissions();
+  const { isSuperAdmin, isKhorooLeader, isLoading } = useRolePermissions();
+  const canReadReports = isSuperAdmin || isKhorooLeader;
 
   useEffect(() => {
-    if (!isLoading && !isSuperAdmin) {
+    if (!isLoading && !canReadReports) {
       router.push('/dashboard/overview');
     }
-  }, [isLoading, isSuperAdmin, router]);
+  }, [isLoading, canReadReports, router]);
 
   if (isLoading) {
     return (
@@ -31,7 +41,7 @@ export default function ReportsPage() {
     );
   }
 
-  if (!isSuperAdmin) {
+  if (!canReadReports) {
     return null;
   }
 

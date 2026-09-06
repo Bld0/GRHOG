@@ -20,8 +20,11 @@ import {
   ChartTooltipContent
 } from '@/components/ui/chart';
 import { PieGraphSkeleton } from './pie-graph-skeleton';
+import { LeaderAreaBadge } from '@/components/layout/leader-area-badge';
+import { useRolePermissions } from '@/hooks/use-role-permissions';
 
 export function PieGraph() {
+  const { isKhorooLeader } = useRolePermissions();
   const [districts, setDistricts] = React.useState<string[]>([]);
   const [district, setDistrict] = React.useState<string>('');
   const [khorooList, setKhorooList] = React.useState<number[]>([]);
@@ -110,6 +113,13 @@ export function PieGraph() {
         <CardTitle>Хэрэглэгчдийн төрөл</CardTitle>
         <CardDescription>
           <div className='flex items-center gap-3'>
+            {/* Хорооны дарга ганц хороо хардаг тул шүүлтүүр утгагүй —
+                өөрчилж болдоггүй сонголт өгөхийн оронд огт үзүүлэхгүй.
+                Өгөгдлийг backend аль хэдийн бүсээр нь шүүсэн байна. */}
+            {isKhorooLeader ? (
+              <LeaderAreaBadge />
+            ) : (
+              <>
             <label className='sr-only'>District</label>
             <Select value={district === '' ? '__all' : district} onValueChange={(v) => setDistrict(v === '__all' ? '' : v)}>
               <SelectTrigger className='rounded border px-2 py-1 text-sm'>
@@ -139,6 +149,8 @@ export function PieGraph() {
                 ))}
               </SelectContent>
             </Select>
+              </>
+            )}
           </div>
         </CardDescription>
       </CardHeader>

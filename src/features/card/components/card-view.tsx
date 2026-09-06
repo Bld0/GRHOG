@@ -119,7 +119,7 @@ import {
 export function CardsView() {
   const router = useRouter();
   // const [isCardIdConverted, setIsCardIdConverted] = useState(false);
-  const { canPerformAction } = useRolePermissions();
+  const { canPerformAction, isKhorooLeader } = useRolePermissions();
   const [currentPage, setCurrentPage] = useState(0); // Changed to 0-based for API
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -1211,10 +1211,14 @@ export function CardsView() {
               </DialogContent>
             </Dialog>
 
+            {/* Экспорт нь бүсээр шүүгддэггүй тул backend дээр /export/** нь
+                хорооны даргад 403 буцаана — 403 өгөх товч үзүүлэхгүй. */}
+            {!isKhorooLeader && (
             <Button onClick={exportToExcel} variant='outline' size='sm'>
               <IconDownload className='mr-2 h-4 w-4' />
               Excel татах
             </Button>
+            )}
           </div>
         </div>
 

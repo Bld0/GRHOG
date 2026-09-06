@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useAuth } from './use-auth';
 
 export function useRolePermissions() {
-  const { user, hasPermission, canPerform, getUserRole, isSuperAdmin, isAdmin, isViewer, isDeveloper, isLoading } = useAuth();
+  const { user, hasPermission, canPerform, getUserRole, isSuperAdmin, isAdmin, isViewer, isDeveloper, isKhorooLeader, isLoading } = useAuth();
 
   const permissions = useMemo(() => {
     if (!user) {
@@ -97,6 +97,11 @@ export function useRolePermissions() {
     return isDeveloper();
   }, [user, isDeveloper]);
 
+  const isKhorooLeaderValue = useMemo(() => {
+    if (!user) return false;
+    return isKhorooLeader();
+  }, [user, isKhorooLeader]);
+
   return {
     userRole,
     userConfig: user,
@@ -106,6 +111,7 @@ export function useRolePermissions() {
     isAdmin: isAdminValue,
     isViewer: isViewerValue,
     isDeveloper: isDeveloperValue,
+    isKhorooLeader: isKhorooLeaderValue,
     canPerformAction: canPerform,
     hasPermission,
     isLoading,

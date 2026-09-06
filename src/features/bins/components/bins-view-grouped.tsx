@@ -77,7 +77,7 @@ import { cn } from '@/lib/utils';
 
 export function BinsViewGrouped() {
   const router = useRouter();
-  const { canPerformAction } = useRolePermissions();
+  const { canPerformAction, isKhorooLeader } = useRolePermissions();
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -475,10 +475,14 @@ export function BinsViewGrouped() {
                 Устгах ({selectedBins.size})
               </Button>
             )}
+            {/* Экспорт нь бүсээр шүүгддэггүй тул backend дээр /export/** нь
+                хорооны даргад 403 буцаана — 403 өгөх товч үзүүлэхгүй. */}
+            {!isKhorooLeader && (
             <Button onClick={exportToExcel} variant='outline' size='sm'>
               <IconDownload className='mr-2 h-4 w-4' />
               Excel татах
             </Button>
+            )}
           </div>
         </div>
 

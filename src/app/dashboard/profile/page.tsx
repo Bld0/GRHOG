@@ -104,6 +104,10 @@ export default function ProfilePage() {
         return 'Administrator';
       case 'VIEWER':
         return 'Viewer';
+      case 'DEVELOPER':
+        return 'Developer';
+      case 'KHOROO_LEADER':
+        return 'Хорооны дарга';
       default:
         return role;
     }
@@ -207,7 +211,10 @@ export default function ProfilePage() {
             <div>
               <Label>Role</Label>
               <p className="text-sm text-muted-foreground py-2">
-                {profile.role === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : profile.role === 'ADMIN' ? 'ADMIN' : 'VIEWER'}
+                {/* Гурван эрхийг гартаар шалгаж, бусдыг бүгдийг 'VIEWER' гэж
+                    харуулдаг байсан — DEVELOPER ба KHOROO_LEADER буруу
+                    шошготой гарна. Эрхийг өөрийг нь харуулна. */}
+                {profile.role}
               </p>
             </div>
           </CardContent>

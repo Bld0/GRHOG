@@ -26,6 +26,8 @@ import {
   IconFileTypeXls
 } from '@tabler/icons-react';
 import { toast } from 'sonner';
+import { LeaderAreaBadge } from '@/components/layout/leader-area-badge';
+import { useRolePermissions } from '@/hooks/use-role-permissions';
 
 /**
  * yyyy-MM-dd — <input type="date"> болон backend хоёулаа хүлээж авна.
@@ -77,6 +79,7 @@ const QUICK_RANGES: { label: string; days: number | null }[] = [
  * "энэ сард энэ хороонд" гэсэн нэг асуултыг хоёр өнцгөөс хардаг.
  */
 export function ReportsView() {
+  const { isKhorooLeader } = useRolePermissions();
   const [tab, setTab] = useState<ReportType>('client-activity');
   const [downloading, setDownloading] = useState<'excel' | 'pdf' | null>(null);
   // Өгөгдмөл нь өнөөдөр: ихэнх асуулт "яг одоо юу болж байна" гэсэн байдаг.
@@ -211,6 +214,18 @@ export function ReportsView() {
                   <Input type='date' value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)} />
                 </div>
                 
+                {/* Дарга ганц бүс хардаг — хоёр шүүлтүүрийн оронд харьяа
+                    бүсийн статик шошго. Тайлангийн дата backend дээр аль
+                    хэдийн түүний хорооны мөрөөр шүүгдсэн ирнэ. */}
+                {isKhorooLeader ? (
+                  <div className='min-w-[140px] space-y-1'>
+                    <Label className='text-xs'>Харьяа бүс</Label>
+                    <div className='flex h-9 items-center'>
+                      <LeaderAreaBadge />
+                    </div>
+                  </div>
+                ) : (
+                  <>
                 <div className='min-w-[140px] space-y-1'>
                   <Label className='text-xs'>Дүүрэг</Label>
                   <Select value={district} onValueChange={setDistrict}>
@@ -244,6 +259,8 @@ export function ReportsView() {
                     </SelectContent>
                   </Select>
                 </div>
+                  </>
+                )}
               </div>
 
               {/* 2. Тайлан гаргах товч (Шүүлтүүрүүдээс хол буюу баруун захад байрлана) */}
@@ -292,8 +309,10 @@ export function ReportsView() {
               <TabsTrigger value='maintenance'>Засвар үйлчилгээ</TabsTrigger>
             </TabsList>
 
-            {/* Татах товч нь ИДЭВХТЭЙ табын тайланг сонгосон шүүлтүүрээр татна. */}
-            <div className='flex items-center gap-2'>
+            {/* Татах товч нь ИДЭВХТЭЙ табын тайланг сонгосон шүүлтүүрээр татна.
+                Экспорт нь бүсээр шүүгддэггүй тул backend дээр /export/** нь
+                хорооны даргад 403 буцаана — 403 өгөх товч үзүүлэхгүй. */}
+            <div className='flex items-center gap-2' hidden={isKhorooLeader}>
               <span className='text-muted-foreground hidden text-xs sm:inline'>
                 <IconDownload className='mr-1 inline h-4 w-4' />
                 Тайлан татах:

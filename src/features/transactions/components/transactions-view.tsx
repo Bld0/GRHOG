@@ -63,8 +63,10 @@ import { TableHeaderFilter, useTableFilters } from '@/components/ui/table-header
 import { ActiveFilters } from '@/components/ui/active-filters';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
+import { useRolePermissions } from '@/hooks/use-role-permissions';
 
 export function TransactionsView() {
+  const { isKhorooLeader } = useRolePermissions();
   const [currentPage, setCurrentPage] = useState(0); // Changed to 0-based for API
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
@@ -406,10 +408,14 @@ export function TransactionsView() {
             <h1 className="text-3xl font-bold tracking-tight">Ашиглалтын түүх</h1>
           </div>
           <div className="flex items-center gap-2">
+            {/* Экспорт нь бүсээр шүүгддэггүй тул backend дээр /export/** нь
+                хорооны даргад 403 буцаана — 403 өгөх товч үзүүлэхгүй. */}
+            {!isKhorooLeader && (
             <Button onClick={exportToExcel} variant="outline" size="sm">
               <IconDownload className="h-4 w-4 mr-2" />
               Excel татах
             </Button>
+            )}
           </div>
         </div>
 
