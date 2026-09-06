@@ -47,7 +47,7 @@ export interface AuthResponse {
   refreshToken?: string;
   username: string;
   email: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER' | 'KHOROO_LEADER';
   isActive?: boolean;
   active?: boolean;
   permissions: UserPermissions;

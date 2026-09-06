@@ -40,12 +40,17 @@ import {
 import { Icons } from '@/components/icons';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
+import { KhorooLeadersPanel } from '@/features/users/components/khoroo-leaders-panel';
+import { UserAreaFields } from '@/features/users/components/user-area-fields';
 
 interface SystemUser {
   id: number;
   username: string;
   email: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER' | 'KHOROO_LEADER';
+  /** Зөвхөн хорооны даргад утгатай — бусад эрхэд null. */
+  district?: string | null;
+  khoroo?: number | null;
   isActive: boolean;
   createdAt: string;
 }
@@ -69,8 +74,19 @@ export default function UsersPage() {
     username: '',
     email: '',
     password: '',
-    role: 'ADMIN' as 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER'
+    role: 'ADMIN' as
+      | 'SUPER_ADMIN'
+      | 'ADMIN'
+      | 'VIEWER'
+      | 'DEVELOPER'
+      | 'KHOROO_LEADER',
+    // Хорооны даргад л утгатай. Хороог мөр болгон хадгална — Select зөвхөн
+    // мөр утга авдаг; илгээхийн өмнө тоо болгоно.
+    district: '',
+    khoroo: ''
   });
+  // Хорооны жагсаалтаас нэмэхэд бүс нь тухайн мөрөөр тогтоно.
+  const [isAreaLocked, setIsAreaLocked] = useState(false);
 
   // Redirect if not super admin - but only after auth is loaded
   useEffect(() => {
@@ -100,6 +116,36 @@ export default function UsersPage() {
     }
   };
 
+  /** Хоосон форм — бүх reset нэг эх сурвалжаас, эс бөгөөс нэгийг нь мартана. */
+  const emptyForm = {
+    username: '',
+    email: '',
+    password: '',
+    role: 'ADMIN' as SystemUser['role'],
+    district: '',
+    khoroo: ''
+  };
+
+  /**
+   * Сервер рүү илгээх бие. Бүсийг ЗӨВХӨН хорооны даргад оруулна: бусад эрхэд
+   * дүүрэг/хороо утгагүй бөгөөд сервер тэднийг үл хайхардаг ч илүү талбар
+   * илгээх шалтгаан алга. Хороог тоо болгож хөрвүүлнэ.
+   */
+  const buildUserPayload = () => {
+    const base = {
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+      role: formData.role
+    };
+    if (formData.role !== 'KHOROO_LEADER') return base;
+    return {
+      ...base,
+      district: formData.district,
+      khoroo: formData.khoroo === '' ? null : Number(formData.khoroo)
+    };
+  };
+
   const handleCreateUser = async () => {
     try {
       const response = await apiClient.fetchWithAuth('/api/users/create', {
@@ -107,13 +153,14 @@ export default function UsersPage() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(buildUserPayload())
       });
 
       if (response.ok) {
         toast.success('User created successfully');
         setIsCreateDialogOpen(false);
-        setFormData({ username: '', email: '', password: '', role: 'ADMIN' });
+        setIsAreaLocked(false);
+        setFormData(emptyForm);
         fetchUsers();
       } else {
         const error = await response.json();
@@ -135,7 +182,7 @@ export default function UsersPage() {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(formData)
+          body: JSON.stringify(buildUserPayload())
         }
       );
 
@@ -143,7 +190,8 @@ export default function UsersPage() {
         toast.success('User updated successfully');
         setIsEditDialogOpen(false);
         setSelectedUser(null);
-        setFormData({ username: '', email: '', password: '', role: 'ADMIN' });
+        setIsAreaLocked(false);
+        setFormData(emptyForm);
         fetchUsers();
       } else {
         const error = await response.json();
@@ -325,12 +373,30 @@ export default function UsersPage() {
                             <span>Харагч</span>
                           </div>
                         </SelectItem>
+                        <SelectItem
+                          value='KHOROO_LEADER'
+                          className='cursor-pointer'
+                        >
+                          <div className='flex items-center space-x-2'>
+                            <Icons.user className='h-4 w-4 text-green-600' />
+                            <span>Хорооны дарга</span>
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <p className='text-xs text-gray-500 dark:text-gray-400'>
                       Хэрэглэгчийн системд хандах эрхийг тодорхойлно
                     </p>
                   </div>
+
+                  {formData.role === 'KHOROO_LEADER' && (
+                    <UserAreaFields
+                      district={formData.district}
+                      khoroo={formData.khoroo}
+                      locked={isAreaLocked}
+                      onChange={(area) => setFormData({ ...formData, ...area })}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -339,12 +405,8 @@ export default function UsersPage() {
                   variant='outline'
                   onClick={() => {
                     setIsCreateDialogOpen(false);
-                    setFormData({
-                      username: '',
-                      email: '',
-                      password: '',
-                      role: 'ADMIN'
-                    });
+                    setIsAreaLocked(false);
+                    setFormData(emptyForm);
                   }}
                   className='w-full sm:w-auto'
                 >
@@ -400,7 +462,9 @@ export default function UsersPage() {
                               ? 'bg-blue-100 text-blue-800'
                               : user.role === 'DEVELOPER'
                                 ? 'bg-purple-100 text-purple-800'
-                                : 'bg-gray-100 text-gray-800'
+                                : user.role === 'KHOROO_LEADER'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-gray-100 text-gray-800'
                         }`}
                       >
                         {user.role === 'SUPER_ADMIN'
@@ -409,8 +473,18 @@ export default function UsersPage() {
                             ? 'ADMIN'
                             : user.role === 'DEVELOPER'
                               ? 'DEVELOPER'
-                              : 'VIEWER'}
+                              : user.role === 'KHOROO_LEADER'
+                                ? 'Хорооны дарга'
+                                : 'VIEWER'}
                       </span>
+                      {user.role === 'KHOROO_LEADER' && (
+                        <div className='text-muted-foreground mt-1 text-xs'>
+                          {user.district || '—'}
+                          {user.khoroo != null
+                            ? `, ${user.khoroo}-р хороо`
+                            : ''}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className='flex space-x-2'>
@@ -420,11 +494,15 @@ export default function UsersPage() {
                             size='sm'
                             onClick={() => {
                               setSelectedUser(user);
+                              setIsAreaLocked(false);
                               setFormData({
                                 username: user.username,
                                 email: user.email,
                                 password: '',
-                                role: user.role
+                                role: user.role,
+                                district: user.district ?? '',
+                                khoroo:
+                                  user.khoroo != null ? String(user.khoroo) : ''
                               });
                               setIsEditDialogOpen(true);
                             }}
@@ -450,6 +528,40 @@ export default function UsersPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/*
+        Хороогоор нь харах өнцөг: хэрэглэгчийн жагсаалтаас дарга хайхын оронд
+        аль хороонд дарга байхгүйг нэг харцаар олно. Даргыг энэ жагсаалтаас
+        нэмэхэд бүс нь тухайн мөрөөр цоожлогдоно.
+      */}
+      <KhorooLeadersPanel
+        leaders={users.filter((user) => user.role === 'KHOROO_LEADER')}
+        onAdd={(district, khoroo) => {
+          setFormData({
+            ...emptyForm,
+            role: 'KHOROO_LEADER',
+            district,
+            khoroo: String(khoroo)
+          });
+          setIsAreaLocked(true);
+          setIsCreateDialogOpen(true);
+        }}
+        onEdit={(leader) => {
+          const user = users.find((item) => item.id === leader.id);
+          if (!user) return;
+          setSelectedUser(user);
+          setIsAreaLocked(false);
+          setFormData({
+            username: user.username,
+            email: user.email,
+            password: '',
+            role: user.role,
+            district: user.district ?? '',
+            khoroo: user.khoroo != null ? String(user.khoroo) : ''
+          });
+          setIsEditDialogOpen(true);
+        }}
+      />
 
       {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -560,12 +672,30 @@ export default function UsersPage() {
                         <span>Харагч</span>
                       </div>
                     </SelectItem>
+                    <SelectItem
+                      value='KHOROO_LEADER'
+                      className='cursor-pointer'
+                    >
+                      <div className='flex items-center space-x-2'>
+                        <Icons.user className='h-4 w-4 text-green-600' />
+                        <span>Хорооны дарга</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <p className='text-xs text-gray-500 dark:text-gray-400'>
                   Хэрэглэгчийн системд хандах эрхийг тодорхойлно
                 </p>
               </div>
+
+              {formData.role === 'KHOROO_LEADER' && (
+                <UserAreaFields
+                  district={formData.district}
+                  khoroo={formData.khoroo}
+                  locked={isAreaLocked}
+                  onChange={(area) => setFormData({ ...formData, ...area })}
+                />
+              )}
             </div>
           </div>
 
@@ -575,12 +705,8 @@ export default function UsersPage() {
               onClick={() => {
                 setIsEditDialogOpen(false);
                 setSelectedUser(null);
-                setFormData({
-                  username: '',
-                  email: '',
-                  password: '',
-                  role: 'ADMIN'
-                });
+                setIsAreaLocked(false);
+                setFormData(emptyForm);
               }}
               className='w-full sm:w-auto'
             >

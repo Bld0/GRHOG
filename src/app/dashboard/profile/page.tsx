@@ -18,7 +18,7 @@ interface UserProfile {
   email: string;
   phone: string | null;
   address: string | null;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER' | 'KHOROO_LEADER';
   isActive: boolean;
 }
 
