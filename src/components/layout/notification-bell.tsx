@@ -14,6 +14,7 @@ import { useNotifications, type Notification } from '@/hooks/use-notifications';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { mn } from 'date-fns/locale';
+import { useRolePermissions } from '@/hooks/use-role-permissions';
 
 function NotificationIcon({ type }: { type: Notification['type'] }) {
   if (type === 'BATTERY_LOW') {
@@ -39,6 +40,7 @@ function NotificationItem({
   onRead: (id: number) => void;
   onDelete: (id: number) => void;
 }) {
+  const { isKhorooLeader } = useRolePermissions();
   const timeAgo = (() => {
     try {
       return formatDistanceToNow(new Date(notification.createdAt), {
@@ -85,6 +87,10 @@ function NotificationItem({
                 <IconCheck className='h-3 w-3' />
               </Button>
             )}
+            {/* Устгах нь backend дээр SUPER_ADMIN-д л нээлттэй. Хорооны
+                дарга бол зөвхөн уншигч — 403 өгөх товч үзүүлэхгүй.
+                "Уншсан" болгох нь даргын цорын ганц бичих эрх, тэр хэвээр. */}
+            {!isKhorooLeader && (
             <Button
               variant='ghost'
               size='icon'
@@ -97,6 +103,7 @@ function NotificationItem({
             >
               <IconTrash className='h-3 w-3' />
             </Button>
+            )}
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { apiClient } from '@/lib/api-client';
+import { useRolePermissions } from './use-role-permissions';
 
 export interface Notification {
   id: number;
@@ -30,6 +31,7 @@ interface NotificationPage {
 const WS_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 export function useNotifications() {
+  const { isKhorooLeader } = useRolePermissions();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,13 @@ export function useNotifications() {
     }
   }, []);
 
+  /**
+   * Устгах нь backend дээр SUPER_ADMIN-д л нээлттэй. Дарга бол зөвхөн
+   * уншигч — товчийг нуухаас гадна үйлдлийг өөрийг нь ч зогсооно
+   * (UI нуух нь ганцаараа хамгаалалт биш).
+   */
   const deleteNotification = useCallback(async (id: number) => {
+    if (isKhorooLeader) return;
     try {
       await apiClient.delete(`/api/notifications/${id}`);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
@@ -92,12 +100,20 @@ export function useNotifications() {
     } catch (error) {
       console.error('Failed to delete notification:', error);
     }
-  }, [fetchUnreadCount]);
+  }, [fetchUnreadCount, isKhorooLeader]);
 
   // WebSocket connection
   useEffect(() => {
     fetchNotifications();
     fetchUnreadCount();
+
+    // `/topic/notifications` нь ХҮН БҮРТ нэг ижил урсгал цацдаг — бүсээр
+    // ялгадаггүй. Хорооны даргыг холбовол хөрш хорооны мэдэгдэл шууд
+    // хонхонд нь орж ирж, REST талд хийсэн бүх шүүлтийг ор тас үгүй
+    // болгоно. Даргад мэдэгдэл нь татаж (pull) шинэчлэгдэнэ.
+    if (isKhorooLeader) {
+      return;
+    }
 
     const client = new Client({
       webSocketFactory: () => new SockJS(`${WS_URL}/ws`),
@@ -124,7 +140,7 @@ export function useNotifications() {
         stompClient.current.deactivate();
       }
     };
-  }, [fetchNotifications, fetchUnreadCount]);
+  }, [fetchNotifications, fetchUnreadCount, isKhorooLeader]);
 
   return {
     notifications,
