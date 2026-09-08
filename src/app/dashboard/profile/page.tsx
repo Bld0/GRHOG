@@ -11,6 +11,7 @@ import { getUser, updateUser } from '@/lib/api';
 import { User } from '@/types';
 import { toast } from 'sonner';
 import { CollectorCardsCard } from '@/features/profile/components/collector-cards-card';
+import PageContainer from '@/components/layout/page-container';
 
 interface UserProfile {
   id: number;
@@ -145,7 +146,9 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    // Хуудас бүр өөрийн гүйлгэх хэсгээ авчирна — <body> нь overflow-hidden.
+    <PageContainer>
+      <div className="container mx-auto w-full space-y-6">
       <div>
         <h1 className="text-3xl font-bold">User Profile</h1>
         <p className="text-muted-foreground">
@@ -251,6 +254,7 @@ export default function ProfilePage() {
           </Button>
         )}
       </div>
-    </div>
+      </div>
+    </PageContainer>
   );
 }

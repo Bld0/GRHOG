@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRolePermissions } from '@/hooks/use-role-permissions';
+import PageContainer from '@/components/layout/page-container';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -243,7 +244,11 @@ export default function UsersPage() {
   }
 
   return (
-    <div className='space-y-6 p-4'>
+    // <body> нь overflow-hidden тул хуудас бүр өөрийн гүйлгэх хэсгээ авчрах
+    // ёстой — PageContainer тэрийг өгнө. Үүнгүйгээр эхний дэлгэцэнд багтахгүй
+    // хэсэг (жишээ нь хороодын даргын жагсаалт) огт хүрэхгүй үлддэг.
+    <PageContainer>
+      <div className='w-full space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='text-3xl font-bold tracking-tight'>
@@ -723,6 +728,7 @@ export default function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </PageContainer>
   );
 }
