@@ -119,13 +119,34 @@ interface CardDetailViewProps {
   cardId: string;
 }
 
+/**
+ * Нэвтрэлтийн түүхийн хугацааны сонголт — Тайлангийн "Түргэн сонголт"-той
+ * ижил муж, ижил утгатай.
+ *
+ * `days` нь ХОНОГИЙН тоо, цагийн зөрүү биш: 0 гэдэг нь өнөөдрийн 00:00-оос
+ * хойш, 7 гэдэг нь 7 хоногийн өмнөх өдрийн 00:00-оос хойш. Цагаар нь тоолбол
+ * яг 7 хоногийн өмнөх өглөө уншуулсан мөр өдрийн цагаас хамаараад заримдаа
+ * багтаж, заримдаа унана — тайлан хоногоор боддогтой зөрнө.
+ */
+const HISTORY_RANGES: { key: string; label: string; days: number | null }[] = [
+  { key: 'today', label: 'Өнөөдөр', days: 0 },
+  { key: '7', label: '7 хоног', days: 7 },
+  { key: '30', label: '30 хоног', days: 30 },
+  { key: '90', label: '90 хоног', days: 90 },
+  { key: 'all', label: 'Бүгд', days: null }
+];
+
 export function CardDetailView({ cardId }: CardDetailViewProps) {
   const router = useRouter();
   const [cardData, setCardData] = useState<CardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accessHistory, setAccessHistory] = useState<AccessHistoryItem[]>([]);
-  const [dateFilter, setDateFilter] = useState<'7' | '30' | 'all'>('30');
+  // Өгөгдмөл нь "Бүгд": энэ хуудас нэг иргэний бүх түүхийн тухай тул хугацааны
+  // муж нь асуултыг нарийсгах хэрэгсэл болохоос анхны шүүлт биш. Өмнө нь 30
+  // хоног байсан нь удаан ашиглаагүй иргэн дээр "түүх алга" гэсэн худал ойлголт
+  // өгдөг байв.
+  const [dateFilter, setDateFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -248,11 +269,13 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
 
   // Filter access history based on date range
   const getFilteredHistory = () => {
-    if (dateFilter === 'all') return accessHistory;
+    const range = HISTORY_RANGES.find((item) => item.key === dateFilter);
+    if (!range || range.days == null) return accessHistory;
 
-    const days = parseInt(dateFilter);
+    // Хоногийн эхлэлээс тоолно — тайлангийн quick range-тэй ижил.
     const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - days);
+    cutoffDate.setDate(cutoffDate.getDate() - range.days);
+    cutoffDate.setHours(0, 0, 0, 0);
 
     return accessHistory.filter(
       (access) => new Date(access.createdAt) >= cutoffDate
@@ -1001,9 +1024,18 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
         {/* Access History Table */}
         <Card>
           <CardHeader>
-            <div className='flex items-center justify-between'>
-              <CardTitle>Нэвтрэлтийн түүх</CardTitle>
-              <div className='flex items-center gap-4'>
+            <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+              <div className='flex flex-col gap-1'>
+                <CardTitle>Нэвтрэлтийн түүх</CardTitle>
+                {/* Сонгосон хугацаанд хэдэн мөр үлдснийг харуулна: 4 уншуулалт
+                    нь бүх мужид багтдаг тохиолдолд шүүлтүүр ажиллаагүй мэт
+                    харагддаг байв. */}
+                <CardDescription>
+                  {totalFilteredAccess} нэвтрэлт
+                  {dateFilter !== 'all' && ` · нийт ${accessHistory.length}`}
+                </CardDescription>
+              </div>
+              <div className='flex flex-wrap items-center gap-4'>
                 {/* Rows Per Page Selection */}
                 <div className='flex items-center gap-2'>
                   <span className='text-muted-foreground text-sm'>Мөр:</span>
@@ -1027,37 +1059,20 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
                 </div>
 
                 {/* Date Filter Buttons */}
-                <div className='flex items-center gap-2'>
-                  <Button
-                    variant={dateFilter === '7' ? 'default' : 'outline'}
-                    size='sm'
-                    onClick={() => {
-                      setDateFilter('7');
-                      setCurrentPage(1);
-                    }}
-                  >
-                    7 хоног
-                  </Button>
-                  <Button
-                    variant={dateFilter === '30' ? 'default' : 'outline'}
-                    size='sm'
-                    onClick={() => {
-                      setDateFilter('30');
-                      setCurrentPage(1);
-                    }}
-                  >
-                    30 хоног
-                  </Button>
-                  <Button
-                    variant={dateFilter === 'all' ? 'default' : 'outline'}
-                    size='sm'
-                    onClick={() => {
-                      setDateFilter('all');
-                      setCurrentPage(1);
-                    }}
-                  >
-                    Бүгд
-                  </Button>
+                <div className='flex flex-wrap items-center gap-2'>
+                  {HISTORY_RANGES.map((range) => (
+                    <Button
+                      key={range.key}
+                      variant={dateFilter === range.key ? 'default' : 'outline'}
+                      size='sm'
+                      onClick={() => {
+                        setDateFilter(range.key);
+                        setCurrentPage(1);
+                      }}
+                    >
+                      {range.label}
+                    </Button>
+                  ))}
                 </div>
               </div>
             </div>
