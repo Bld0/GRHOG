@@ -29,8 +29,12 @@ interface BatteryPoint {
 
 const chartConfig = {
   percent: {
-    label: 'Цэнэг (%)',
+    label: 'Өдрийн дундаж',
     color: 'hsl(142 71% 45%)'
+  },
+  range: {
+    label: 'Өдрийн доод–дээд',
+    color: 'hsl(142 40% 55%)'
   }
 } satisfies ChartConfig;
 
@@ -84,6 +88,15 @@ export function BinBatteryHistory({ binId }: { binId: string | number }) {
 
   const latest = points.length > 0 ? points[points.length - 1] : null;
 
+  // Цэг бүр нэг ӨДРИЙН дундаж — тухайн агшны заалт биш. Зөвхөн дундажийг
+  // зурвал батерей дуусаад солигдсон өдөр хамгийн сонирхолтой хоёр утга
+  // (0% хүртэл унасан, дараа нь 100% болсон) дундажид уусаж алга болно.
+  // Доод–дээдийн туузыг ард нь зурж энэ хоёрыг харуулна.
+  const chartData = points.map((point) => ({
+    ...point,
+    range: [point.minPercent, point.maxPercent] as [number, number]
+  }));
+
   return (
     <Card>
       <CardHeader>
@@ -92,7 +105,7 @@ export function BinBatteryHistory({ binId }: { binId: string | number }) {
             <CardTitle>Батерейн түүх</CardTitle>
             <CardDescription>
               {latest
-                ? `Сүүлийн заалт: ${latest.percent.toFixed(1)}% (${latest.voltage.toFixed(2)}V)`
+                ? `Сүүлийн өдрийн дундаж: ${latest.percent.toFixed(1)}% (${latest.voltage.toFixed(2)}V)`
                 : 'Өдрийн дундаж цэнэгийн хувь'}
             </CardDescription>
           </div>
@@ -119,7 +132,7 @@ export function BinBatteryHistory({ binId }: { binId: string | number }) {
           </div>
         ) : (
           <ChartContainer config={chartConfig} className='h-56 w-full'>
-            <AreaChart data={points} margin={{ left: 4, right: 8, top: 8 }}>
+            <AreaChart data={chartData} margin={{ left: 4, right: 8, top: 8 }}>
               <defs>
                 <linearGradient id='batteryFill' x1='0' y1='0' x2='0' y2='1'>
                   <stop
@@ -150,7 +163,35 @@ export function BinBatteryHistory({ binId }: { binId: string | number }) {
                 width={36}
                 tickFormatter={(value: number) => `${value}%`}
               />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    formatter={(value, name, item) =>
+                      name === 'range' ? (
+                        <span className='text-muted-foreground'>
+                          Доод–дээд: {(value as [number, number])[0].toFixed(1)}%
+                          – {(value as [number, number])[1].toFixed(1)}%
+                        </span>
+                      ) : (
+                        <span>
+                          Өдрийн дундаж:{' '}
+                          <span className='font-medium tabular-nums'>
+                            {Number(value).toFixed(1)}%
+                          </span>{' '}
+                          ({item.payload.voltage.toFixed(2)}V)
+                        </span>
+                      )
+                    }
+                  />
+                }
+              />
+              <Area
+                dataKey='range'
+                type='monotone'
+                stroke='none'
+                fill='var(--color-range)'
+                fillOpacity={0.18}
+              />
               <Area
                 dataKey='percent'
                 type='monotone'
