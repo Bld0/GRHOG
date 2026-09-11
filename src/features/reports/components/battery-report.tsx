@@ -11,6 +11,7 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -90,6 +91,7 @@ export function BatteryReport({ filters }: { filters: ReportFilters }) {
   const [coverage, setCoverage] = useState<BatteryCoverage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState('drainPerDay');
+  const [isBackfilling, setIsBackfilling] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setIsLoading(true);
@@ -125,6 +127,49 @@ export function BatteryReport({ filters }: { filters: ReportFilters }) {
 
   useEffect(() => {
     fetchAll();
+  }, [fetchAll]);
+
+  /**
+   * Түүхийг нөхөх ажлуудыг дараалан дуудна.
+   *
+   * Эдгээр нь нэг удаагийн засварын ажил: батерей сольсон огноо болон
+   * хоослолтын тоо аль аль нь түүхэн өгөгдлөөс л сэргэдэг. Хоослолтыг
+   * ЗӨВХӨН dryRun-аар дуудна — мөр устгадаг ажлыг товчоор санамсаргүй
+   * ажиллуулах ёсгүй, тоог нь хараад гараар шийднэ.
+   */
+  const runBackfill = useCallback(async () => {
+    setIsBackfilling(true);
+    try {
+      const steps: { label: string; url: string }[] = [
+        { label: 'Батерейн түүх', url: '/api/reports/battery/backfill' },
+        { label: 'Батерей сольсон огноо', url: '/api/reports/battery/backfill-replacements' },
+        { label: 'Дүүрэлтийн түүх', url: '/api/reports/storage/backfill' },
+        {
+          label: 'Хоослолтын тооцоо (туршилт)',
+          url: '/api/reports/storage/reconcile-clearings?dryRun=true'
+        }
+      ];
+
+      for (const step of steps) {
+        const response = await apiClient.fetchWithAuth(step.url, { method: 'POST' });
+        if (!response.ok) {
+          toast.error(
+            response.status === 403
+              ? `${step.label}: зөвхөн SUPER_ADMIN ажиллуулна`
+              : `${step.label}: алдаа гарлаа (${response.status})`
+          );
+          return;
+        }
+        const result = await response.json();
+        toast.success(`${step.label}: ${JSON.stringify(result)}`);
+      }
+
+      await fetchAll();
+    } catch {
+      toast.error('Түүх нөхөх ажиллагаа тасарлаа.');
+    } finally {
+      setIsBackfilling(false);
+    }
   }, [fetchAll]);
 
   const formatDate = (value: string | null) =>
@@ -283,6 +328,14 @@ export function BatteryReport({ filters }: { filters: ReportFilters }) {
                 дээш хоногийг сонгоно уу
               </CardDescription>
             </div>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={runBackfill}
+              disabled={isBackfilling}
+            >
+              {isBackfilling ? 'Нөхөж байна...' : 'Түүхийг нөхөх'}
+            </Button>
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className='w-full lg:w-64'>
                 <SelectValue />
