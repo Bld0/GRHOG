@@ -334,7 +334,7 @@ export function CardsView() {
 
   const formatDate = (dateString: Date | null) => {
     if (!dateString) return '-';
-    return dateString.toLocaleString();
+    return dateString.toLocaleString('mn-MN');
   };
 
   const handleCreateUser = async () => {

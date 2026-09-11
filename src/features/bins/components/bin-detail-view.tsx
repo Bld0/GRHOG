@@ -274,7 +274,7 @@ export function BinDetailView({ id }: BinDetailViewProps) {
   };
 
   const formatRelativeDate = (date: Date) => {
-    return date.toLocaleString();
+    return date.toLocaleString('mn-MN');
   };
 
   const getBinStatusColor = (storageLevel: number) => {

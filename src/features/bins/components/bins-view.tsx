@@ -305,7 +305,7 @@ export function BinsView() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleString();
+    return date.toLocaleString('mn-MN');
   };
 
   const exportToExcel = async () => {

@@ -252,7 +252,7 @@ export function CardDetailView({ cardId }: CardDetailViewProps) {
   };
 
   const formatRelativeDate = (date: Date) => {
-    return date.toLocaleString();
+    return date.toLocaleString('mn-MN');
   };
 
   const getActivityScoreColor = (score: number) => {
