@@ -119,6 +119,15 @@
       "namedRegex": "^/api/clients/(?<nxtPid>[^/]+?)/status(?:/)?$"
     },
     {
+      "page": "/api/export/reports/[type]/[format]",
+      "regex": "^/api/export/reports/([^/]+?)/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPtype": "nxtPtype",
+        "nxtPformat": "nxtPformat"
+      },
+      "namedRegex": "^/api/export/reports/(?<nxtPtype>[^/]+?)/(?<nxtPformat>[^/]+?)(?:/)?$"
+    },
+    {
       "page": "/api/notifications/[id]",
       "regex": "^/api/notifications/([^/]+?)(?:/)?$",
       "routeKeys": {
@@ -239,6 +248,12 @@
       "namedRegex": "^/dashboard/complaints(?:/)?$"
     },
     {
+      "page": "/dashboard/maintenance",
+      "regex": "^/dashboard/maintenance(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/maintenance(?:/)?$"
+    },
+    {
       "page": "/dashboard/overview",
       "regex": "^/dashboard/overview(?:/)?$",
       "routeKeys": {},
@@ -255,6 +270,12 @@
       "regex": "^/dashboard/raw\\-data(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/dashboard/raw\\-data(?:/)?$"
+    },
+    {
+      "page": "/dashboard/reports",
+      "regex": "^/dashboard/reports(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/reports(?:/)?$"
     },
     {
       "page": "/dashboard/transactions",
