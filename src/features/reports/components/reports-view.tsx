@@ -20,6 +20,7 @@ import { BatteryReport } from './battery-report';
 import { ClientActivityReport } from './client-activity-report';
 import { ClearingReport } from './clearing-report';
 import { MaintenanceReport } from './maintenance-report';
+import { SensorHealthReport } from './sensor-health-report';
 import {
   IconDownload,
   IconFileTypePdf,
@@ -307,12 +308,18 @@ export function ReportsView() {
               <TabsTrigger value='clearings'>Хоослолт</TabsTrigger>
               <TabsTrigger value='battery'>Батерей</TabsTrigger>
               <TabsTrigger value='maintenance'>Засвар үйлчилгээ</TabsTrigger>
+              <TabsTrigger value='sensor'>Мэдрэгч</TabsTrigger>
             </TabsList>
 
             {/* Татах товч нь ИДЭВХТЭЙ табын тайланг сонгосон шүүлтүүрээр татна.
                 Экспорт нь бүсээр шүүгддэггүй тул backend дээр /export/** нь
-                хорооны даргад 403 буцаана — 403 өгөх товч үзүүлэхгүй. */}
-            <div className='flex items-center gap-2' hidden={isKhorooLeader}>
+                хорооны даргад 403 буцаана — 403 өгөх товч үзүүлэхгүй.
+                Мэдрэгчийн табд ч мөн адил нуугдана: /export/reports/sensor/**
+                endpoint байхгүй тул товч дарвал 404 болно. */}
+            <div
+              className='flex items-center gap-2'
+              hidden={isKhorooLeader || tab === 'sensor'}
+            >
               <span className='text-muted-foreground hidden text-xs sm:inline'>
                 <IconDownload className='mr-1 inline h-4 w-4' />
                 Тайлан татах:
@@ -352,6 +359,10 @@ export function ReportsView() {
 
           <TabsContent value='maintenance'>
             <MaintenanceReport filters={applied} />
+          </TabsContent>
+
+          <TabsContent value='sensor'>
+            <SensorHealthReport filters={applied} />
           </TabsContent>
         </Tabs>
       </div>

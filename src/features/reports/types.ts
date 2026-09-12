@@ -296,13 +296,54 @@ export interface MaintenanceReport {
   byKhoroo: { district: string | null; khoroo: number | null; count: number }[];
 }
 
+// ---------------- Мэдрэгчийн эрүүл мэнд ----------------
+
+/**
+ * BLIND — 6 цагийн турш хүчинтэй хэмжилтгүй (мэдрэгч "сохор");
+ * INTERMITTENT — алдаа 10%-иас дээш; HEALTHY — бусад бүх тохиолдол.
+ * Ангилалыг backend тооцдог, frontend зөвхөн шошго/өнгө буулгана.
+ */
+export type SensorStatus = 'BLIND' | 'INTERMITTENT' | 'HEALTHY';
+
+export interface SensorHealthRow {
+  id: number;
+  binId: string;
+  binName: string | null;
+  location: string | null;
+  district: string | null;
+  khoroo: number | null;
+  totalMessages: number;
+  validCount: number;
+  failedCount: number;
+  failurePercent: number;
+  lastSensorOkAt: string | null;
+  dominantErrorCode: string | null;
+  status: SensorStatus;
+}
+
+export const SENSOR_STATUS_LABEL: Record<SensorStatus, string> = {
+  BLIND: 'Сохор',
+  INTERMITTENT: 'Завсардсан',
+  HEALTHY: 'Эрүүл'
+};
+
+/** clearing-report.tsx-ийн STATUS_STYLE-тэй ижил хэв маяг — outline badge дээр
+ * зөөлөн өнгийн дэвсгэр. */
+export const SENSOR_STATUS_STYLE: Record<SensorStatus, string> = {
+  BLIND: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  INTERMITTENT:
+    'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+  HEALTHY: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+};
+
 // ---------------- Тайлан татах ----------------
 
 export type ReportType =
   | 'client-activity'
   | 'clearings'
   | 'battery'
-  | 'maintenance';
+  | 'maintenance'
+  | 'sensor';
 
 /**
  * Тайланг файлаар татна.
