@@ -145,6 +145,10 @@ export function BatteryReport({ filters }: { filters: ReportFilters }) {
         { label: 'Батерей сольсон огноо', url: '/api/reports/battery/backfill-replacements' },
         { label: 'Дүүрэлтийн түүх', url: '/api/reports/storage/backfill' },
         {
+          label: 'Мэдрэгчийн алдааны түүх',
+          url: '/api/reports/sensor-health/backfill'
+        },
+        {
           label: 'Хоослолтын тооцоо (туршилт)',
           url: '/api/reports/storage/reconcile-clearings?dryRun=true'
         }
