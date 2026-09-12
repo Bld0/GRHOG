@@ -26,7 +26,12 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { IconEyeOff, IconAlertTriangle, IconCircleCheck } from '@tabler/icons-react';
+import {
+  IconEyeOff,
+  IconAlertTriangle,
+  IconCircleCheck,
+  IconInfoCircle
+} from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import {
@@ -153,7 +158,7 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
 
   return (
     <div className='space-y-6'>
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
         {stats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className='flex flex-row items-center justify-between pb-2'>
@@ -176,6 +181,43 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
             </CardContent>
           </Card>
         ))}
+
+        {/* Гурван тооны ард заавар. Тоо өөрөө юу гэсэн үг болохоо хэлдэггүй:
+            "Сохор 13" гэдгийг уншиж чадахгүй хүнд энэ тайлан утгагүй бөгөөд
+            бүр аюултай — хоослолтын тоо бүрэн мэт харагдуулна. */}
+        <Card className='bg-muted/40'>
+          <CardHeader className='flex flex-row items-center justify-between pb-2'>
+            <CardTitle className='text-muted-foreground text-sm font-medium'>
+              Хэрхэн унших вэ
+            </CardTitle>
+            <IconInfoCircle className='text-muted-foreground h-5 w-5' />
+          </CardHeader>
+          <CardContent className='text-muted-foreground space-y-1.5 pt-1 text-xs'>
+            <p>
+              Сав бүр дүүрэлтээ тогтмол мэдээлдэг. Мэдрэгч уншиж чадаагүй үед
+              хэмжилт огт ирэхгүй — энэ нь сав хоосон гэсэн үг{' '}
+              <span className='font-medium'>биш</span>.
+            </p>
+            <p>
+              <span className='font-medium text-red-600 dark:text-red-400'>
+                Сохор
+              </span>{' '}
+              савыг хоослосон эсэхийг систем мэдэхгүй тул хоослолтын тайланд
+              огт харагдахгүй. Мэдрэгчийг нь засах шаардлагатай.
+            </p>
+            <p>
+              <span className='font-medium text-amber-600 dark:text-amber-400'>
+                Завсардсан
+              </span>{' '}
+              савны мэдээлэл ирдэг ч тасалддаг тул дүүргэлт, хоослолт хожимдож
+              шинэчлэгдэнэ.
+            </p>
+            <p>
+              <span className='font-mono'>NO_RESPONSE</span> — мэдрэгч хариу
+              өгөөгүй; ихэвчлэн холболт эсвэл тэжээлийн асуудал.
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
