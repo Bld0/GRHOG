@@ -140,32 +140,98 @@ export function BatteryReport({ filters }: { filters: ReportFilters }) {
   const runBackfill = useCallback(async () => {
     setIsBackfilling(true);
     try {
-      const steps: { label: string; url: string }[] = [
-        { label: 'Батерейн түүх', url: '/api/reports/battery/backfill' },
-        { label: 'Батерей сольсон огноо', url: '/api/reports/battery/backfill-replacements' },
-        { label: 'Дүүрэлтийн түүх', url: '/api/reports/storage/backfill' },
+      // paged: нэг дуудалт логийн 50,000 мөрөөр хязгаарлагддаг. Лог одоо 423
+      // мянган мөртэй тул fromId-г дамжуулахгүй бол дахин дарах бүрд ижил
+      // эхний 50 мянга л уншигдаж, үлдсэн нь хэзээ ч нөхөгдөхгүй.
+      const steps: { label: string; url: string; paged: boolean }[] = [
+        {
+          label: 'Батерейн түүх',
+          url: '/api/reports/battery/backfill',
+          paged: true
+        },
+        {
+          label: 'Батерей сольсон огноо',
+          url: '/api/reports/battery/backfill-replacements',
+          paged: false
+        },
+        {
+          label: 'Дүүрэлтийн түүх',
+          url: '/api/reports/storage/backfill',
+          paged: true
+        },
         {
           label: 'Мэдрэгчийн алдааны түүх',
-          url: '/api/reports/sensor-health/backfill'
+          url: '/api/reports/sensor-health/backfill',
+          paged: true
         },
         {
           label: 'Хоослолтын тооцоо (туршилт)',
-          url: '/api/reports/storage/reconcile-clearings?dryRun=true'
+          url: '/api/reports/storage/reconcile-clearings?dryRun=true',
+          paged: false
         }
       ];
 
+      // Гацахаас хамгаална: 423 мянган мөрд ~9 үе хангалттай, 40 бол лог
+      // хэд дахин өссөн ч хүрэлцэнэ.
+      const MAX_ROUNDS = 40;
+
       for (const step of steps) {
-        const response = await apiClient.fetchWithAuth(step.url, { method: 'POST' });
-        if (!response.ok) {
-          toast.error(
-            response.status === 403
-              ? `${step.label}: зөвхөн SUPER_ADMIN ажиллуулна`
-              : `${step.label}: алдаа гарлаа (${response.status})`
-          );
-          return;
+        let fromId = 0;
+        let rounds = 0;
+        const totals: Record<string, number> = {};
+
+        for (;;) {
+          const url = step.paged ? `${step.url}?fromId=${fromId}` : step.url;
+          const response = await apiClient.fetchWithAuth(url, {
+            method: 'POST'
+          });
+          if (!response.ok) {
+            toast.error(
+              response.status === 403
+                ? `${step.label}: зөвхөн SUPER_ADMIN ажиллуулна`
+                : `${step.label}: алдаа гарлаа (${response.status})`
+            );
+            return;
+          }
+
+          const result = await response.json();
+          rounds += 1;
+
+          // Үе бүрийн тоог нэгтгэнэ — үе тутамд toast гаргавал дэлгэц дүүрнэ.
+          // scanned/created/skipped гэх мэт нь тухайн үеийн НЭМЭГДЭЛ тул
+          // нэмнэ; totalReadings мэт нь тэр агшны БҮТЭН тоо тул нэмвэл
+          // үеийн тоогоор үржиж худал болно — сүүлчийнхийг нь авна.
+          const isDelta = /^(scanned|created|skipped|deleted|matched|bins)/;
+          for (const [key, value] of Object.entries(result)) {
+            if (typeof value === 'number' && key !== 'lastLogId') {
+              totals[key] = isDelta.test(key)
+                ? (totals[key] ?? 0) + value
+                : value;
+            }
+          }
+
+          if (!step.paged || result.reachedLimit !== true) {
+            break;
+          }
+
+          const nextId = Number(result.lastLogId ?? 0);
+          // Ахиц гарахгүй бол зогсоно — эс бөгөөс мөнхийн давталт.
+          if (!Number.isFinite(nextId) || nextId <= fromId) {
+            break;
+          }
+          fromId = nextId;
+
+          if (rounds >= MAX_ROUNDS) {
+            toast.warning(
+              `${step.label}: ${rounds} үе гүйсэн ч дуусаагүй — товчийг дахин дарна уу`
+            );
+            break;
+          }
         }
-        const result = await response.json();
-        toast.success(`${step.label}: ${JSON.stringify(result)}`);
+
+        toast.success(
+          `${step.label}${rounds > 1 ? ` (${rounds} үе)` : ''}: ${JSON.stringify(totals)}`
+        );
       }
 
       await fetchAll();
