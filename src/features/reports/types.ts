@@ -357,6 +357,13 @@ export async function downloadReport(
   format: 'excel' | 'pdf',
   filters: ReportFilters
 ): Promise<void> {
+  // Мэдрэгчийн тайланд backend талд экспортын цэг байхгүй (зөвхөн UI дээр
+  // товч нуугдсан) — дараагийн дуудагч (гарын товч, багц татах, өөр таб)
+  // UI-ийн нөхцөлийг тойрч 404-т хүрэхээс сая нь эхэн дээрээ зогсооно.
+  if (type === 'sensor') {
+    throw new Error('Мэдрэгчийн тайланд файлаар татах боломж алга');
+  }
+
   const response = await fetchWithAuth(
     `/api/export/reports/${type}/${format}?${toQuery(filters)}`
   );
