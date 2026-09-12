@@ -46,7 +46,8 @@ import {
 /**
  * Баганын тайлбар. Техникийн тодорхойлолт биш, энгийн үг ба жишээ тоогоор —
  * тайланг батерейны нэр томьёо мэдэхгүй хүн ч уншина.
- */
+ */import { ReportStatsGrid } from './report-stats-grid';
+
 const DRAIN_HINT =
   'Батерей өдөрт хэдэн хувиар цэнэгээ алдаж байгааг харуулна. **Хувь өндөр байх тусам цэнэг хурдан дуусна.** Жишээ нь 3%/хоног гэвэл ойролцоогоор 30 гаруй хоног ажиллана';
 
@@ -302,30 +303,7 @@ export function BatteryReport({ filters }: { filters: ReportFilters }) {
         </Card>
       )}
 
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className='flex flex-row items-center justify-between pb-2'>
-              <CardTitle className='text-muted-foreground text-sm font-medium'>
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-5 w-5 ${stat.tone}`} />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className='h-8 w-20' />
-              ) : (
-                <div className='text-2xl font-bold tabular-nums'>
-                  {stat.value}
-                </div>
-              )}
-              <p className='text-muted-foreground truncate pt-1 text-xs'>
-                {stat.hint}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <ReportStatsGrid stats={stats} loading={isLoading} />
 
       {(report?.lowBatteryBins.length ?? 0) > 0 && (
         <Card>

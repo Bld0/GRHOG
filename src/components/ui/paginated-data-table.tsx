@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { getPageNumbers } from '@/lib/pagination-range';
 import {
   Table,
   TableBody,
@@ -58,42 +59,6 @@ export function PaginatedDataTable<T>({
   emptyMessage = 'No data available',
   className,
 }: PaginatedDataTableProps<T>) {
-  // Generate page numbers for pagination
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
-    
-    if (pagination.totalPages <= maxVisiblePages) {
-      for (let i = 0; i < pagination.totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (pagination.page <= 2) {
-        for (let i = 0; i <= 3; i++) {
-          pages.push(i);
-        }
-        pages.push('ellipsis');
-        pages.push(pagination.totalPages - 1);
-      } else if (pagination.page >= pagination.totalPages - 3) {
-        pages.push(0);
-        pages.push('ellipsis');
-        for (let i = pagination.totalPages - 4; i < pagination.totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push(0);
-        pages.push('ellipsis');
-        for (let i = pagination.page - 1; i <= pagination.page + 1; i++) {
-          pages.push(i);
-        }
-        pages.push('ellipsis');
-        pages.push(pagination.totalPages - 1);
-      }
-    }
-    
-    return pages;
-  };
-
   if (loading) {
     return (
       <div className={`space-y-4 ${className}`}>
@@ -216,7 +181,7 @@ export function PaginatedDataTable<T>({
                 />
               </PaginationItem>
               
-              {getPageNumbers().map((page, index) => (
+              {getPageNumbers(pagination.page, pagination.totalPages).map((page, index) => (
                 <PaginationItem key={index}>
                   {page === 'ellipsis' ? (
                     <PaginationEllipsis />

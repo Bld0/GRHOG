@@ -43,6 +43,7 @@ import {
   STATUS_STYLE,
   toQuery
 } from '../types';
+import { ReportStatsGrid } from './report-stats-grid';
 
 const PAGE_SIZE = 20;
 
@@ -178,28 +179,7 @@ export function ClearingReport({ filters }: { filters: ReportFilters }) {
 
   return (
     <div className='space-y-6'>
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className='flex flex-row items-center justify-between pb-2'>
-              <CardTitle className='text-muted-foreground text-sm font-medium'>
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-5 w-5 ${stat.tone}`} />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className='h-8 w-16' />
-              ) : (
-                <div className='text-2xl font-bold tabular-nums'>
-                  {stat.value}
-                </div>
-              )}
-              <p className='text-muted-foreground pt-1 text-xs'>{stat.hint}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <ReportStatsGrid stats={stats} loading={isLoading} />
 
       <Card>
         <CardHeader>

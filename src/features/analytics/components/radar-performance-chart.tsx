@@ -26,19 +26,19 @@ import { TrendingUp } from 'lucide-react';
 interface RadarPerformanceChartProps {
   data: Array<{
     month: string;
-    efficiency: number;
-    coverage: number;
+    collection: number;
+    clearings: number;
   }>;
   className?: string;
 }
 
 const radarChartConfig = {
-  efficiency: {
-    label: "Үр ашиг",
+  collection: {
+    label: "Цуглуулалт",
     color: "hsl(var(--chart-efficiency))",
   },
-  coverage: {
-    label: "Хамрах хүрээ",
+  clearings: {
+    label: "Хоослолт",
     color: "hsl(var(--chart-coverage))",
   },
 } satisfies ChartConfig;
@@ -49,7 +49,7 @@ export function RadarPerformanceChart({ data, className }: RadarPerformanceChart
       <CardHeader className="items-center pb-4">
         <CardTitle>Системийн гүйцэтгэл</CardTitle>
         <CardDescription>
-          Сүүлийн 6 сарын үр ашиг ба хамрах хүрээний харьцуулалт
+          Сар бүрийн цуглуулалт ба хоослолтын харьцуулалт
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-0">
@@ -65,14 +65,14 @@ export function RadarPerformanceChart({ data, className }: RadarPerformanceChart
             <PolarAngleAxis dataKey="month" />
             <PolarGrid radialLines={false} />
             <Radar
-              dataKey="efficiency"
+              dataKey="collection"
               fill="var(--chart-efficiency)"
               fillOpacity={0}
               stroke="var(--chart-efficiency)"
               strokeWidth={2}
             />
             <Radar
-              dataKey="coverage"
+              dataKey="clearings"
               fill="var(--chart-coverage)"
               fillOpacity={0}
               stroke="var(--chart-coverage)"

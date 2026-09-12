@@ -240,17 +240,21 @@ export interface BinStatistics {
   normalBins: number;
   totalClearings: number;
   averageClearingsPerDay: number;
-  penetrationRate: number;
+  /** Сүүлийн 30 хоногт картаа уншуулсан иргэдийн хувь. */
+  activeClientRate: number;
+  activeClients: number;
+  totalClients: number;
 }
 
 export interface UsageStatistics {
   totalUsages: number;
   uniqueUsers: number;
   averageUsagesPerDay: number;
+  /** Дундажийг хуваасан бодит хоногийн тоо. */
+  periodDays: number;
   usageTrend: Array<{
     date: string;
     usages: number;
-    uniqueUsers: number;
   }>;
   topUsedBins: Array<{
     binId: string;
@@ -259,10 +263,12 @@ export interface UsageStatistics {
 }
 
 export interface PenetrationAnalysis {
+  /** Нэг хоослолтод ногдох дундаж картын уншилт (хувь БИШ). */
   averagePenetration: number;
-  highPenetrationBins: number;
-  mediumPenetrationBins: number;
-  lowPenetrationBins: number;
+  /** Хугацаанд дор хаяж нэг удаа хоослогдсон — өөрөөр хэлбэл хэмжигдсэн сав. */
+  measuredBins: number;
+  totalBins: number;
+  windowDays: number;
   penetrationByLocation: Array<{
     location: string;
     averagePenetration: number;
@@ -272,10 +278,11 @@ export interface PenetrationAnalysis {
 
 export interface ClearingEfficiency {
   averageFillLevelBeforeClear: number;
-  optimalClearings: number;
-  overdueClearings: number;
-  prematureClearings: number;
+  /** Сав үнэхээр дүүрсэн үед хийгдсэн хоослолтын хувь. */
   efficiencyScore: number;
+  onTimeClearings: number;
+  totalClearings: number;
+  shouldClearPercent: number;
   clearingsByPeriod: Array<{
     period: string;
     totalClearings: number;
@@ -325,7 +332,6 @@ export interface DashboardAverageFilling {
 export interface CollectionTrend {
   month: string;
   collection: number;
-  recycling: number;
   storageLevel: number;
   clearings: number;
 }
@@ -333,7 +339,6 @@ export interface CollectionTrend {
 export interface CollectionTrends {
   trends: CollectionTrend[];
   totalCollection: number;
-  totalRecycling: number;
 }
 
 export interface BinStatusDistribution {

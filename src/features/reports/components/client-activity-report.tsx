@@ -1,7 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+
+import {
+  IconAlertTriangle,
+  IconRefresh,
+  IconSearch,
+  IconUserCheck,
+  IconUserOff
+} from '@tabler/icons-react';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,190 +30,55 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import {
-  IconAlertTriangle,
-  IconRefresh,
-  IconSearch,
-  IconUsersGroup,
-  IconUserOff,
-  IconUserCheck
-} from '@tabler/icons-react';
-import { toast } from 'sonner';
-import { apiClient } from '@/lib/api-client';
-import { useDebounce } from '@/hooks/use-debounce';
 import { useRolePermissions } from '@/hooks/use-role-permissions';
 import {
-  ActivityClient,
   ActivityTab,
   BUCKET_LABEL,
-  ClientActivityReport as ActivityReport,
   InactivityBucket,
   ReportFilters,
   UsageBucket,
-  USAGE_BUCKET_LABEL,
-  toQuery
+  USAGE_BUCKET_LABEL
 } from '../types';
 
-const PAGE_SIZE = 20;
-
-/** Идэвхтэй/идэвхгүй харьцааг нэг мөрөнд харуулах зурвас. */
-function ActivityBar({ activePercent }: { activePercent: number }) {
-  return (
-    <div className='flex items-center gap-2'>
-      <div className='h-2 w-24 overflow-hidden rounded-full bg-red-200 dark:bg-red-900/40'>
-        <div
-          className='h-2 rounded-full bg-green-600'
-          style={{ width: `${Math.min(100, Math.max(0, activePercent))}%` }}
-        />
-      </div>
-      <span className='text-sm font-medium tabular-nums'>
-        {activePercent.toFixed(1)}%
-      </span>
-    </div>
-  );
-}
+import { KhorooBreakdown } from './activity/khoroo-breakdown';
+import { ReportStatCards } from './activity/report-stat-cards';
+import {
+  PAGE_SIZE,
+  useClientActivityReport
+} from './activity/use-client-activity-report';
 
 /**
- * Хороогоор хэрэглэгчийн ашиглалтын идэвх.
+ * Хэрэглэгчийн идэвхийн тайлан — зохицуулалт л хийнэ.
  *
- * Зорилго нь зөвхөн тоо харуулах биш — саваа ашиглахгүй байгаа хэрэглэгчийг
- * нэрээр нь илрүүлэх явдал. Тиймээс идэвхгүйн тоо бүр дарагдах ба доорх
- * жагсаалтыг шууд шүүнэ.
+ * Таталт `useClientActivityReport`-д, нэгдсэн үзүүлэлт ба хорооны задаргаа
+ * `activity/` доторх component-уудад. Өмнө нь энэ бүхэн 669 мөрийн нэг
+ * файлд байв.
  */
 export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
   const router = useRouter();
-
-  const [report, setReport] = useState<ActivityReport | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const [tab, setTab] = useState<ActivityTab>('inactive');
-  const [bucket, setBucket] = useState<InactivityBucket>('all');
-  const [usageBucket, setUsageBucket] = useState<UsageBucket>('all');
-  const [khorooFilter, setKhorooFilter] = useState<number | null>(null);
-  const [clients, setClients] = useState<ActivityClient[]>([]);
-  const [totalClients, setTotalClients] = useState(0);
-  const [page, setPage] = useState(0);
-  const [listLoading, setListLoading] = useState(false);
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 400);
-  const [isBackfilling, setIsBackfilling] = useState(false);
   const { isSuperAdmin } = useRolePermissions();
-
-  const isActiveTab = tab === 'active';
-
-  const fetchReport = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await apiClient.fetchWithAuth(
-        `/api/reports/client-activity?${toQuery(filters)}`
-      );
-      if (!response.ok) throw new Error('Идэвхийн тайлан татахад алдаа гарлаа');
-      setReport(await response.json());
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Тайлан татахад алдаа гарлаа'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filters]);
-
-  const fetchClients = useCallback(async () => {
-    setListLoading(true);
-    try {
-      const query = toQuery(
-        {
-          ...filters,
-          khoroo: khorooFilter != null ? String(khorooFilter) : filters.khoroo
-        },
-        {
-          // Хугацааны ангилал зөвхөн идэвхгүй жагсаалтад утгатай — идэвхтэй нь
-          // ганц нөхцөл: сонгосон хугацаанд уншуулсан эсэх. Харин уншуулалтын
-          // тоогоор шүүх нь эсрэгээрээ зөвхөн идэвхтэй жагсаалтад хамаатай.
-          bucket: isActiveTab || bucket === 'all' ? undefined : bucket,
-          usage:
-            !isActiveTab || usageBucket === 'all' ? undefined : usageBucket,
-          search: debouncedSearch.trim() || undefined,
-          page,
-          size: PAGE_SIZE
-        }
-      );
-      const response = await apiClient.fetchWithAuth(
-        `/api/reports/client-activity/${isActiveTab ? 'active' : 'inactive'}?${query}`
-      );
-      if (!response.ok)
-        throw new Error(
-          `${isActiveTab ? 'Идэвхтэй' : 'Идэвхгүй'} хэрэглэгчийн жагсаалт татахад алдаа гарлаа`
-        );
-      const data = await response.json();
-      setClients(data.content ?? []);
-      setTotalClients(data.totalElements ?? 0);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Жагсаалт татахад алдаа гарлаа'
-      );
-    } finally {
-      setListLoading(false);
-    }
-  }, [
-    filters,
-    khorooFilter,
+  const {
+    report,
+    isLoading,
+    tab,
+    setTab,
     bucket,
+    setBucket,
     usageBucket,
-    debouncedSearch,
+    setUsageBucket,
+    khorooFilter,
+    setKhorooFilter,
+    clients,
+    totalClients,
     page,
-    isActiveTab
-  ]);
-
-  useEffect(() => {
-    fetchReport();
-  }, [fetchReport]);
-
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
-
-  // Шүүлтүүр солигдвол эхний хуудас руу буцна.
-  useEffect(() => {
-    setPage(0);
-  }, [tab, bucket, usageBucket, khorooFilter, debouncedSearch, filters]);
-
-  /**
-   * Хадгалагдсан `card_used_at` талбарыг bin_usage-аас нөхнө.
-   *
-   * Ангиллын тоонууд (7/14/30/хэзээ ч) нь тэр талбараар хийгддэг тул зөвхөн
-   * харагдах утгыг эх сурвалжаас тооцоолоод хангалтгүй — ангилал зөв болохын
-   * тулд талбарыг өөрийг нь нөхөх ёстой.
-   */
-  const runBackfill = async () => {
-    setIsBackfilling(true);
-    try {
-      const response = await apiClient.fetchWithAuth(
-        '/api/users/clients/update-total-access',
-        { method: 'POST' }
-      );
-      if (!response.ok) {
-        throw new Error('Дахин тооцоолоход алдаа гарлаа');
-      }
-      const data = await response.json();
-      toast.success(
-        `${data.updatedClients ?? 0} хэрэглэгчийн хэрэглээ шинэчлэгдлээ` +
-          (data.clientsGainedLastUsed
-            ? ` (${data.clientsGainedLastUsed} нь "уншуулаагүй" гэж буруу бүртгэгдсэн байсан)`
-            : '')
-      );
-      fetchReport();
-      fetchClients();
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Дахин тооцоолоход алдаа гарлаа'
-      );
-    } finally {
-      setIsBackfilling(false);
-    }
-  };
+    setPage,
+    listLoading,
+    search,
+    setSearch,
+    isActiveTab,
+    isBackfilling,
+    runBackfill
+  } = useClientActivityReport(filters);
 
   /** Хорооны тоо дээр дарахад тухайн табыг нээж, шүүлтүүрийг сэлгэнэ. */
   const selectKhoroo = (target: ActivityTab, khoroo: number | null) => {
@@ -218,37 +91,6 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
   const totalPages = Math.max(1, Math.ceil(totalClients / PAGE_SIZE));
   const formatDate = (value: string | null) =>
     value ? new Date(value).toLocaleDateString('mn-MN') : '—';
-
-  const stats = [
-    {
-      title: 'Нийт хэрэглэгч',
-      value: report?.totalClients ?? 0,
-      hint: 'Сонгосон хороонд бүртгэлтэй',
-      icon: IconUsersGroup,
-      tone: 'text-blue-600 dark:text-blue-400'
-    },
-    {
-      title: 'Идэвхтэй',
-      value: report?.activeClients ?? 0,
-      hint: `Нийтийн ${report?.activePercent ?? 0}%`,
-      icon: IconUserCheck,
-      tone: 'text-green-600 dark:text-green-400'
-    },
-    {
-      title: 'Идэвхгүй',
-      value: report?.inactiveClients ?? 0,
-      hint: `Нийтийн ${report?.inactivePercent ?? 0}%`,
-      icon: IconUserOff,
-      tone: 'text-red-600 dark:text-red-400'
-    },
-    {
-      title: 'Хэзээ ч ашиглаагүй',
-      value: report?.buckets.never ?? 0,
-      hint: 'Картаа огт эхлүүлээгүй',
-      icon: IconUserOff,
-      tone: 'text-amber-600 dark:text-amber-400'
-    }
-  ];
 
   const buckets: { key: InactivityBucket; count: number }[] = [
     { key: '7', count: report?.buckets.days7 ?? 0 },
@@ -265,107 +107,15 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
 
   return (
     <div className='space-y-6'>
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className='flex flex-row items-center justify-between pb-2'>
-              <CardTitle className='text-muted-foreground text-sm font-medium'>
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-5 w-5 ${stat.tone}`} />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className='h-8 w-16' />
-              ) : (
-                <div className='text-2xl font-bold tabular-nums'>
-                  {stat.value}
-                </div>
-              )}
-              <p className='text-muted-foreground pt-1 text-xs'>{stat.hint}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <ReportStatCards report={report} loading={isLoading} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Хороогоор</CardTitle>
-          <CardDescription>
-            Идэвхтэй/идэвхгүйн тоо дээр дарж тухайн хорооны хэрэглэгчдийг доор
-            харна
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className='space-y-2'>
-              {Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton key={index} className='h-12 w-full' />
-              ))}
-            </div>
-          ) : !report?.byKhoroo.length ? (
-            <div className='text-muted-foreground py-8 text-center text-sm'>
-              Сонгосон нөхцөлд хэрэглэгч олдсонгүй.
-            </div>
-          ) : (
-            <div className='overflow-x-auto'>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Дүүрэг</TableHead>
-                    <TableHead>Хороо</TableHead>
-                    <TableHead className='text-right'>Нийт</TableHead>
-                    <TableHead className='text-right'>Идэвхтэй</TableHead>
-                    <TableHead className='text-right'>Идэвхгүй</TableHead>
-                    <TableHead>Идэвхтэйн хувь</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {report.byKhoroo.map((row) => (
-                    <TableRow
-                      key={`${row.district}-${row.khoroo}`}
-                      className={
-                        khorooFilter === row.khoroo ? 'bg-muted/60' : undefined
-                      }
-                    >
-                      <TableCell>{row.district || '—'}</TableCell>
-                      <TableCell>
-                        {row.khoroo != null ? `${row.khoroo}-р хороо` : '—'}
-                      </TableCell>
-                      <TableCell className='text-right tabular-nums'>
-                        {row.total}
-                      </TableCell>
-                      <TableCell className='text-right'>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          className='h-7 px-2 font-semibold text-green-600 tabular-nums hover:text-green-700 dark:text-green-400'
-                          onClick={() => selectKhoroo('active', row.khoroo)}
-                        >
-                          {row.active}
-                        </Button>
-                      </TableCell>
-                      <TableCell className='text-right'>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          className='h-7 px-2 font-semibold text-red-600 tabular-nums hover:text-red-700 dark:text-red-400'
-                          onClick={() => selectKhoroo('inactive', row.khoroo)}
-                        >
-                          {row.inactive}
-                        </Button>
-                      </TableCell>
-                      <TableCell>
-                        <ActivityBar activePercent={row.activePercent} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <KhorooBreakdown
+        byKhoroo={report?.byKhoroo ?? []}
+        loading={isLoading}
+        tab={tab}
+        selectedKhoroo={khorooFilter}
+        onSelect={selectKhoroo}
+      />
 
       <Card>
         <CardHeader className='space-y-4'>

@@ -17,7 +17,6 @@ import {
   IconTrash,
   IconUsers,
   IconTrendingUp,
-  IconTrendingDown,
   IconCalendar,
   IconDownload,
   IconMapPin,
@@ -25,16 +24,15 @@ import {
   IconRecycle,
   IconChartBar
 } from '@tabler/icons-react';
-import { RadialPerformanceChart } from './radial-performance-chart';
 import { RadarPerformanceChart } from './radar-performance-chart';
 import { PieInteractiveChart } from './pie-interactive-chart';
 import { LineTrendsChart } from './line-trends-chart';
-import { StackedBarChart } from './stacked-bar-chart';
 import { 
   useBinStatistics, 
   useUsageStatistics, 
   usePenetrationAnalysis, 
-  useClearingEfficiency 
+  useClearingEfficiency,
+  useCollectionTrends
 } from '@/hooks/use-api-data';
 import { normalizeStorageLevel } from '@/lib/utils';
 
@@ -46,6 +44,8 @@ export function AnalyticsView() {
   const { data: usageStats, loading: usageStatsLoading, error: usageStatsError } = useUsageStatistics();
   const { data: penetrationAnalysis, loading: penetrationLoading, error: penetrationError } = usePenetrationAnalysis();
   const { data: clearingEfficiency, loading: clearingLoading, error: clearingError } = useClearingEfficiency();
+  // Сарын графикууд бодит `/dashboard/collection-trends`-ээс тэжээгдэнэ.
+  const { data: collectionTrends } = useCollectionTrends();
 
   const isLoading = binStatsLoading || usageStatsLoading || penetrationLoading || clearingLoading;
   const hasError = binStatsError || usageStatsError || penetrationError || clearingError;
@@ -57,26 +57,20 @@ export function AnalyticsView() {
   const criticalBins = binStats?.criticalBins || 0;
   const warningBins = binStats?.warningBins || 0;
   const normalBins = binStats?.normalBins || 0;
-  const penetrationRate = binStats?.penetrationRate || 0;
+  const activeClientRate = binStats?.activeClientRate || 0;
 
   const totalUsages = usageStats?.totalUsages || 0;
   const uniqueUsers = usageStats?.uniqueUsers || 0;
   const averageUsagesPerDay = usageStats?.averageUsagesPerDay || 0;
 
-  const radialChartData = [{ 
-    month: "current", 
-    collected: Math.round(averageFillLevel * 0.7), 
-    target: averageFillLevel 
-  }];
-
-  const radarChartData = [
-    { month: "1-р сар", efficiency: 78, coverage: 85 },
-    { month: "2-р сар", efficiency: 82, coverage: 88 },
-    { month: "3-р сар", efficiency: 85, coverage: 92 },
-    { month: "4-р сар", efficiency: 79, coverage: 86 },
-    { month: "5-р сар", efficiency: 88, coverage: 94 },
-    { month: "6-р сар", efficiency: 91, coverage: 96 },
-  ];
+  // Сарын бодит цуглуулалт ба хоослолт. Өмнө нь энд 6 сарын тоо гараар
+  // бичигдсэн байсан (`efficiency: 78, coverage: 85` г.м.) — хэмжилттэй
+  // ямар ч холбоогүй.
+  const monthlyTrends = (collectionTrends?.trends ?? []).map((trend) => ({
+    month: trend.month,
+    collection: trend.collection,
+    clearings: trend.clearings
+  }));
 
   // Use penetration analysis data for pie chart
   const pieInteractiveData = penetrationAnalysis?.penetrationByLocation?.slice(0, 5).map((location, index) => ({
@@ -85,23 +79,10 @@ export function AnalyticsView() {
     fill: `hsl(var(--chart-${index % 3 === 0 ? 'efficiency' : index % 3 === 1 ? 'collected' : 'coverage'}))`
   })) || [];
 
-  const lineChartData = [
-    { month: "1-р сар", collected: 2850, recycled: 1420 },
-    { month: "2-р сар", collected: 3120, recycled: 1650 },
-    { month: "3-р сар", collected: 3480, recycled: 1890 },
-    { month: "4-р сар", collected: 2920, recycled: 1560 },
-    { month: "5-р сар", collected: 3650, recycled: 2100 },
-    { month: "6-р сар", collected: 3890, recycled: 2340 },
-  ];
-
-  const stackedBarData = [
-    { month: "1-р сар", organic: 850, plastic: 420, paper: 680, glass: 290 },
-    { month: "2-р сар", organic: 920, plastic: 480, paper: 750, glass: 340 },
-    { month: "3-р сар", organic: 1050, plastic: 560, paper: 820, glass: 380 },
-    { month: "4-р сар", organic: 780, plastic: 390, paper: 590, glass: 260 },
-    { month: "5-р сар", organic: 1150, plastic: 620, paper: 890, glass: 420 },
-    { month: "6-р сар", organic: 1240, plastic: 680, paper: 950, glass: 460 },
-  ];
+  const lineChartData = (collectionTrends?.trends ?? []).map((trend) => ({
+    month: trend.month,
+    collected: trend.collection
+  }));
 
   const exportReport = () => {
     const reportData = {
@@ -113,7 +94,7 @@ export function AnalyticsView() {
         criticalBins,
         warningBins,
         normalBins,
-        penetrationRate,
+        activeClientRate,
         totalUsages,
         uniqueUsers,
         averageUsagesPerDay
@@ -240,13 +221,13 @@ export function AnalyticsView() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Нэвтрэх түвшин</CardTitle>
+              <CardTitle className="text-sm font-medium">Иргэдийн хамрагдалт</CardTitle>
               <IconUsers className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{Math.round(penetrationRate)}%</div>
+              <div className="text-2xl font-bold">{Math.round(activeClientRate)}%</div>
               <p className="text-xs text-muted-foreground">
-                Идэвхтэй хэрэглэгч: {uniqueUsers}
+                30 хоногт уншуулсан: {binStats?.activeClients ?? 0} / {binStats?.totalClients ?? 0}
               </p>
             </CardContent>
           </Card>
@@ -267,32 +248,17 @@ export function AnalyticsView() {
 
         {/* Charts Grid */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* Radial Performance Chart */}
-          <Card className="col-span-1">
-            <CardHeader>
-              <CardTitle>Гүйцэтгэлийн үзүүлэлт</CardTitle>
-              <CardDescription>
-                Одоогийн дүүрэлтийн түвшин
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-44 md:h-56">
-                <RadialPerformanceChart data={radialChartData} />
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Radar Performance Chart */}
           <Card className="col-span-1">
             <CardHeader>
               <CardTitle>Сарын гүйцэтгэл</CardTitle>
               <CardDescription>
-                Үр ашиг болон хамрах хүрээ
+                Цуглуулалт ба хоослолтын харьцуулалт
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-44 md:h-56">
-                <RadarPerformanceChart data={radarChartData} />
+                <RadarPerformanceChart data={monthlyTrends} />
               </div>
             </CardContent>
           </Card>
@@ -317,27 +283,12 @@ export function AnalyticsView() {
             <CardHeader>
               <CardTitle>Хугацааны тренд</CardTitle>
               <CardDescription>
-                Цуглуулсан болон дахин боловсруулсан хог
+                Цуглуулсан хог
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-56 md:h-[320px]">
                 <LineTrendsChart data={lineChartData} />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Stacked Bar Chart */}
-          <Card className="col-span-1">
-            <CardHeader>
-              <CardTitle>Хогийн төрөл</CardTitle>
-              <CardDescription>
-                Хогийн төрлүүдийн хуваарилалт
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-44 md:h-56">
-                <StackedBarChart data={stackedBarData} />
               </div>
             </CardContent>
           </Card>
@@ -377,10 +328,11 @@ export function AnalyticsView() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {clearingEfficiency?.efficiencyScore ? Math.round(clearingEfficiency.efficiencyScore) : 0}%
+                {Math.round(clearingEfficiency?.efficiencyScore ?? 0)}%
               </div>
               <p className="text-xs text-muted-foreground">
-                Дундаж дүүрэлт: {clearingEfficiency?.averageFillLevelBeforeClear ? Math.round(clearingEfficiency.averageFillLevelBeforeClear) : 0}%
+                {clearingEfficiency?.onTimeClearings ?? 0} / {clearingEfficiency?.totalClearings ?? 0} хоослолт
+                {' '}{Math.round(clearingEfficiency?.shouldClearPercent ?? 90)}%-аас дээш дүүрэлттэй үед
               </p>
             </CardContent>
           </Card>
@@ -389,15 +341,16 @@ export function AnalyticsView() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <IconTrendingUp className="mr-2 h-4 w-4" />
-                Нэвтрэх түвшин
+                Нэг хоослолтод ногдох уншилт
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {penetrationAnalysis?.averagePenetration ? Math.round(penetrationAnalysis.averagePenetration) : 0}%
+                {penetrationAnalysis?.averagePenetration ?? 0}
               </div>
               <p className="text-xs text-muted-foreground">
-                Өндөр: {penetrationAnalysis?.highPenetrationBins || 0} | Дунд: {penetrationAnalysis?.mediumPenetrationBins || 0} | Бага: {penetrationAnalysis?.lowPenetrationBins || 0}
+                Хэмжигдсэн сав: {penetrationAnalysis?.measuredBins ?? 0} / {penetrationAnalysis?.totalBins ?? 0}
+                {' '}· сүүлийн {penetrationAnalysis?.windowDays ?? 30} хоног
               </p>
             </CardContent>
           </Card>

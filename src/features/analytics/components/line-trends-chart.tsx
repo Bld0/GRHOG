@@ -27,7 +27,6 @@ interface LineTrendsChartProps {
   data: Array<{
     month: string;
     collected: number;
-    recycled: number;
   }>;
   className?: string;
 }
@@ -36,10 +35,6 @@ const lineChartConfig = {
   collected: {
     label: "Цуглуулсан хог",
     color: "hsl(var(--chart-collected))",
-  },
-  recycled: {
-    label: "Дахин боловсруулсан",
-    color: "hsl(var(--chart-recycled))",
   },
 } satisfies ChartConfig;
 
@@ -73,13 +68,6 @@ export function LineTrendsChart({ data, className }: LineTrendsChartProps) {
               dataKey="collected"
               type="monotone"
               stroke="var(--chart-collected)"
-              strokeWidth={2}
-              dot={false}
-            />
-            <Line
-              dataKey="recycled"
-              type="monotone"
-              stroke="var(--chart-recycled)"
               strokeWidth={2}
               dot={false}
             />

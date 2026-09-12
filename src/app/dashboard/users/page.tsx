@@ -1,109 +1,49 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRolePermissions } from '@/hooks/use-role-permissions';
-import PageContainer from '@/components/layout/page-container';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
-import { Icons } from '@/components/icons';
 import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/button';
+import { Icons } from '@/components/icons';
+import PageContainer from '@/components/layout/page-container';
+import { useRolePermissions } from '@/hooks/use-role-permissions';
 import { apiClient } from '@/lib/api-client';
 import { KhorooLeadersPanel } from '@/features/users/components/khoroo-leaders-panel';
-import { UserAreaFields } from '@/features/users/components/user-area-fields';
+import { UserDialog } from '@/features/users/components/user-dialog';
+import {
+  EMPTY_USER_FORM,
+  UserFormValues,
+  buildUserPayload
+} from '@/features/users/components/user-form-fields';
+import {
+  SystemUser,
+  UsersTable
+} from '@/features/users/components/users-table';
 
-interface SystemUser {
-  id: number;
-  username: string;
-  email: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' | 'DEVELOPER' | 'KHOROO_LEADER';
-  /** Зөвхөн хорооны даргад утгатай — бусад эрхэд null. */
-  district?: string | null;
-  khoroo?: number | null;
-  isActive: boolean;
-  createdAt: string;
-}
-
+/**
+ * Системийн хэрэглэгчийн удирдлага — зохицуулалт л хийнэ.
+ *
+ * Форм, цонх, хүснэгт тус бүр өөрийн файлтай. Өмнө нь энэ бүхэн 734 мөрийн
+ * нэг файлд, үүсгэх ба засах цонх нь бие биенээ бүрэн давтаж байв.
+ */
 export default function UsersPage() {
   const {
     isSuperAdmin,
     canPerformAction,
-    canPost,
-    canPut,
-    canDelete,
     isLoading: authLoading
   } = useRolePermissions();
   const router = useRouter();
+
   const [users, setUsers] = useState<SystemUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit' | null>(null);
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    role: 'ADMIN' as
-      | 'SUPER_ADMIN'
-      | 'ADMIN'
-      | 'VIEWER'
-      | 'DEVELOPER'
-      | 'KHOROO_LEADER',
-    // Хорооны даргад л утгатай. Хороог мөр болгон хадгална — Select зөвхөн
-    // мөр утга авдаг; илгээхийн өмнө тоо болгоно.
-    district: '',
-    khoroo: ''
-  });
+  const [formData, setFormData] = useState<UserFormValues>(EMPTY_USER_FORM);
   // Хорооны жагсаалтаас нэмэхэд бүс нь тухайн мөрөөр тогтоно.
   const [isAreaLocked, setIsAreaLocked] = useState(false);
 
-  // Redirect if not super admin - but only after auth is loaded
-  useEffect(() => {
-    if (!authLoading && !isSuperAdmin) {
-      router.push('/dashboard/overview');
-      toast.error('Access denied. Super admin privileges required.');
-    }
-  }, [isSuperAdmin, router, authLoading]);
-
-  useEffect(() => {
-    if (isSuperAdmin && !authLoading) {
-      fetchUsers();
-    }
-  }, [isSuperAdmin, authLoading]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await apiClient.fetchWithAuth('/api/users');
       if (response.ok) {
@@ -115,115 +55,94 @@ export default function UsersPage() {
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isSuperAdmin) {
+      router.push('/dashboard/overview');
+      toast.error('Access denied. Super admin privileges required.');
+      return;
+    }
+    fetchUsers();
+  }, [isSuperAdmin, authLoading, router, fetchUsers]);
+
+  const closeDialog = () => {
+    setDialogMode(null);
+    setSelectedUser(null);
+    setIsAreaLocked(false);
+    setFormData(EMPTY_USER_FORM);
   };
 
-  /** Хоосон форм — бүх reset нэг эх сурвалжаас, эс бөгөөс нэгийг нь мартана. */
-  const emptyForm = {
-    username: '',
-    email: '',
-    password: '',
-    role: 'ADMIN' as SystemUser['role'],
-    district: '',
-    khoroo: ''
+  const openEdit = (user: SystemUser, locked = false) => {
+    setSelectedUser(user);
+    setIsAreaLocked(locked);
+    setFormData({
+      username: user.username,
+      email: user.email,
+      password: '',
+      role: user.role,
+      district: user.district ?? '',
+      khoroo: user.khoroo != null ? String(user.khoroo) : ''
+    });
+    setDialogMode('edit');
   };
 
-  /**
-   * Сервер рүү илгээх бие. Бүсийг ЗӨВХӨН хорооны даргад оруулна: бусад эрхэд
-   * дүүрэг/хороо утгагүй бөгөөд сервер тэднийг үл хайхардаг ч илүү талбар
-   * илгээх шалтгаан алга. Хороог тоо болгож хөрвүүлнэ.
-   */
-  const buildUserPayload = () => {
-    const base = {
-      username: formData.username,
-      email: formData.email,
-      password: formData.password,
-      role: formData.role
-    };
-    if (formData.role !== 'KHOROO_LEADER') return base;
-    return {
-      ...base,
-      district: formData.district,
-      khoroo: formData.khoroo === '' ? null : Number(formData.khoroo)
-    };
-  };
+  const submit = async () => {
+    const isCreate = dialogMode === 'create';
+    if (!isCreate && !selectedUser) return;
 
-  const handleCreateUser = async () => {
+    const url = isCreate ? '/api/users/create' : `/api/users/${selectedUser!.id}`;
     try {
-      const response = await apiClient.fetchWithAuth('/api/users/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(buildUserPayload())
+      const response = await apiClient.fetchWithAuth(url, {
+        method: isCreate ? 'POST' : 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildUserPayload(formData))
       });
 
-      if (response.ok) {
-        toast.success('User created successfully');
-        setIsCreateDialogOpen(false);
-        setIsAreaLocked(false);
-        setFormData(emptyForm);
-        fetchUsers();
-      } else {
+      if (!response.ok) {
         const error = await response.json();
-        toast.error(error.message || 'Failed to create user');
+        throw new Error(error.message);
       }
-    } catch (error) {
-      toast.error('Failed to create user');
-    }
-  };
 
-  const handleEditUser = async () => {
-    if (!selectedUser) return;
-
-    try {
-      const response = await apiClient.fetchWithAuth(
-        `/api/users/${selectedUser.id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(buildUserPayload())
-        }
+      toast.success(
+        isCreate ? 'User created successfully' : 'User updated successfully'
       );
-
-      if (response.ok) {
-        toast.success('User updated successfully');
-        setIsEditDialogOpen(false);
-        setSelectedUser(null);
-        setIsAreaLocked(false);
-        setFormData(emptyForm);
-        fetchUsers();
-      } else {
-        const error = await response.json();
-        toast.error(error.message || 'Failed to update user');
-      }
+      closeDialog();
+      fetchUsers();
     } catch (error) {
-      toast.error('Failed to update user');
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : isCreate
+            ? 'Failed to create user'
+            : 'Failed to update user'
+      );
     }
   };
 
-  const handleDeleteUser = async (userId: number) => {
+  const deleteUser = async (user: SystemUser) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
-
     try {
-      const response = await apiClient.fetchWithAuth(`/api/users/${userId}`, {
+      const response = await apiClient.fetchWithAuth(`/api/users/${user.id}`, {
         method: 'DELETE'
       });
-
-      if (response.ok) {
-        toast.success('User deleted successfully');
-        fetchUsers();
-      } else {
+      if (!response.ok) {
         const error = await response.json();
-        toast.error(error.message || 'Failed to delete user');
+        throw new Error(error.message);
       }
+      toast.success('User deleted successfully');
+      fetchUsers();
     } catch (error) {
-      toast.error('Failed to delete user');
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : 'Failed to delete user'
+      );
     }
   };
 
-  if (authLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className='flex h-64 items-center justify-center'>
         <Icons.spinner className='h-8 w-8 animate-spin' />
@@ -231,504 +150,78 @@ export default function UsersPage() {
     );
   }
 
-  if (!isSuperAdmin) {
-    return null;
-  }
-
-  if (isLoading) {
-    return (
-      <div className='flex h-64 items-center justify-center'>
-        <Icons.spinner className='h-8 w-8 animate-spin' />
-      </div>
-    );
-  }
+  if (!isSuperAdmin) return null;
 
   return (
-    // <body> нь overflow-hidden тул хуудас бүр өөрийн гүйлгэх хэсгээ авчрах
-    // ёстой — PageContainer тэрийг өгнө. Үүнгүйгээр эхний дэлгэцэнд багтахгүй
-    // хэсэг (жишээ нь хороодын даргын жагсаалт) огт хүрэхгүй үлддэг.
     <PageContainer>
       <div className='w-full space-y-6'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <h1 className='text-3xl font-bold tracking-tight'>
-            Системийн хэрэглэгчид
-          </h1>
-          <p className='text-muted-foreground'>
-            Системийн хэрэглэгчдийн удирдлага
-          </p>
-        </div>
-        {canPerformAction('canCreateUsers') && (
-          <Dialog
-            open={isCreateDialogOpen}
-            onOpenChange={setIsCreateDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button className='bg-primary hover:bg-primary/90 text-white shadow-sm'>
-                <Icons.add className='mr-2 h-4 w-4' />
-                Шинэ хэрэглэгч
-              </Button>
-            </DialogTrigger>
-            <DialogContent className='sm:max-w-[500px]'>
-              <DialogHeader className='space-y-3'>
-                <DialogTitle className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
-                  Шинэ хэрэглэгч үүсгэх
-                </DialogTitle>
-                <DialogDescription className='text-gray-600 dark:text-gray-400'>
-                  Системд шинэ хэрэглэгч нэмэх. Бүх талбарыг бөглөнө үү.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className='space-y-6 py-4'>
-                <div className='grid grid-cols-1 gap-4'>
-                  <div className='space-y-2'>
-                    <Label
-                      htmlFor='username'
-                      className='text-sm font-medium text-gray-700 dark:text-gray-300'
-                    >
-                      Хэрэглэгчийн нэр *
-                    </Label>
-                    <Input
-                      id='username'
-                      placeholder='Хэрэглэгчийн нэр оруулна уу'
-                      value={formData.username}
-                      onChange={(e) =>
-                        setFormData({ ...formData, username: e.target.value })
-                      }
-                      className='focus:border-primary focus:ring-primary h-10 border-gray-300'
-                    />
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label
-                      htmlFor='email'
-                      className='text-sm font-medium text-gray-700 dark:text-gray-300'
-                    >
-                      И-мэйл хаяг *
-                    </Label>
-                    <Input
-                      id='email'
-                      type='email'
-                      placeholder='example@grhog.com'
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      className='focus:border-primary focus:ring-primary h-10 border-gray-300'
-                    />
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label
-                      htmlFor='password'
-                      className='text-sm font-medium text-gray-700 dark:text-gray-300'
-                    >
-                      Нууц үг *
-                    </Label>
-                    <Input
-                      id='password'
-                      type='password'
-                      placeholder='Хамгийн багадаа 6 тэмдэгт'
-                      value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
-                      className='focus:border-primary focus:ring-primary h-10 border-gray-300'
-                    />
-                    <p className='text-xs text-gray-500 dark:text-gray-400'>
-                      Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой
-                    </p>
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label
-                      htmlFor='role'
-                      className='text-sm font-medium text-gray-700 dark:text-gray-300'
-                    >
-                      Хэрэглэгчийн эрх *
-                    </Label>
-                    <Select
-                      value={formData.role}
-                      onValueChange={(value: any) =>
-                        setFormData({ ...formData, role: value })
-                      }
-                    >
-                      <SelectTrigger className='focus:border-primary focus:ring-primary h-10 border-gray-300'>
-                        <SelectValue placeholder='Эрх сонгоно уу' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem
-                          value='SUPER_ADMIN'
-                          className='cursor-pointer'
-                        >
-                          <div className='flex items-center space-x-2'>
-                            <Icons.user className='h-4 w-4 text-red-500' />
-                            <span>Супер админ</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value='ADMIN' className='cursor-pointer'>
-                          <div className='flex items-center space-x-2'>
-                            <Icons.user className='h-4 w-4 text-blue-500' />
-                            <span>Админ</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value='VIEWER' className='cursor-pointer'>
-                          <div className='flex items-center space-x-2'>
-                            <Icons.user className='h-4 w-4 text-gray-500' />
-                            <span>Харагч</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem
-                          value='KHOROO_LEADER'
-                          className='cursor-pointer'
-                        >
-                          <div className='flex items-center space-x-2'>
-                            <Icons.user className='h-4 w-4 text-green-600' />
-                            <span>Хорооны дарга</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className='text-xs text-gray-500 dark:text-gray-400'>
-                      Хэрэглэгчийн системд хандах эрхийг тодорхойлно
-                    </p>
-                  </div>
-
-                  {formData.role === 'KHOROO_LEADER' && (
-                    <UserAreaFields
-                      district={formData.district}
-                      khoroo={formData.khoroo}
-                      locked={isAreaLocked}
-                      onChange={(area) => setFormData({ ...formData, ...area })}
-                    />
-                  )}
-                </div>
-              </div>
-
-              <DialogFooter className='flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2'>
-                <Button
-                  variant='outline'
-                  onClick={() => {
-                    setIsCreateDialogOpen(false);
-                    setIsAreaLocked(false);
-                    setFormData(emptyForm);
-                  }}
-                  className='w-full sm:w-auto'
-                >
-                  Цуцлах
-                </Button>
-                <Button
-                  onClick={handleCreateUser}
-                  className='bg-primary hover:bg-primary/90 w-full text-white shadow-sm sm:w-auto'
-                  disabled={
-                    !formData.username ||
-                    !formData.email ||
-                    !formData.password ||
-                    formData.password.length < 6
-                  }
-                >
-                  <Icons.add className='mr-2 h-4 w-4' />
-                  Хэрэглэгч үүсгэх
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Хэрэглэгчид</CardTitle>
-          <CardDescription>Системийн хэрэглэгчдийн жагсаалт</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Хэрэглэгчийн нэр</TableHead>
-                <TableHead>И-мэйл</TableHead>
-                <TableHead>Эрх</TableHead>
-                <TableHead>Үйлдэл</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users
-                .filter((user) => user.role !== 'DEVELOPER')
-                .map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>{user.username}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs ${
-                          user.role === 'SUPER_ADMIN'
-                            ? 'bg-red-100 text-red-800'
-                            : user.role === 'ADMIN'
-                              ? 'bg-blue-100 text-blue-800'
-                              : user.role === 'DEVELOPER'
-                                ? 'bg-purple-100 text-purple-800'
-                                : user.role === 'KHOROO_LEADER'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {user.role === 'SUPER_ADMIN'
-                          ? 'SUPER_ADMIN'
-                          : user.role === 'ADMIN'
-                            ? 'ADMIN'
-                            : user.role === 'DEVELOPER'
-                              ? 'DEVELOPER'
-                              : user.role === 'KHOROO_LEADER'
-                                ? 'Хорооны дарга'
-                                : 'VIEWER'}
-                      </span>
-                      {user.role === 'KHOROO_LEADER' && (
-                        <div className='text-muted-foreground mt-1 text-xs'>
-                          {user.district || '—'}
-                          {user.khoroo != null
-                            ? `, ${user.khoroo}-р хороо`
-                            : ''}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex space-x-2'>
-                        {canPerformAction('canEditUsers') && (
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setIsAreaLocked(false);
-                              setFormData({
-                                username: user.username,
-                                email: user.email,
-                                password: '',
-                                role: user.role,
-                                district: user.district ?? '',
-                                khoroo:
-                                  user.khoroo != null ? String(user.khoroo) : ''
-                              });
-                              setIsEditDialogOpen(true);
-                            }}
-                          >
-                            <Icons.userPen className='h-4 w-4' />
-                          </Button>
-                        )}
-                        {canPerformAction('canDeleteUsers') &&
-                          user.username !== 'admin' && (
-                            <Button
-                              variant='outline'
-                              size='sm'
-                              onClick={() => handleDeleteUser(user.id)}
-                            >
-                              <Icons.trash className='h-4 w-4' />
-                            </Button>
-                          )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/*
-        Хороогоор нь харах өнцөг: хэрэглэгчийн жагсаалтаас дарга хайхын оронд
-        аль хороонд дарга байхгүйг нэг харцаар олно. Даргыг энэ жагсаалтаас
-        нэмэхэд бүс нь тухайн мөрөөр цоожлогдоно.
-      */}
-      <KhorooLeadersPanel
-        leaders={users.filter((user) => user.role === 'KHOROO_LEADER')}
-        onAdd={(district, khoroo) => {
-          setFormData({
-            ...emptyForm,
-            role: 'KHOROO_LEADER',
-            district,
-            khoroo: String(khoroo)
-          });
-          setIsAreaLocked(true);
-          setIsCreateDialogOpen(true);
-        }}
-        onEdit={(leader) => {
-          const user = users.find((item) => item.id === leader.id);
-          if (!user) return;
-          setSelectedUser(user);
-          setIsAreaLocked(false);
-          setFormData({
-            username: user.username,
-            email: user.email,
-            password: '',
-            role: user.role,
-            district: user.district ?? '',
-            khoroo: user.khoroo != null ? String(user.khoroo) : ''
-          });
-          setIsEditDialogOpen(true);
-        }}
-      />
-
-      {/* Edit User Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className='sm:max-w-[500px]'>
-          <DialogHeader className='space-y-3'>
-            <DialogTitle className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
-              Хэрэглэгч засах
-            </DialogTitle>
-            <DialogDescription className='text-gray-600 dark:text-gray-400'>
-              Хэрэглэгчийн мэдээлэл засах. Нууц үгийг хоосон үлдээснээр
-              өөрчлөхгүй.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className='space-y-6 py-4'>
-            <div className='grid grid-cols-1 gap-4'>
-              <div className='space-y-2'>
-                <Label
-                  htmlFor='edit-username'
-                  className='text-sm font-medium text-gray-700 dark:text-gray-300'
-                >
-                  Хэрэглэгчийн нэр *
-                </Label>
-                <Input
-                  id='edit-username'
-                  placeholder='Хэрэглэгчийн нэр оруулна уу'
-                  value={formData.username}
-                  onChange={(e) =>
-                    setFormData({ ...formData, username: e.target.value })
-                  }
-                  className='focus:border-primary focus:ring-primary h-10 border-gray-300'
-                />
-              </div>
-
-              <div className='space-y-2'>
-                <Label
-                  htmlFor='edit-email'
-                  className='text-sm font-medium text-gray-700 dark:text-gray-300'
-                >
-                  И-мэйл хаяг *
-                </Label>
-                <Input
-                  id='edit-email'
-                  type='email'
-                  placeholder='example@grhog.com'
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className='focus:border-primary focus:ring-primary h-10 border-gray-300'
-                />
-              </div>
-
-              <div className='space-y-2'>
-                <Label
-                  htmlFor='edit-password'
-                  className='text-sm font-medium text-gray-700 dark:text-gray-300'
-                >
-                  Нууц үг
-                </Label>
-                <Input
-                  id='edit-password'
-                  type='password'
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  placeholder='Зөвхөн өөрчлөх бол оруулна уу'
-                  className='focus:border-primary focus:ring-primary h-10 border-gray-300'
-                />
-                <p className='text-xs text-gray-500 dark:text-gray-400'>
-                  Нууц үгийг өөрчлөхгүй бол хоосон үлдээнэ үү
-                </p>
-              </div>
-
-              <div className='space-y-2'>
-                <Label
-                  htmlFor='edit-role'
-                  className='text-sm font-medium text-gray-700 dark:text-gray-300'
-                >
-                  Хэрэглэгчийн эрх *
-                </Label>
-                <Select
-                  value={formData.role}
-                  onValueChange={(value: any) =>
-                    setFormData({ ...formData, role: value })
-                  }
-                >
-                  <SelectTrigger className='focus:border-primary focus:ring-primary h-10 border-gray-300'>
-                    <SelectValue placeholder='Эрх сонгоно уу' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='SUPER_ADMIN' className='cursor-pointer'>
-                      <div className='flex items-center space-x-2'>
-                        <Icons.user className='h-4 w-4 text-red-500' />
-                        <span>Супер админ</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value='ADMIN' className='cursor-pointer'>
-                      <div className='flex items-center space-x-2'>
-                        <Icons.user className='h-4 w-4 text-blue-500' />
-                        <span>Админ</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value='VIEWER' className='cursor-pointer'>
-                      <div className='flex items-center space-x-2'>
-                        <Icons.user className='h-4 w-4 text-gray-500' />
-                        <span>Харагч</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem
-                      value='KHOROO_LEADER'
-                      className='cursor-pointer'
-                    >
-                      <div className='flex items-center space-x-2'>
-                        <Icons.user className='h-4 w-4 text-green-600' />
-                        <span>Хорооны дарга</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className='text-xs text-gray-500 dark:text-gray-400'>
-                  Хэрэглэгчийн системд хандах эрхийг тодорхойлно
-                </p>
-              </div>
-
-              {formData.role === 'KHOROO_LEADER' && (
-                <UserAreaFields
-                  district={formData.district}
-                  khoroo={formData.khoroo}
-                  locked={isAreaLocked}
-                  onChange={(area) => setFormData({ ...formData, ...area })}
-                />
-              )}
-            </div>
+        <div className='flex items-center justify-between'>
+          <div>
+            <h1 className='text-3xl font-bold tracking-tight'>
+              Системийн хэрэглэгчид
+            </h1>
+            <p className='text-muted-foreground'>
+              Системийн хэрэглэгчдийн удирдлага
+            </p>
           </div>
-
-          <DialogFooter className='flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2'>
+          {canPerformAction('canCreateUsers') && (
             <Button
-              variant='outline'
+              className='bg-primary hover:bg-primary/90 text-white shadow-sm'
               onClick={() => {
-                setIsEditDialogOpen(false);
-                setSelectedUser(null);
+                setFormData(EMPTY_USER_FORM);
                 setIsAreaLocked(false);
-                setFormData(emptyForm);
+                setDialogMode('create');
               }}
-              className='w-full sm:w-auto'
             >
-              Цуцлах
+              <Icons.add className='mr-2 h-4 w-4' />
+              Шинэ хэрэглэгч
             </Button>
-            <Button
-              onClick={handleEditUser}
-              className='bg-primary hover:bg-primary/90 w-full text-white shadow-sm sm:w-auto'
-              disabled={!formData.username || !formData.email}
-            >
-              <Icons.userPen className='mr-2 h-4 w-4' />
-              Хадгалах
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          )}
+        </div>
+
+        {/* DEVELOPER эрх нь дотоод хэрэглээний данс — жагсаалтад харуулахгүй. */}
+        <UsersTable
+          users={users.filter((user) => user.role !== 'DEVELOPER')}
+          canEdit={canPerformAction('canEditUsers')}
+          canDelete={canPerformAction('canDeleteUsers')}
+          onEdit={(user) => openEdit(user)}
+          onDelete={deleteUser}
+        />
+
+        {/*
+          Хороогоор нь харах өнцөг: хэрэглэгчийн жагсаалтаас дарга хайхын оронд
+          аль хороонд дарга байхгүйг нэг харцаар олно. Даргыг энэ жагсаалтаас
+          нэмэхэд бүс нь тухайн мөрөөр цоожлогдоно.
+        */}
+        <KhorooLeadersPanel
+          leaders={users.filter((user) => user.role === 'KHOROO_LEADER')}
+          onAdd={(district, khoroo) => {
+            setFormData({
+              ...EMPTY_USER_FORM,
+              role: 'KHOROO_LEADER',
+              district,
+              khoroo: String(khoroo)
+            });
+            setIsAreaLocked(true);
+            setDialogMode('create');
+          }}
+          onEdit={(leader) => {
+            const user = users.find((item) => item.id === leader.id);
+            if (user) openEdit(user);
+          }}
+        />
       </div>
+
+      <UserDialog
+        mode={dialogMode ?? 'create'}
+        open={dialogMode !== null}
+        onOpenChange={(open) => !open && closeDialog()}
+        values={formData}
+        onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
+        areaLocked={isAreaLocked}
+        onSubmit={submit}
+        onCancel={closeDialog}
+      />
     </PageContainer>
   );
 }
