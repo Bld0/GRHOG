@@ -215,8 +215,14 @@ export function BatteryReport({ filters }: { filters: ReportFilters }) {
           }
 
           const nextId = Number(result.lastLogId ?? 0);
-          // Ахиц гарахгүй бол зогсоно — эс бөгөөс мөнхийн давталт.
+          // Ахиц гарахгүй бол зогсоно — эс бөгөөс мөнхийн давталт. Одоогийн
+          // backend дээр lastId үргэлж өсдөг тул энд хүрэхгүй ч, хүрсэн
+          // тохиолдолд ЧИМЭЭГҮЙ тасрах ёсгүй: ажил дуусаагүй атлаа дууссан
+          // мэт харагдвал оператор дутуу түүхийг бүтэн гэж итгэнэ.
           if (!Number.isFinite(nextId) || nextId <= fromId) {
+            toast.warning(
+              `${step.label}: лог дээр ахиц гарсангүй — түүх дутуу байж магадгүй`
+            );
             break;
           }
           fromId = nextId;
