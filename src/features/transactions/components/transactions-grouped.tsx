@@ -180,8 +180,14 @@ export function TransactionsGrouped() {
                 <TableRow>
                   <TableHead className='w-[50px]'></TableHead>
                   <TableHead>Хороо / Байршил</TableHead>
-                  <TableHead className='w-[120px] text-center'>
+                  <TableHead className='w-[110px] text-center'>
                     Ашиглалт
+                  </TableHead>
+                  <TableHead className='w-[150px] text-center'>
+                    Ашигласан хэрэглэгч
+                  </TableHead>
+                  <TableHead className='w-[130px] text-center'>
+                    Хогийн савны тоо
                   </TableHead>
                   <TableHead className='w-[180px] text-center'>
                     Дундаж дүүрэлт
@@ -217,11 +223,17 @@ export function TransactionsGrouped() {
                               {group.khoroo} Хороо , {group.location}
                             </div>
                             <div className='text-muted-foreground text-xs'>
-                              {group.district} • {group.binCount} сав
+                              {group.district}
                             </div>
                           </TableCell>
                           <TableCell className='text-center font-semibold'>
                             {group.usageCount}
+                          </TableCell>
+                          <TableCell className='text-center font-semibold'>
+                            {group.userCount}
+                          </TableCell>
+                          <TableCell className='text-center font-semibold'>
+                            {group.binCount}
                           </TableCell>
                           <TableCell>
                             <div className='flex items-center justify-center gap-2'>
@@ -263,6 +275,10 @@ export function TransactionsGrouped() {
                               <TableCell className='text-center'>
                                 {bin.usageCount}
                               </TableCell>
+                              <TableCell className='text-center'>
+                                {bin.userCount}
+                              </TableCell>
+                              <TableCell className='text-center'>-</TableCell>
                               <TableCell>
                                 <div className='flex items-center justify-center gap-2'>
                                   <Progress
@@ -287,7 +303,7 @@ export function TransactionsGrouped() {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className='py-8 text-center'>
+                    <TableCell colSpan={8} className='py-8 text-center'>
                       <div className='flex flex-col items-center gap-2'>
                         <IconSearch className='text-muted-foreground h-8 w-8' />
                         <p className='text-muted-foreground'>

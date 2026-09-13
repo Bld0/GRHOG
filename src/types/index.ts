@@ -159,6 +159,7 @@ export interface DistrictKhorooGroup {
 export interface UsageLocationGroupBin {
   binName: string;
   usageCount: number;
+  userCount: number;
   avgStorageLevelPercent: number;
   avgBatteryLevelPercent: number;
   lastUsedAt: string | null;
@@ -170,6 +171,7 @@ export interface UsageLocationGroup {
   location: string;
   binCount: number;
   usageCount: number;
+  userCount: number;
   avgStorageLevelPercent: number;
   avgBatteryLevelPercent: number;
   lastUsedAt: string | null;
