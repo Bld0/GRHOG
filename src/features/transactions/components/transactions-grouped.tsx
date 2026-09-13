@@ -51,7 +51,8 @@ const formatDate = (value: string | null) =>
  */
 export function TransactionsGrouped() {
   const [currentPage, setCurrentPage] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(20);
+  // Байршлын бүлэг цөөн (~21) — анхдагчаар нэг хуудсанд бүгд багтана.
+  const [itemsPerPage, setItemsPerPage] = useState(50);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   // Бичиж буй утга ба илгээгдсэн утга тусдаа — товчлуур бүрд дахин татахгүй.
   const [searchInput, setSearchInput] = useState('');
@@ -161,7 +162,7 @@ export function TransactionsGrouped() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[5, 10, 20, 50].map((size) => (
+              {[20, 50, 100, 200].map((size) => (
                 <SelectItem key={size} value={String(size)}>
                   {size}
                 </SelectItem>
