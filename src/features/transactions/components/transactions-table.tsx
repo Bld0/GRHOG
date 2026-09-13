@@ -32,6 +32,8 @@ export interface TransactionRow {
   id: string;
   date: Date;
   residentId: string;
+  /** Картын танигч — хэрэглэгчийн хуудас руу үсрэхэд. */
+  cardId: string;
   clientName: string;
   clientType: string;
   clientPhone: string;
@@ -109,10 +111,14 @@ export function TransactionsTable({
         <TableBody>
           {rows.map((row) => (
             <TableRow key={row.id}>
-              <IconCell icon={<IconClock className='text-muted-foreground h-4 w-4' />}>
+              <IconCell
+                icon={<IconClock className='text-muted-foreground h-4 w-4' />}
+              >
                 <span className='font-medium'>{formatDateTime(row.date)}</span>
               </IconCell>
-              <IconCell icon={<IconMapPin className='text-muted-foreground h-4 w-4' />}>
+              <IconCell
+                icon={<IconMapPin className='text-muted-foreground h-4 w-4' />}
+              >
                 <span className='font-medium'>{row.clientAddress}</span>
               </IconCell>
               <TableCell>
@@ -122,10 +128,23 @@ export function TransactionsTable({
                   </Badge>
                 </div>
               </TableCell>
-              <IconCell icon={<IconUser className='text-muted-foreground h-4 w-4' />}>
-                <span className='font-medium'>{row.clientName}</span>
+              <IconCell
+                icon={<IconUser className='text-muted-foreground h-4 w-4' />}
+              >
+                {row.cardId ? (
+                  <Link
+                    href={`/dashboard/card/${row.cardId}`}
+                    className='text-primary hover:text-primary/80 cursor-pointer font-medium hover:underline'
+                  >
+                    {row.clientName}
+                  </Link>
+                ) : (
+                  <span className='font-medium'>{row.clientName}</span>
+                )}
               </IconCell>
-              <IconCell icon={<IconTrash className='text-muted-foreground h-4 w-4' />}>
+              <IconCell
+                icon={<IconTrash className='text-muted-foreground h-4 w-4' />}
+              >
                 <Link
                   href={`/dashboard/bins/${row.binId}`}
                   className='text-primary hover:text-primary/80 cursor-pointer font-medium hover:underline'
@@ -133,14 +152,18 @@ export function TransactionsTable({
                   {row.binName}
                 </Link>
               </IconCell>
-              <IconCell icon={<IconWeight className='text-muted-foreground h-4 w-4' />}>
+              <IconCell
+                icon={<IconWeight className='text-muted-foreground h-4 w-4' />}
+              >
                 <Badge variant={storageTone(row.storageLevel)}>
                   {row.storageLevel === NO_READING
                     ? 'Data coming soon'
                     : `${row.storageLevel.toFixed(1)}%`}
                 </Badge>
               </IconCell>
-              <IconCell icon={<IconBattery className='text-muted-foreground h-4 w-4' />}>
+              <IconCell
+                icon={<IconBattery className='text-muted-foreground h-4 w-4' />}
+              >
                 <span className='text-sm'>
                   {row.batteryLevel === NO_READING
                     ? 'Data coming soon'

@@ -82,6 +82,7 @@ export function TransactionsView() {
       id: `TXN-${String(usage.id).padStart(4, '0')}`,
       date: new Date(usage.createdAt),
       residentId: usage.cardIdDec || '-',
+      cardId: usage.cardId || '',
       clientName: usage.clientName || '-',
       clientType: usage.clientType || '-',
       clientPhone: usage.clientPhone || '-',

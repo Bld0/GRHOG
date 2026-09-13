@@ -157,6 +157,7 @@ export interface DistrictKhorooGroup {
 
 /** Ашиглалт хороо + байршлаар бүлэглэсэн (/bin-usages/grouped-by-location). */
 export interface UsageLocationGroupBin {
+  binId: number;
   binName: string;
   usageCount: number;
   userCount: number;

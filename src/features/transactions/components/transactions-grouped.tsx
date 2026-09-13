@@ -8,6 +8,8 @@ import {
   IconX
 } from '@tabler/icons-react';
 
+import Link from 'next/link';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -270,7 +272,12 @@ export function TransactionsGrouped() {
                             >
                               <TableCell></TableCell>
                               <TableCell className='pl-8'>
-                                {bin.binName}
+                                <Link
+                                  href={`/dashboard/bins/${bin.binId}`}
+                                  className='text-primary hover:text-primary/80 font-medium hover:underline'
+                                >
+                                  {bin.binName}
+                                </Link>
                               </TableCell>
                               <TableCell className='text-center'>
                                 {bin.usageCount}
