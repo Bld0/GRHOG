@@ -155,6 +155,27 @@ export interface DistrictKhorooGroup {
   bins: Bin[];
 }
 
+/** Ашиглалт хороо + байршлаар бүлэглэсэн (/bin-usages/grouped-by-location). */
+export interface UsageLocationGroupBin {
+  binName: string;
+  usageCount: number;
+  avgStorageLevelPercent: number;
+  avgBatteryLevelPercent: number;
+  lastUsedAt: string | null;
+}
+
+export interface UsageLocationGroup {
+  district: string;
+  khoroo: number | null;
+  location: string;
+  binCount: number;
+  usageCount: number;
+  avgStorageLevelPercent: number;
+  avgBatteryLevelPercent: number;
+  lastUsedAt: string | null;
+  bins: UsageLocationGroupBin[];
+}
+
 export interface Client {
   id: number;
   email: string | null;

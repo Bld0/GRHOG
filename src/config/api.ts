@@ -27,6 +27,7 @@ export const API_CONFIG = {
     BINS: '/bins',
     CLIENTS: '/clients',
     BIN_USAGES: '/bin-usages',
+    BIN_USAGES_BY_LOCATION: '/bin-usages/grouped-by-location',
     CLEARINGS: '/clearings',
     COMPLAINTS: '/complaints',
     DASHBOARD: {

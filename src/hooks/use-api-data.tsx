@@ -18,6 +18,7 @@ import {
   DistrictKhorooGroup,
   PenetrationAnalysis,
   TotalHouseholdsData,
+  UsageLocationGroup,
   UsageStatistics
 } from '@/types';
 import { API_ENDPOINTS } from '@/lib/api';
@@ -76,6 +77,18 @@ export function useBinUsages(
 ): HookReturn<BinUsage> {
   return usePagedResource<BinUsage>(
     API_ENDPOINTS.BIN_USAGES,
+    enabled,
+    paginationParams
+  );
+}
+
+/** Ашиглалт (дүүрэг, хороо, байршил)-аар бүлэглэсэн — бүлгээр хуудаслана. */
+export function useBinUsagesByLocation(
+  enabled: boolean = true,
+  paginationParams?: PaginationParams
+): HookReturn<UsageLocationGroup> {
+  return usePagedResource<UsageLocationGroup>(
+    API_ENDPOINTS.BIN_USAGES_BY_LOCATION,
     enabled,
     paginationParams
   );
