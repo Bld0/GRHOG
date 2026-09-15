@@ -32,6 +32,8 @@ export interface PaginationParams {
   // structured column-filter query.
   keyword?: string;
   isActive?: boolean;
+  /** Дүүрэг, хороо эсвэл байршил нь хоосон картуудыг л авчирна. */
+  incomplete?: boolean;
   cardId?: string;
   name?: string;
   email?: string;

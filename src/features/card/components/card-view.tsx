@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { IconAlertTriangle, IconDownload, IconTrash } from '@tabler/icons-react';
+import {
+  IconAlertTriangle,
+  IconDownload,
+  IconTrash
+} from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -48,6 +52,8 @@ export function CardsView() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingCard, setEditingCard] = useState<CardRow | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  // Дүүрэг, хороо эсвэл байршил нь хоосон картууд.
+  const [incompleteOnly, setIncompleteOnly] = useState(false);
 
   const {
     activeFilters,
@@ -65,9 +71,10 @@ export function CardsView() {
       size: itemsPerPage,
       sortBy: sortConfig?.field || 'createdAt',
       sortDirection: sortConfig?.direction || 'desc',
-      ...(search ? { search } : {})
+      ...(search ? { search } : {}),
+      ...(incompleteOnly ? { incomplete: true } : {})
     } as PaginationParams;
-  }, [currentPage, itemsPerPage, activeFilters, sortConfig]);
+  }, [currentPage, itemsPerPage, activeFilters, sortConfig, incompleteOnly]);
 
   const {
     data: apiClients,
@@ -156,7 +163,7 @@ export function CardsView() {
 
   return (
     <PageContainer>
-      <div className='flex flex-1 flex-col space-y-5 h-full'>
+      <div className='flex h-full flex-1 flex-col space-y-5'>
         <div className='flex items-center justify-between pr-6'>
           <h1 className='text-3xl font-bold tracking-tight'>Картын жагсаалт</h1>
           <div className='flex items-center gap-2'>
@@ -170,6 +177,16 @@ export function CardsView() {
                 Устгах ({selectedIds.size})
               </Button>
             )}
+            <Button
+              variant={incompleteOnly ? 'default' : 'outline'}
+              size='sm'
+              onClick={() => {
+                setIncompleteOnly((prev) => !prev);
+                setCurrentPage(0);
+              }}
+            >
+              Хаяг дутуу
+            </Button>
             <CardCreateDialog
               canCreate={canPerformAction('canCreateClients')}
               onCreated={refetch}
@@ -194,8 +211,8 @@ export function CardsView() {
                 <CardTitle>Картын жагсаалт</CardTitle>
                 <CardDescription>
                   {pagination.totalElements} карт олдлоо •{' '}
-                  {pagination?.statistics?.totalAccessedCount || 0} нэвтрэлттэй •
-                  Хуудас {currentPage + 1}/{pagination.totalPages}
+                  {pagination?.statistics?.totalAccessedCount || 0} нэвтрэлттэй
+                  • Хуудас {currentPage + 1}/{pagination.totalPages}
                 </CardDescription>
               </div>
               <Select
