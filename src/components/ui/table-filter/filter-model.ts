@@ -40,7 +40,8 @@ export function defaultOperatorsFor(type: FilterFieldType): FilterOperator[] {
         { value: 'is_not', label: 'is not' },
         { value: 'contains', label: 'contains' },
         { value: 'starts_with', label: 'starts with' },
-        { value: 'ends_with', label: 'ends with' }
+        { value: 'ends_with', label: 'ends with' },
+        { value: 'is_empty', label: 'хоосон' }
       ];
     case 'number':
       return [
@@ -48,7 +49,8 @@ export function defaultOperatorsFor(type: FilterFieldType): FilterOperator[] {
         { value: 'is_not', label: 'is not' },
         { value: 'greater_than', label: 'is greater than' },
         { value: 'less_than', label: 'is less than' },
-        { value: 'between', label: 'is between' }
+        { value: 'between', label: 'is between' },
+        { value: 'is_empty', label: 'хоосон' }
       ];
     case 'boolean':
       return [
@@ -61,7 +63,8 @@ export function defaultOperatorsFor(type: FilterFieldType): FilterOperator[] {
         { value: 'is_not', label: 'is not' },
         { value: 'before', label: 'is before' },
         { value: 'after', label: 'is after' },
-        { value: 'between', label: 'is between' }
+        { value: 'between', label: 'is between' },
+        { value: 'is_empty', label: 'хоосон' }
       ];
     default:
       return [{ value: 'is', label: 'is' }];
@@ -96,7 +99,21 @@ export function buildFilter(args: BuildArgs): ActiveFilter | null {
   const operatorLabel =
     operators.find((op) => op.value === operator)?.label ?? 'is';
 
-  const made = type === 'date' ? buildDate(args, operatorLabel) : buildValue(args, operatorLabel);
+  // "хоосон" нь утга шаарддаггүй цорын ганц оператор.
+  if (operator === 'is_empty') {
+    return {
+      id: `${field}_${Date.now()}`,
+      field,
+      operator,
+      value: '',
+      label: `${label} хоосон`
+    };
+  }
+
+  const made =
+    type === 'date'
+      ? buildDate(args, operatorLabel)
+      : buildValue(args, operatorLabel);
   if (!made) return null;
 
   return {

@@ -26,6 +26,10 @@ function toSearchPart(filter: ActiveFilter): string | null {
     return range ? `${field}: {"between": ${range}}` : null;
   }
 
+  if (operator === 'is_empty') {
+    return `${field}: {"is_empty": ""}`;
+  }
+
   switch (operator) {
     case 'is':
     case 'is_not':

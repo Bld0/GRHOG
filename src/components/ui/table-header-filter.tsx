@@ -81,6 +81,8 @@ export function TableHeaderFilter({
 
   const operators = filterOperators ?? defaultOperatorsFor(type);
   const isBetweenNumber = operator === 'between' && type === 'number';
+  // "хоосон" нь утга шаарддаггүй — оролтыг нуугаад шууд хэрэгжинэ.
+  const isEmptyOperator = operator === 'is_empty';
   const hasFilter = activeFilters.some((f) => f.field === field);
 
   const resetInputs = () => {
@@ -169,6 +171,11 @@ export function TableHeaderFilter({
 
   const changeOperator = (next: string) => {
     setOperator(next);
+    // "хоосон" нь утгагүй тул сонгосон даруйд хэрэгжинэ.
+    if (next === 'is_empty') {
+      commit({ operator: next });
+      return;
+    }
     // Утга аль хэдийн бичигдсэн бол оператор солиход шууд хэрэгжинэ.
     if (type !== 'date' && value.trim()) commit({ operator: next });
   };
@@ -201,9 +208,11 @@ export function TableHeaderFilter({
   }, []);
 
   const sorted = currentSort?.field === field ? currentSort.direction : null;
-  const canApply = isBetweenNumber
-    ? Boolean(value.trim() && value2.trim())
-    : Boolean(value.trim());
+  const canApply = isEmptyOperator
+    ? true
+    : isBetweenNumber
+      ? Boolean(value.trim() && value2.trim())
+      : Boolean(value.trim());
 
   return (
     <div className={`relative ${className}`}>
@@ -222,7 +231,9 @@ export function TableHeaderFilter({
                 : `Sort by ${label}`
             }
           >
-            <span className={sorted ? 'text-foreground' : 'text-muted-foreground'}>
+            <span
+              className={sorted ? 'text-foreground' : 'text-muted-foreground'}
+            >
               {sorted === 'asc' ? (
                 <IconChevronUp className='h-4 w-4' />
               ) : sorted === 'desc' ? (
@@ -275,21 +286,23 @@ export function TableHeaderFilter({
               </SelectContent>
             </Select>
 
-            {customFilterOptions ?? (
-              <FilterInputs
-                type={type}
-                operator={operator}
-                value={value}
-                value2={value2}
-                date={date}
-                date2={date2}
-                onValueChange={changeValue}
-                onDateChange={changeDate}
-              />
-            )}
+            {isEmptyOperator
+              ? null
+              : (customFilterOptions ?? (
+                  <FilterInputs
+                    type={type}
+                    operator={operator}
+                    value={value}
+                    value2={value2}
+                    date={date}
+                    date2={date2}
+                    onValueChange={changeValue}
+                    onDateChange={changeDate}
+                  />
+                ))}
 
             <div className='flex gap-2'>
-              {type !== 'date' && canApply && (
+              {(type !== 'date' || isEmptyOperator) && canApply && (
                 <Button
                   variant='default'
                   size='sm'
@@ -439,11 +452,18 @@ function DatePicker({
           className='w-full justify-start text-left font-normal'
         >
           <IconCalendar className='mr-1 h-3 w-3' />
-          {date ? format(date, longFormat ? 'MMM dd, yyyy' : 'MMM dd') : placeholder}
+          {date
+            ? format(date, longFormat ? 'MMM dd, yyyy' : 'MMM dd')
+            : placeholder}
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-auto p-0' align='start'>
-        <Calendar mode='single' selected={date} onSelect={onSelect} initialFocus />
+        <Calendar
+          mode='single'
+          selected={date}
+          onSelect={onSelect}
+          initialFocus
+        />
       </PopoverContent>
     </Popover>
   );
