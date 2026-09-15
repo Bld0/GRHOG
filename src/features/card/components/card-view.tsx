@@ -135,6 +135,9 @@ export function CardsView() {
     if (sortConfig?.direction) {
       params.append('sortDirection', sortConfig.direction);
     }
+    // Хуудасны "Хаяг дутуу" товч экспортод ч үйлчилнэ — экранд харагдаж
+    // байгаагаас өөр багц татагдвал хэрэглэгч тайлбарлаж чадахгүй.
+    if (incompleteOnly) params.append('incomplete', 'true');
     return downloadXlsx('/api/export/cards', params, 'cards_export');
   };
 
