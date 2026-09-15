@@ -57,8 +57,6 @@ interface CardFormFieldsProps {
   idPrefix: string;
   values: CardFormValues;
   onChange: (patch: Partial<CardFormValues>) => void;
-  /** Карт ID-гийн мөрөнд нэмж харуулах удирдлага (хөрвүүлэх унтраалга). */
-  cardIdSlot?: React.ReactNode;
   nameLabel?: string;
   cardIdLabel?: string;
 }
@@ -72,14 +70,34 @@ export function CardFormFields({
   idPrefix,
   values,
   onChange,
-  cardIdSlot,
   nameLabel = 'Нэр',
   cardIdLabel = 'Карт ID'
 }: CardFormFieldsProps) {
   const id = (field: string) => `${idPrefix}-${field}`;
+  // Ажилтан нь хороо/байршилд хамаарахгүй — backend эдгээрийг хадгалахдаа
+  // цэвэрлэдэг тул форм дээр ч харуулахгүй.
+  const isStaff = values.type === 'Ажилтан';
 
   return (
     <div className='grid gap-4 py-4'>
+      <Field htmlFor={id('type')} label='Төрөл'>
+        <Select
+          value={values.type}
+          onValueChange={(value) => onChange({ type: value })}
+        >
+          <SelectTrigger className='col-span-3'>
+            <SelectValue placeholder='Төрөл сонгоно уу' />
+          </SelectTrigger>
+          <SelectContent>
+            {CLIENT_TYPES.map((type) => (
+              <SelectItem key={type} value={type}>
+                {type}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+
       <Field htmlFor={id('name')} label={nameLabel}>
         <Input
           id={id('name')}
@@ -96,13 +114,8 @@ export function CardFormFields({
           value={values.cardId}
           onChange={(e) => onChange({ cardId: e.target.value })}
           placeholder='C12345678'
-          className={
-            cardIdSlot
-              ? 'bg-muted-foreground/10 font-mono'
-              : `col-span-3 font-mono ${values.cardId ? 'border-green-500 bg-green-50' : ''}`
-          }
+          className={`col-span-3 font-mono ${values.cardId ? 'border-green-500 bg-green-50' : ''}`}
         />
-        {cardIdSlot}
       </Field>
 
       <Field htmlFor={id('email')} label='И-мэйл'>
@@ -145,65 +158,55 @@ export function CardFormFields({
         </Select>
       </Field>
 
-      <Field htmlFor={id('khoroo')} label='Хороо'>
-        <Input
-          id={id('khoroo')}
-          type='number'
-          value={values.khoroo}
-          onChange={(e) => onChange({ khoroo: e.target.value })}
-          placeholder='Хороо'
-          className='col-span-3'
-        />
-      </Field>
+      {!isStaff && (
+        <>
+          <Field htmlFor={id('khoroo')} label='Хороо'>
+            <Input
+              id={id('khoroo')}
+              type='number'
+              value={values.khoroo}
+              onChange={(e) => onChange({ khoroo: e.target.value })}
+              placeholder='Хороо'
+              className='col-span-3'
+            />
+          </Field>
 
-      <Field htmlFor={id('streetBuilding')} label='Гудамж, байр'>
-        <Input
-          id={id('streetBuilding')}
-          value={values.streetBuilding}
-          onChange={(e) => onChange({ streetBuilding: e.target.value })}
-          placeholder='Гудамж, байр'
-          className='col-span-3'
-        />
-      </Field>
+          <Field htmlFor={id('streetBuilding')} label='Гудамж, байр'>
+            <Input
+              id={id('streetBuilding')}
+              value={values.streetBuilding}
+              onChange={(e) => onChange({ streetBuilding: e.target.value })}
+              placeholder='Гудамж, байр'
+              className='col-span-3'
+            />
+          </Field>
 
-      <Field htmlFor={id('apartmentNumber')} label='Тоот'>
-        <Input
-          id={id('apartmentNumber')}
-          type='number'
-          value={values.apartmentNumber}
-          onChange={(e) => onChange({ apartmentNumber: e.target.value })}
-          placeholder='Тоот'
-          className='col-span-3'
-        />
-      </Field>
+          <Field htmlFor={id('apartmentNumber')} label='Тоот'>
+            <Input
+              id={id('apartmentNumber')}
+              type='number'
+              value={values.apartmentNumber}
+              onChange={(e) => onChange({ apartmentNumber: e.target.value })}
+              placeholder='Тоот'
+              className='col-span-3'
+            />
+          </Field>
 
-      <Field htmlFor={id('address')} label='Дэлгэрэнгүй хаяг' labelAlign='left'>
-        <Input
-          id={id('address')}
-          value={values.address}
-          onChange={(e) => onChange({ address: e.target.value })}
-          placeholder='Дэлгэрэнгүй хаяг'
-          className='col-span-3'
-        />
-      </Field>
-
-      <Field htmlFor={id('type')} label='Төрөл'>
-        <Select
-          value={values.type}
-          onValueChange={(value) => onChange({ type: value })}
-        >
-          <SelectTrigger className='col-span-3'>
-            <SelectValue placeholder='Төрөл сонгоно уу' />
-          </SelectTrigger>
-          <SelectContent>
-            {CLIENT_TYPES.map((type) => (
-              <SelectItem key={type} value={type}>
-                {type}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
+          <Field
+            htmlFor={id('address')}
+            label='Дэлгэрэнгүй хаяг'
+            labelAlign='left'
+          >
+            <Input
+              id={id('address')}
+              value={values.address}
+              onChange={(e) => onChange({ address: e.target.value })}
+              placeholder='Дэлгэрэнгүй хаяг'
+              className='col-span-3'
+            />
+          </Field>
+        </>
+      )}
     </div>
   );
 }

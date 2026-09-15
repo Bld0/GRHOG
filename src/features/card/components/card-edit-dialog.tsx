@@ -12,9 +12,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import SwitchButton from '@/components/switch-button';
 import { apiClient } from '@/lib/api-client';
-import { swapCardIdBytes } from '@/lib/card-id';
 import {
   CardFormFields,
   CardFormValues,
@@ -46,11 +44,10 @@ interface CardEditDialogProps {
 }
 
 /**
- * Карт засварлах цонх. Формын төлөв, хөрвүүлэлт, хадгалалтыг өөрөө эзэмшинэ.
+ * Карт засварлах цонх. Формын төлөв ба хадгалалтыг өөрөө эзэмшинэ.
  */
 export function CardEditDialog({ card, onClose, onSaved }: CardEditDialogProps) {
   const [values, setValues] = useState<CardFormValues>(EMPTY_CARD_FORM);
-  const [cardIdConverted, setCardIdConverted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Шинэ мөр сонгогдох бүрд формыг түүний утгаар дүүргэнэ.
@@ -69,16 +66,10 @@ export function CardEditDialog({ card, onClose, onSaved }: CardEditDialogProps) 
         card.apartmentNumber != null ? String(card.apartmentNumber) : '',
       type: card.type ?? ''
     });
-    setCardIdConverted(card.cardIdConverted ?? false);
   }, [card]);
 
   const patch = (change: Partial<CardFormValues>) =>
     setValues((prev) => ({ ...prev, ...change }));
-
-  const toggleConversion = () => {
-    setValues((prev) => ({ ...prev, cardId: swapCardIdBytes(prev.cardId) }));
-    setCardIdConverted((prev) => !prev);
-  };
 
   const save = async () => {
     if (!card?.id) return;
@@ -89,7 +80,12 @@ export function CardEditDialog({ card, onClose, onSaved }: CardEditDialogProps) 
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...toClientPayload(values), cardIdConverted })
+          // Хөрвүүлэлтийн төлөв UI-гаас алга болсон — картад хадгалагдсан
+          // тугийг хэвээр буцааж явуулна.
+          body: JSON.stringify({
+            ...toClientPayload(values),
+            cardIdConverted: card.cardIdConverted ?? false
+          })
         }
       );
 
@@ -122,18 +118,7 @@ export function CardEditDialog({ card, onClose, onSaved }: CardEditDialogProps) 
             {card?.name} ({card?.cardId}) картын мэдээллийг засварлах
           </DialogDescription>
         </DialogHeader>
-        <CardFormFields
-          idPrefix='edit'
-          values={values}
-          onChange={patch}
-          cardIdSlot={
-            <SwitchButton
-              value={cardIdConverted}
-              onChange={toggleConversion}
-              label={cardIdConverted ? 'Хөрвүүлсэн' : 'Хөрвүүлээгүй'}
-            />
-          }
-        />
+        <CardFormFields idPrefix='edit' values={values} onChange={patch} />
         <DialogFooter>
           <Button
             type='button'
