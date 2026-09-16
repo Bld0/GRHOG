@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import PageContainer from '@/components/layout/page-container';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -27,6 +28,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
 import { normalizeStorageLevel } from '@/lib/utils';
 import AllBinsMap from '@/features/overview/components/all-bins-map';
+import { InactiveClientsGraph } from '@/features/overview/components/inactive-clients-graph';
 import { number } from 'zod';
 
 export default function OverViewLayout({
@@ -361,20 +363,29 @@ export default function OverViewLayout({
           </Card>
         </div>
         {/* Dashboard chart slots (provided by nested route outlets) */}
-        <div className='flex-1'>
-          {/* Stack vertically on small screens, side-by-side on md+ */}
-          <div className='flex flex-col items-start gap-4 md:flex-row'>
-            <div className='w-full md:w-7/12'>
-              <div>{bar_stats}</div>
-              {/* All bins map - use responsive height classes for mobile */}
-              <div className='mt-4'>
-                <AllBinsMap
-                  height='480px'
-                  className='h-56 sm:h-72 md:h-[480px]'
-                />
-              </div>
-            </div>
-            <div className='w-full md:w-5/12'>{pie_stats}</div>
+        {/* Stack vertically on small screens, two columns on md+. Хоёр багана
+            тус бүр хоёр картаас бүрдэнэ — баруун талын хоосон зай үлдэхгүй. */}
+        {/* Мөр бүр хамгийн өндөр картаараа тэгшилнэ: зүүн/баруун карт хоёр
+            ижил түвшинд эхэлж, ижил түвшинд дуусна. */}
+        <div className='grid flex-1 grid-cols-1 gap-4 md:grid-cols-12'>
+          <div className='md:col-span-7'>{bar_stats}</div>
+          <div className='md:col-span-5'>{pie_stats}</div>
+          {/* All bins map - use responsive height classes for mobile.
+              Энд зураг нь урьдчилсан харагдац: дээр нь тунгалаг холбоос
+              тавьсан тул дарахад савны жагсаалтын газрын зураг таб руу
+              бүтэн хэмжээгээр нээгдэнэ (Leaflet-ийн товчлууруудыг ч дарна). */}
+          <div className='relative md:col-span-7'>
+            <AllBinsMap height='480px' className='h-56 sm:h-72 md:h-[480px]' />
+            <Link
+              href='/dashboard/bins?view=map'
+              aria-label='Бүх савыг газрын зураг дээр бүтэн хэмжээгээр харах'
+              title='Газрын зургийг бүтэн хэмжээгээр харах'
+              className='absolute inset-0 z-[1000] cursor-pointer rounded-lg'
+            />
+          </div>
+          {/* Идэвхгүй хэрэглэгч хороогоор — дүүрэг/хороогоор шүүнэ */}
+          <div className='md:col-span-5'>
+            <InactiveClientsGraph />
           </div>
         </div>
       </div>

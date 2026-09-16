@@ -3,13 +3,12 @@
 import * as React from 'react';
 import { buildApiUrl, API_CONFIG } from '@/config/api';
 import { apiClient } from '@/lib/api-client';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
@@ -108,7 +107,7 @@ export function PieGraph() {
   if (typeof window === 'undefined') return null; // client only
 
   return (
-    <Card className='@container/card'>
+    <Card className='@container/card flex h-full flex-col'>
       <CardHeader>
         <CardTitle>Хэрэглэгчдийн төрөл</CardTitle>
         <CardDescription>
@@ -155,42 +154,42 @@ export function PieGraph() {
         </CardDescription>
       </CardHeader>
 
-      <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
+      {/* Дугуй чарт ба задаргаа зэрэгцэж — өмнө нь дугуй нь өргөн картын
+          голд ганцаараа сууж, доод талд нь хоосон зай үлддэг байв. */}
+      <CardContent className='flex flex-1 flex-col items-center gap-4 px-2 pt-2 sm:flex-row sm:px-6'>
         {loading ? (
           <PieGraphSkeleton />
         ) : data.length === 0 ? (
           <div className='p-4 text-sm text-muted-foreground'>Мэдээлэл олдсонгүй</div>
         ) : (
-          <ChartContainer config={{}} className='mx-auto h-[280px] flex items-center justify-center'>
-            <div className='w-full'>
-              <ResponsiveContainer width='100%' height={280}>
+          <>
+            <ChartContainer config={{}} className='aspect-auto h-full min-h-[200px] w-full sm:flex-1'>
+              <ResponsiveContainer width='100%' height='100%'>
                 <PieChart>
                   <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                  <Pie data={data} dataKey='count' nameKey='type' innerRadius={100} outerRadius={130} label={false}>
+                  <Pie data={data} dataKey='count' nameKey='type' innerRadius='58%' outerRadius='88%' label={false}>
                     {data.map((entry, idx) => (
                       <Cell key={`cell-${idx}`} fill={colors[idx % colors.length]} />
                     ))}
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
+            </ChartContainer>
+
+            <div className='flex w-full flex-col text-sm sm:w-44'>
+              {data.map((d, idx) => (
+                <div key={d.type} className='flex items-center justify-between py-1'>
+                  <div className='flex items-center gap-2'>
+                    <span className='h-3 w-3 rounded-full' style={{ background: colors[idx % colors.length] }} />
+                    <span>{d.type}</span>
+                  </div>
+                  <span className='font-medium' style={{ color: colors[idx % colors.length] }}>{d.count}</span>
+                </div>
+              ))}
             </div>
-          </ChartContainer>
+          </>
         )}
       </CardContent>
-
-      <CardFooter className='flex-col gap-2 text-sm'>
-        <div className='flex flex-col w-full'>
-          {data.map((d, idx) => (
-            <div key={d.type} className='flex justify-between py-1 items-center'>
-              <div className='flex items-center gap-2'>
-                <span className='h-3 w-3 rounded-full' style={{ background: colors[idx % colors.length] }} />
-                <span>{d.type}</span>
-              </div>
-              <span className='font-medium' style={{ color: colors[idx % colors.length] }}>{d.count}</span>
-            </div>
-          ))}
-        </div>
-      </CardFooter>
     </Card>
   );
 }

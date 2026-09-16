@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   IconAlertTriangle,
   IconDownload,
@@ -25,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ActiveFilters } from '@/components/ui/active-filters';
 import { useTableFilters } from '@/components/ui/table-header-filter';
 import { TablePagination } from '@/components/ui/table-pagination';
@@ -35,6 +37,8 @@ import { PaginationParams } from '@/hooks/use-pagination';
 import { useRolePermissions } from '@/hooks/use-role-permissions';
 import { buildFilterSearch } from '@/lib/table-filter-query';
 import { downloadXlsx } from '@/lib/export-xlsx';
+
+import AllBinsMap from '@/features/overview/components/all-bins-map';
 
 import { BinDeleteDialog } from './bin-delete-dialog';
 import { BinsGroupedStats } from './bins-grouped-stats';
@@ -48,6 +52,11 @@ import { BinsGroupedTable } from './bins-grouped-table';
  */
 export function BinsViewGrouped() {
   const { canPerformAction, isKhorooLeader } = useRolePermissions();
+  // Харагдац нь URL-д — дашбоардаас `?view=map`-аар шууд газрын зураг дээр
+  // буух, буцах/дахин ачаалахад сонголт хадгалагдах хоёулаа үүнээс.
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const view = searchParams.get('view') === 'map' ? 'map' : 'list';
   const [currentPage, setCurrentPage] = useState(0);
   // Байршлын бүлэг цөөн (~21) — анхдагчаар нэг хуудсанд бүгд багтана.
   const [itemsPerPage, setItemsPerPage] = useState(50);
@@ -191,6 +200,27 @@ export function BinsViewGrouped() {
           </div>
         </div>
 
+        {/* Жагсаалт / газрын зураг хооронд шилжих таб. Сонголт нь URL-д
+            (?view=map) үлдэнэ — дашбоардын газрын зураг дээр дарахад шууд
+            энэ табаар нээгдэнэ. */}
+        <Tabs
+          value={view}
+          onValueChange={(v) =>
+            router.replace(
+              v === 'map' ? '/dashboard/bins?view=map' : '/dashboard/bins'
+            )
+          }
+        >
+          <TabsList>
+            <TabsTrigger value='list'>Жагсаалт</TabsTrigger>
+            <TabsTrigger value='map'>Газрын зураг</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {view === 'map' ? (
+          <AllBinsMap height='72vh' className='h-[60vh] md:h-[72vh]' />
+        ) : (
+          <>
         <BinsGroupedStats
           groupCount={pagination.totalElements}
           activeBins={activeBins}
@@ -301,6 +331,8 @@ export function BinsViewGrouped() {
             />
           </CardContent>
         </Card>
+          </>
+        )}
       </div>
 
       <BinDeleteDialog
