@@ -196,14 +196,23 @@ export function AddressDetailView({ addressId }: { addressId: string }) {
                   cards.map((card) => (
                     <TableRow key={card.id}>
                       <TableCell>
-                        {/* Нэвтрэлтийн бүтэн түүх картын хуудсан дээр. */}
-                        <Link
-                          href={`/dashboard/card/${card.id}`}
-                          className='inline-flex items-center gap-1 font-medium hover:underline'
-                        >
-                          {card.name || `Карт ${card.id}`}
-                          <IconExternalLink className='h-3.5 w-3.5' />
-                        </Link>
+                        {/* Нэвтрэлтийн бүтэн түүх картын хуудсан дээр.
+                            Тэр хуудас мөрийн id-гаар БИШ картын UID-аар
+                            хайдаг (`/clients/{cardId}/activity`) — id
+                            дамжуулбал "Карт олдсонгүй" гэж гарна. */}
+                        {card.cardId ? (
+                          <Link
+                            href={`/dashboard/card/${card.cardId}`}
+                            className='inline-flex items-center gap-1 font-medium hover:underline'
+                          >
+                            {card.name || `Карт ${card.id}`}
+                            <IconExternalLink className='h-3.5 w-3.5' />
+                          </Link>
+                        ) : (
+                          <span className='font-medium'>
+                            {card.name || `Карт ${card.id}`}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className='font-mono'>
                         {card.cardIdDec || card.cardId || '-'}
