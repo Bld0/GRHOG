@@ -64,7 +64,11 @@ export function CardEditDialog({ card, onClose, onSaved }: CardEditDialogProps) 
       streetBuilding: card.streetBuilding ?? '',
       apartmentNumber:
         card.apartmentNumber != null ? String(card.apartmentNumber) : '',
-      type: card.type ?? ''
+      type: card.type ?? '',
+      // Засварлахад хаягийг талбаруудаас нь дахин тодорхойлно: хуучин
+      // `addressId`-г явуулбал backend түүнийг эх сурвалж болгож, операторын
+      // хийсэн дүүрэг/хорооны засварыг дуугүй хүчингүй болгоно.
+      addressId: null
     });
   }, [card]);
 

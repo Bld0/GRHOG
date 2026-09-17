@@ -8,6 +8,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import {
   ActivityClient,
   ActivityTab,
+  ActivityUnit,
   ClientActivityReport as ActivityReport,
   InactivityBucket,
   ReportFilters,
@@ -28,6 +29,9 @@ export function useClientActivityReport(filters: ReportFilters) {
   const [isLoading, setIsLoading] = useState(true);
 
   const [tab, setTab] = useState<ActivityTab>('inactive');
+  // Карт эсвэл өрх. Жагсаалтууд хоёр горимд ч КАРТААР үлдэнэ — оператор арга
+  // хэмжээг картад авдаг (залгах, хаяг засах), өрхийн мөр хэнд залгахаа хэлдэггүй.
+  const [unit, setUnit] = useState<ActivityUnit>('card');
   const [bucket, setBucket] = useState<InactivityBucket>('all');
   const [usageBucket, setUsageBucket] = useState<UsageBucket>('all');
   const [khorooFilter, setKhorooFilter] = useState<number | null>(null);
@@ -45,7 +49,7 @@ export function useClientActivityReport(filters: ReportFilters) {
     setIsLoading(true);
     try {
       const response = await apiClient.fetchWithAuth(
-        `/api/reports/client-activity?${toQuery(filters)}`
+        `/api/reports/client-activity?${toQuery(filters, { unit })}`
       );
       if (!response.ok) throw new Error('Идэвхийн тайлан татахад алдаа гарлаа');
       setReport(await response.json());
@@ -56,7 +60,7 @@ export function useClientActivityReport(filters: ReportFilters) {
     } finally {
       setIsLoading(false);
     }
-  }, [filters]);
+  }, [filters, unit]);
 
   const fetchClients = useCallback(async () => {
     setListLoading(true);
@@ -158,6 +162,8 @@ export function useClientActivityReport(filters: ReportFilters) {
   return {
     report,
     isLoading,
+    unit,
+    setUnit,
     tab,
     setTab,
     bucket,

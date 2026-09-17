@@ -20,12 +20,19 @@ import {
   EMPTY_CARD_FORM,
   toClientPayload
 } from './card-form-fields';
+import { AddressPicker, AddressOption } from './address-picker';
 
 interface CardCreateDialogProps {
   /** Товч харагдах эсэх — эрхийн шалгалтыг дуудагч хийнэ. */
   canCreate: boolean;
   /** Амжилттай үүсгэсний дараа жагсаалтыг дахин татна. */
   onCreated: () => void;
+  /**
+   * Хаягийн хуудаснаас дуудахад тухайн өрхийг урьдчилж сонгоно — оператор
+   * хаягаа дахин хайх шаардлагагүй.
+   */
+  presetAddress?: AddressOption | null;
+  triggerLabel?: string;
 }
 
 /**
@@ -35,13 +42,45 @@ interface CardCreateDialogProps {
  * нь `CardsView` дотор 4 `useState` ба 60 мөрийн handler болж, 1900 мөрт
  * дэлгэцийн бусад логиктой холилдож байв.
  */
-export function CardCreateDialog({ canCreate, onCreated }: CardCreateDialogProps) {
+export function CardCreateDialog({
+  canCreate,
+  onCreated,
+  presetAddress = null,
+  triggerLabel = 'Карт нэмэх'
+}: CardCreateDialogProps) {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<CardFormValues>(EMPTY_CARD_FORM);
+  const [address, setAddress] = useState<AddressOption | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const patch = (change: Partial<CardFormValues>) =>
     setValues((prev) => ({ ...prev, ...change }));
+
+  /** Хаяг сонгоход картын хаягийн талбарууд түүнээс бөглөгдөнө. */
+  const selectAddress = (selected: AddressOption | null) => {
+    setAddress(selected);
+    patch(
+      selected
+        ? {
+            addressId: selected.id,
+            district: selected.district,
+            khoroo: String(selected.khoroo),
+            streetBuilding: selected.streetBuilding ?? '',
+            apartmentNumber: selected.apartmentNumber ?? ''
+          }
+        : { addressId: null }
+    );
+  };
+
+  // Цонх нээгдэх бүрд урьдчилж сонгосон хаягийг тавина.
+  const openChange = (next: boolean) => {
+    setOpen(next);
+    if (next && presetAddress) selectAddress(presetAddress);
+    if (!next) {
+      setValues(EMPTY_CARD_FORM);
+      setAddress(null);
+    }
+  };
 
   const submit = async () => {
     if (!values.name || !values.cardId) {
@@ -64,6 +103,7 @@ export function CardCreateDialog({ canCreate, onCreated }: CardCreateDialogProps
 
       setOpen(false);
       setValues(EMPTY_CARD_FORM);
+      setAddress(null);
       toast.success('Карт амжилттай үүслээ');
       // Өмнө нь `window.location.reload()` дуудаж бүх хуудсыг сэргээдэг
       // байсан — шүүлтүүр, хуудаслалт, сонголт бүгд алга болно.
@@ -79,31 +119,37 @@ export function CardCreateDialog({ canCreate, onCreated }: CardCreateDialogProps
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={openChange}>
       <DialogTrigger asChild>
         {canCreate && (
           <Button size='sm'>
             <IconPlus className='mr-2 h-4 w-4' />
-            Карт нэмэх
+            {triggerLabel}
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className='sm:max-w-[525px]'>
+      <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-[525px]'>
         <DialogHeader>
           <DialogTitle>Шинэ карт нэмэх</DialogTitle>
         </DialogHeader>
+        {/* Хаяг (өрх) нь бүртгэлийн үндсэн нэгж — эхлээд түүнийг сонгоно.
+            Нэг хаяг дор олон карт байж болно. */}
+        {values.type !== 'Ажилтан' && (
+          <AddressPicker selected={address} onSelect={selectAddress} />
+        )}
         <CardFormFields
           idPrefix='create'
           values={values}
           onChange={patch}
           nameLabel='Нэр *'
           cardIdLabel='Карт ID *'
+          addressLocked={address !== null}
         />
         <DialogFooter>
           <Button
             type='button'
             variant='outline'
-            onClick={() => setOpen(false)}
+            onClick={() => openChange(false)}
             disabled={isSubmitting}
           >
             Цуцлах

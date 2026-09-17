@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import {
@@ -7,7 +8,8 @@ import {
   IconRefresh,
   IconSearch,
   IconUserCheck,
-  IconUserOff
+  IconUserOff,
+  IconMapPin
 } from '@tabler/icons-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +35,7 @@ import {
 import { useRolePermissions } from '@/hooks/use-role-permissions';
 import {
   ActivityTab,
+  ActivityUnit,
   BUCKET_LABEL,
   InactivityBucket,
   ReportFilters,
@@ -60,6 +63,8 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
   const {
     report,
     isLoading,
+    unit,
+    setUnit,
     tab,
     setTab,
     bucket,
@@ -99,6 +104,9 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
     { key: 'never', count: report?.buckets.never ?? 0 }
   ];
 
+  const isHousehold = unit === 'household';
+  const unitWord = isHousehold ? 'өрх' : 'хэрэглэгч';
+
   const usageBuckets: { key: UsageBucket; count: number }[] = [
     { key: 'low', count: report?.usageBuckets?.low ?? 0 },
     { key: 'mid', count: report?.usageBuckets?.mid ?? 0 },
@@ -107,11 +115,37 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
 
   return (
     <div className='space-y-6'>
-      <ReportStatCards report={report} loading={isLoading} />
+      {/* Тоолох нэгж. Өрх идэвхгүй = түүний БҮХ карт ашиглаагүй — 3 карттай
+          айлын нэг нь хог хаяж байхад картаар тоолвол хоёр "идэвхгүй" гарч
+          тоо хөөрөгдөнө. */}
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <Tabs
+          value={unit}
+          onValueChange={(value) => setUnit(value as ActivityUnit)}
+        >
+          <TabsList>
+            <TabsTrigger value='card'>Карт</TabsTrigger>
+            <TabsTrigger value='household'>Өрх</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {report?.cardsWithoutAddress ? (
+          <Link
+            href='/dashboard/card?incomplete=1'
+            className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm'
+          >
+            <IconMapPin className='h-4 w-4' />
+            Хаяг дутуу {report.cardsWithoutAddress} карт — өрхөд холбогдоогүй
+          </Link>
+        ) : null}
+      </div>
+
+      <ReportStatCards report={report} loading={isLoading} unit={unit} />
 
       <KhorooBreakdown
         byKhoroo={report?.byKhoroo ?? []}
         loading={isLoading}
+        unitWord={unitWord}
         tab={tab}
         selectedKhoroo={khorooFilter}
         onSelect={selectKhoroo}
@@ -148,6 +182,11 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
           <div className='flex flex-col gap-1'>
             <CardTitle>
               {isActiveTab ? 'Идэвхтэй хэрэглэгчид' : 'Идэвхгүй хэрэглэгчид'}
+              {isHousehold && (
+                <span className='text-muted-foreground ml-2 text-sm font-normal'>
+                  (жагсаалт карт тус бүрээр)
+                </span>
+              )}
             </CardTitle>
             <CardDescription>
               {isActiveTab ? (
@@ -195,6 +234,12 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
                     </Badge>
                   </Button>
                 ))}
+              </div>
+            ) : isHousehold ? (
+              /* Уншуулалтын тоогоор ангилах нь картын шинж чанар — өрхөд
+                 утгагүй тул backend null буцаадаг, энд ч харуулахгүй. */
+              <div className='text-muted-foreground text-sm'>
+                Уншуулалтын ангилал зөвхөн картын горимд
               </div>
             ) : (
               /* Идэвхтэй табд уншуулалтын тоогоор шүүнэ — тоо нь хүснэгтийн
@@ -333,10 +378,27 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
                       <TableCell>{client.phone || '—'}</TableCell>
                       <TableCell>
                         <div className='text-sm'>
-                          {client.district || '—'}
-                          {client.khoroo != null
-                            ? `, ${client.khoroo}-р хороо`
-                            : ''}
+                          {/* Хаягтай бол өрхийн хуудас руу — тэндээс тэр
+                              хаягийн бусад карт, засвар хийх зам нээгдэнэ. */}
+                          {client.addressId ? (
+                            <Link
+                              href={`/dashboard/address/${client.addressId}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className='hover:underline'
+                            >
+                              {client.district || '—'}
+                              {client.khoroo != null
+                                ? `, ${client.khoroo}-р хороо`
+                                : ''}
+                            </Link>
+                          ) : (
+                            <>
+                              {client.district || '—'}
+                              {client.khoroo != null
+                                ? `, ${client.khoroo}-р хороо`
+                                : ''}
+                            </>
+                          )}
                         </div>
                         <div className='text-muted-foreground text-xs'>
                           {client.streetBuilding || client.address || '—'}
@@ -390,7 +452,7 @@ export function ClientActivityReport({ filters }: { filters: ReportFilters }) {
           {totalClients > PAGE_SIZE && (
             <div className='flex items-center justify-between pt-4'>
               <div className='text-muted-foreground text-sm'>
-                Нийт {totalClients} хэрэглэгч · {page + 1}/{totalPages}-р хуудас
+                Нийт {totalClients} карт · {page + 1}/{totalPages}-р хуудас
               </div>
               <div className='flex gap-2'>
                 <Button

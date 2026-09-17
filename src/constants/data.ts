@@ -32,7 +32,18 @@ export const navItems: NavItem[] = [
     requiresRole: 'VIEWER' // All roles can view bins
   },
   {
-    title: 'Карт',
+    title: 'Хаяг',
+    url: '/dashboard/address',
+    icon: 'home',
+    shortcut: ['a', 'a'],
+    isActive: false,
+    items: [], // No child items
+    requiresRole: 'VIEWER' // Бүх дүр хаягийн жагсаалт харна
+  },
+  {
+    // Мөр бүр нэг КАРТ. Нэг өрх олон карттай байж болох тул "Хаяг" цэсний
+    // тоотой давхцахгүй — нэр нь хүн, тоо нь карт.
+    title: 'Хэрэглэгч',
     url: '/dashboard/card',
     icon: 'card',
     shortcut: ['r', 'r'],
@@ -77,7 +88,9 @@ export const navItems: NavItem[] = [
     requiresRole: 'VIEWER' // Харах эрх бүгдэд, бүртгэх эрх ADMIN+
   },
   {
-    title: 'Системийн хэрэглэгчид',
+    // "Ажилтан" гэсэн ганцаар нь нэрлэвэл картын `ClientType.Ажилтан` төрөлтэй
+    // андуурагдана — энэ нь системд нэвтэрдэг бүртгэл.
+    title: 'Системийн ажилтан',
     url: '/dashboard/users',
     icon: 'users',
     shortcut: ['u', 'u'],
@@ -86,7 +99,7 @@ export const navItems: NavItem[] = [
     requiresRole: 'SUPER_ADMIN' // Only visible to super admin
   },
   {
-    title: 'Хэрэглэгчийн өгөгдөл',
+    title: 'Түүхий өгөгдөл',
     url: '/dashboard/raw-data',
     icon: 'rawData',
     shortcut: ['w', 'w'],

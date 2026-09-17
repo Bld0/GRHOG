@@ -22,6 +22,8 @@ export interface CardFormValues {
   streetBuilding: string;
   apartmentNumber: string;
   type: string;
+  /** Сонгосон өрх. Хоосон бол хаягийн талбаруудаас шинээр үүснэ. */
+  addressId: number | null;
 }
 
 export const EMPTY_CARD_FORM: CardFormValues = {
@@ -34,7 +36,8 @@ export const EMPTY_CARD_FORM: CardFormValues = {
   khoroo: '',
   streetBuilding: '',
   apartmentNumber: '',
-  type: ''
+  type: '',
+  addressId: null
 };
 
 /** УБ-ын дүүргүүд — нэмэх ба засварлах цонх хоёулаа энэ жагсаалтыг дагана. */
@@ -59,6 +62,8 @@ interface CardFormFieldsProps {
   onChange: (patch: Partial<CardFormValues>) => void;
   nameLabel?: string;
   cardIdLabel?: string;
+  /** Хаяг сонгогдсон үед хаягийн талбарууд зөвхөн харах горимд орно. */
+  addressLocked?: boolean;
 }
 
 /**
@@ -71,7 +76,8 @@ export function CardFormFields({
   values,
   onChange,
   nameLabel = 'Нэр',
-  cardIdLabel = 'Карт ID'
+  cardIdLabel = 'Карт ID',
+  addressLocked = false
 }: CardFormFieldsProps) {
   const id = (field: string) => `${idPrefix}-${field}`;
   // Ажилтан нь хороо/байршилд хамаарахгүй — backend эдгээрийг хадгалахдаа
@@ -144,6 +150,7 @@ export function CardFormFields({
         <Select
           value={values.district}
           onValueChange={(value) => onChange({ district: value })}
+          disabled={addressLocked}
         >
           <SelectTrigger className='col-span-3'>
             <SelectValue placeholder='Дүүрэг сонгоно уу' />
@@ -166,6 +173,7 @@ export function CardFormFields({
               type='number'
               value={values.khoroo}
               onChange={(e) => onChange({ khoroo: e.target.value })}
+              disabled={addressLocked}
               placeholder='Хороо'
               className='col-span-3'
             />
@@ -176,6 +184,7 @@ export function CardFormFields({
               id={id('streetBuilding')}
               value={values.streetBuilding}
               onChange={(e) => onChange({ streetBuilding: e.target.value })}
+              disabled={addressLocked}
               placeholder='Гудамж, байр'
               className='col-span-3'
             />
@@ -187,6 +196,7 @@ export function CardFormFields({
               type='number'
               value={values.apartmentNumber}
               onChange={(e) => onChange({ apartmentNumber: e.target.value })}
+              disabled={addressLocked}
               placeholder='Тоот'
               className='col-span-3'
             />
@@ -246,6 +256,9 @@ export function toClientPayload(values: CardFormValues) {
     apartmentNumber: values.apartmentNumber
       ? parseInt(values.apartmentNumber)
       : null,
-    type: values.type || null
+    type: values.type || null,
+    // Сонгосон хаяг байвал backend түүнийг эх сурвалж болгож, дээрх хаягийн
+    // талбаруудыг өөрөө дарж бичнэ.
+    addressId: values.addressId
   };
 }

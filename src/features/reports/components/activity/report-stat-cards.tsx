@@ -7,34 +7,38 @@ import {
   IconUsersGroup
 } from '@tabler/icons-react';
 
-import type { ClientActivityReport } from '../../types';
+import type { ActivityUnit, ClientActivityReport } from '../../types';
 import { ReportStatsGrid } from '../report-stats-grid';
 
 /** Тайлангийн дөрвөн нэгдсэн үзүүлэлт. */
 export function ReportStatCards({
   report,
-  loading
+  loading,
+  unit = 'card'
 }: {
   report: ClientActivityReport | null;
   loading: boolean;
+  /** Тоолох нэгж — гарчиг, тайлбарыг нь дагуулна. */
+  unit?: ActivityUnit;
 }) {
+  const isHousehold = unit === 'household';
   const stats = [
     {
-      title: 'Нийт хэрэглэгч',
+      title: isHousehold ? 'Нийт өрх' : 'Нийт хэрэглэгч',
       value: report?.totalClients ?? 0,
       hint: 'Сонгосон хороонд бүртгэлтэй',
       icon: IconUsersGroup,
       tone: 'text-blue-600 dark:text-blue-400'
     },
     {
-      title: 'Идэвхтэй',
+      title: isHousehold ? 'Идэвхтэй өрх' : 'Идэвхтэй',
       value: report?.activeClients ?? 0,
       hint: `Нийтийн ${report?.activePercent ?? 0}%`,
       icon: IconUserCheck,
       tone: 'text-green-600 dark:text-green-400'
     },
     {
-      title: 'Идэвхгүй',
+      title: isHousehold ? 'Идэвхгүй өрх' : 'Идэвхгүй',
       value: report?.inactiveClients ?? 0,
       hint: `Нийтийн ${report?.inactivePercent ?? 0}%`,
       icon: IconUserOff,
@@ -43,7 +47,7 @@ export function ReportStatCards({
     {
       title: 'Хэзээ ч ашиглаагүй',
       value: report?.buckets.never ?? 0,
-      hint: 'Картаа огт эхлүүлээгүй',
+      hint: isHousehold ? 'Нэг ч карт нь уншуулаагүй' : 'Картаа огт эхлүүлээгүй',
       icon: IconAlertTriangle,
       tone: 'text-red-600 dark:text-red-400'
     }

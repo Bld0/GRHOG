@@ -31,7 +31,9 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from '@/components/ui/chart';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LeaderAreaBadge } from '@/components/layout/leader-area-badge';
+import { useAddressStats } from '@/features/address/api/use-address-stats';
 import { useRolePermissions } from '@/hooks/use-role-permissions';
 import { apiClient } from '@/lib/api-client';
 import { buildApiUrl, API_CONFIG } from '@/config/api';
@@ -40,7 +42,7 @@ import type {
   KhorooActivityRow
 } from '@/features/reports/types';
 
-export const description = 'Идэвхгүй хэрэглэгч хороогоор';
+export const description = 'Идэвхгүй хэрэглэгч / өрх хороогоор';
 
 const chartConfig = {
   inactive: {
@@ -51,8 +53,19 @@ const chartConfig = {
 
 const ALL = '__all';
 
+/**
+ * Тоолох нэгж.
+ *
+ * `card` — карт тус бүр. `household` — өрх: түүний БҮХ карт уншуулаагүй бол л
+ * идэвхгүй. 3 карттай айлын нэг нь хог хаяж байвал картаар тоолоход хоёр
+ * "идэвхгүй" гарч тоо хөөрөгдөнө — өрхөөр тоолох нь хог цуглуулалтад
+ * ач холбогдолтой тоо.
+ */
+type Unit = 'card' | 'household';
+
 export function InactiveClientsGraph() {
   const { isKhorooLeader } = useRolePermissions();
+  const [unit, setUnit] = React.useState<Unit>('card');
   const [districts, setDistricts] = React.useState<string[]>([]);
   const [district, setDistrict] = React.useState<string>('');
   const [khoroo, setKhoroo] = React.useState<string>('');
@@ -87,6 +100,7 @@ export function InactiveClientsGraph() {
   // Дүүргийн шүүлтүүрийг сервер рүү дамжуулна (хорооны шүүлт нь доорх мөрүүд
   // дээр орон нутагт хийгддэг — тэр нь нэмэлт таталт шаардахгүй).
   React.useEffect(() => {
+    if (unit !== 'card') return;
     let mounted = true;
     setLoading(true);
     setError(null);
@@ -112,12 +126,30 @@ export function InactiveClientsGraph() {
     return () => {
       mounted = false;
     };
-  }, [district]);
+  }, [district, unit]);
 
-  const rows: KhorooActivityRow[] = React.useMemo(
-    () => report?.byKhoroo ?? [],
-    [report]
-  );
+  const {
+    stats,
+    loading: householdLoading,
+    error: householdError
+  } = useAddressStats(district, unit === 'household');
+
+  // Хоёр эх сурвалжийг чарт нэг л хэлбэрээр уншина.
+  const rows: KhorooActivityRow[] = React.useMemo(() => {
+    if (unit === 'household') {
+      return stats.byKhoroo.map((row) => ({
+        district: row.district,
+        khoroo: row.khoroo,
+        total: row.total,
+        inactive: row.inactive,
+        active: row.total - row.inactive,
+        inactivePercent: row.total
+          ? Math.round((row.inactive / row.total) * 100)
+          : 0
+      })) as KhorooActivityRow[];
+    }
+    return report?.byKhoroo ?? [];
+  }, [unit, stats, report]);
 
   const khoroos = React.useMemo(
     () =>
@@ -143,17 +175,29 @@ export function InactiveClientsGraph() {
   );
 
   const totalInactive = data.reduce((sum, r) => sum + r.inactive, 0);
+  const isLoading = unit === 'household' ? householdLoading : loading;
+  const activeError = unit === 'household' ? householdError : error;
 
   return (
     <Card className='@container/card flex h-full flex-col'>
       <CardHeader className='flex flex-col items-stretch space-y-0 border-b !p-0 sm:flex-row'>
         <div className='flex flex-1 flex-col justify-center gap-1 px-6 py-3'>
-          <CardTitle>Идэвхгүй хэрэглэгч</CardTitle>
+          <CardTitle>
+            {unit === 'household' ? 'Идэвхгүй өрх' : 'Идэвхгүй хэрэглэгч'}
+          </CardTitle>
           <CardDescription>
-            Сүүлийн 30 хоногт карт уншуулаагүй — нийт {totalInactive}
+            {unit === 'household'
+              ? `Бүх карт нь 30 хоног уншуулаагүй — нийт ${totalInactive}`
+              : `Сүүлийн 30 хоногт карт уншуулаагүй — нийт ${totalInactive}`}
           </CardDescription>
         </div>
         <div className='flex items-center gap-2 px-4 py-3'>
+          <Tabs value={unit} onValueChange={(value) => setUnit(value as Unit)}>
+            <TabsList>
+              <TabsTrigger value='card'>Карт</TabsTrigger>
+              <TabsTrigger value='household'>Өрх</TabsTrigger>
+            </TabsList>
+          </Tabs>
           {isKhorooLeader ? (
             <LeaderAreaBadge />
           ) : (
@@ -199,10 +243,10 @@ export function InactiveClientsGraph() {
         </div>
       </CardHeader>
       <CardContent className='flex-1 px-2 pt-4 sm:px-6 sm:pt-6'>
-        {loading ? (
+        {isLoading ? (
           <div className='bg-muted h-[300px] w-full animate-pulse rounded' />
-        ) : error ? (
-          <div className='text-destructive p-4 text-sm'>Алдаа: {error}</div>
+        ) : activeError ? (
+          <div className='text-destructive p-4 text-sm'>Алдаа: {activeError}</div>
         ) : data.length === 0 ? (
           <div className='text-muted-foreground p-4 text-sm'>
             Мэдээлэл олдсонгүй

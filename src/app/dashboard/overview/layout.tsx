@@ -29,6 +29,10 @@ import { useEffect, useState } from 'react';
 import { normalizeStorageLevel } from '@/lib/utils';
 import AllBinsMap from '@/features/overview/components/all-bins-map';
 import { InactiveClientsGraph } from '@/features/overview/components/inactive-clients-graph';
+import {
+  AddressCardDistributionGraph,
+  MissingAddressGraph
+} from '@/features/overview/components/address-quality-graphs';
 import { number } from 'zod';
 
 export default function OverViewLayout({
@@ -383,9 +387,17 @@ export default function OverViewLayout({
               className='absolute inset-0 z-[1000] cursor-pointer rounded-lg'
             />
           </div>
-          {/* Идэвхгүй хэрэглэгч хороогоор — дүүрэг/хороогоор шүүнэ */}
+          {/* Идэвхгүй хэрэглэгч/өрх хороогоор — дүүрэг/хороогоор шүүнэ */}
           <div className='md:col-span-5'>
             <InactiveClientsGraph />
+          </div>
+          {/* Хаягийн өгөгдлийн чанар: өрхөд ноогдох картын тархалт ба хаяг
+              дутуу үлдсэн картууд. Хоёулаа өгөгдөл цэгцрэх тусам өөрчлөгдөнө. */}
+          <div className='md:col-span-6'>
+            <AddressCardDistributionGraph />
+          </div>
+          <div className='md:col-span-6'>
+            <MissingAddressGraph />
           </div>
         </div>
       </div>

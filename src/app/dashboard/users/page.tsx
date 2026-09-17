@@ -158,10 +158,10 @@ export default function UsersPage() {
         <div className='flex items-center justify-between'>
           <div>
             <h1 className='text-3xl font-bold tracking-tight'>
-              Системийн хэрэглэгчид
+              Системийн ажилтан
             </h1>
             <p className='text-muted-foreground'>
-              Системийн хэрэглэгчдийн удирдлага
+              Системд нэвтэрдэг ажилтны бүртгэл
             </p>
           </div>
           {canPerformAction('canCreateUsers') && (

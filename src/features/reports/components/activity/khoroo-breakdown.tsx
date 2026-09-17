@@ -45,6 +45,8 @@ function ActivityBar({ activePercent }: { activePercent: number }) {
 interface KhorooBreakdownProps {
   byKhoroo: KhorooActivityRow[];
   loading: boolean;
+  /** "хэрэглэгч" эсвэл "өрх" — тоолох нэгжийн нэр. */
+  unitWord?: string;
   tab: ActivityTab;
   selectedKhoroo: number | null;
   onSelect: (target: ActivityTab, khoroo: number | null) => void;
@@ -54,6 +56,7 @@ interface KhorooBreakdownProps {
 export function KhorooBreakdown({
   byKhoroo,
   loading,
+  unitWord = 'хэрэглэгч',
   tab,
   selectedKhoroo,
   onSelect
@@ -63,8 +66,8 @@ export function KhorooBreakdown({
       <CardHeader>
         <CardTitle>Хороогоор</CardTitle>
         <CardDescription>
-          Идэвхтэй/идэвхгүйн тоо дээр дарж тухайн хорооны хэрэглэгчдийг доор
-          харна
+          Идэвхтэй/идэвхгүйн тоо дээр дарж тухайн хорооны жагсаалтыг доор харна.
+          Мөрийн тоо {unitWord} тус бүрээр.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -76,7 +79,7 @@ export function KhorooBreakdown({
           </div>
         ) : !byKhoroo.length ? (
           <div className='text-muted-foreground py-8 text-center text-sm'>
-            Сонгосон нөхцөлд хэрэглэгч олдсонгүй.
+            Сонгосон нөхцөлд {unitWord} олдсонгүй.
           </div>
         ) : (
           <div className='overflow-x-auto'>

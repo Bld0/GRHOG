@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   IconAlertTriangle,
   IconDownload,
@@ -47,13 +48,17 @@ import { CardRow, CardTable } from './card-table';
  */
 export function CardsView() {
   const { canPerformAction, isKhorooLeader } = useRolePermissions();
+  // Тайлангийн "Хаяг дутуу N карт" холбоос энэ хуудсыг шүүлтүүртэй нь нээнэ.
+  const searchParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingCard, setEditingCard] = useState<CardRow | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   // Дүүрэг, хороо эсвэл байршил нь хоосон картууд.
-  const [incompleteOnly, setIncompleteOnly] = useState(false);
+  const [incompleteOnly, setIncompleteOnly] = useState(
+    searchParams.get('incomplete') === '1'
+  );
 
   const {
     activeFilters,
@@ -168,7 +173,7 @@ export function CardsView() {
     <PageContainer>
       <div className='flex h-full flex-1 flex-col space-y-5'>
         <div className='flex items-center justify-between pr-6'>
-          <h1 className='text-3xl font-bold tracking-tight'>Картын жагсаалт</h1>
+          <h1 className='text-3xl font-bold tracking-tight'>Хэрэглэгч</h1>
           <div className='flex items-center gap-2'>
             {selectedIds.size > 0 && canPerformAction('canDeleteClients') && (
               <Button
@@ -293,7 +298,7 @@ function CardsViewSkeleton() {
   return (
     <PageContainer>
       <div className='flex flex-1 flex-col space-y-6'>
-        <h1 className='text-3xl font-bold tracking-tight'>Картын жагсаалт</h1>
+        <h1 className='text-3xl font-bold tracking-tight'>Хэрэглэгч</h1>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>

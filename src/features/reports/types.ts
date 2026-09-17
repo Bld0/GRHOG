@@ -35,7 +35,12 @@ export interface KhorooActivityRow {
   inactivePercent: number;
 }
 
+/** Тоолох нэгж: карт тус бүр эсвэл өрх (хаяг). */
+export type ActivityUnit = 'card' | 'household';
+
 export interface ClientActivityReport {
+  /** Аль нэгжээр тоолсон нь. */
+  unit?: ActivityUnit;
   startDate: string;
   endDate: string;
   totalClients: number;
@@ -50,12 +55,17 @@ export interface ClientActivityReport {
     days30: number;
     never: number;
   };
-  /** Идэвхтэй хэрэглэгчийг уншуулалтын тоогоор нь ангилсан тоо. */
+  /**
+   * Идэвхтэй хэрэглэгчийг уншуулалтын тоогоор нь ангилсан тоо.
+   * Өрхийн горимд null — уншуулалтын тоо нь картын шинж чанар.
+   */
   usageBuckets: {
     low: number;
     mid: number;
     high: number;
-  };
+  } | null;
+  /** Өрхөд холбогдоогүй картын тоо — цэвэрлэх ажлын хэмжээ. */
+  cardsWithoutAddress?: number;
 }
 
 /**
@@ -72,6 +82,8 @@ export interface ActivityClient {
   streetBuilding: string | null;
   apartmentNumber: string | null;
   type: string | null;
+  /** Харьяалагдах өрх — хаяггүй карт бол null. */
+  addressId: number | null;
   cardId: string | null;
   lastUsedAt: string | null;
   totalAccess: number;
