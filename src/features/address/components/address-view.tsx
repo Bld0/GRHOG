@@ -36,6 +36,7 @@ import { apiClient } from '@/lib/api-client';
 import { AddressOption, DISTRICTS } from '@/features/address/types';
 
 import { AddressFormDialog } from './address-form-dialog';
+import { ResidentTabs } from './resident-tabs';
 
 const ALL = '__all';
 
@@ -122,8 +123,11 @@ export function AddressView() {
   return (
     <PageContainer>
       <div className='flex h-full flex-1 flex-col space-y-5'>
-        <div className='flex items-center justify-between pr-6'>
-          <h1 className='text-3xl font-bold tracking-tight'>Хаяг</h1>
+        <div className='flex flex-wrap items-center justify-between gap-3 pr-6'>
+          <div className='flex items-center gap-4'>
+            <h1 className='text-3xl font-bold tracking-tight'>Хэрэглэгч</h1>
+            <ResidentTabs active='address' />
+          </div>
           {canPerformAction('canCreateClients') && (
             <Button
               size='sm'

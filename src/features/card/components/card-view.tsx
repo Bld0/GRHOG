@@ -33,6 +33,8 @@ import { PaginationParams } from '@/hooks/use-pagination';
 import { buildFilterSearch } from '@/lib/table-filter-query';
 import { downloadXlsx } from '@/lib/export-xlsx';
 
+import { ResidentTabs } from '@/features/address/components/resident-tabs';
+
 import { CardCreateDialog } from './card-create-dialog';
 import { CardDeleteDialog } from './card-delete-dialog';
 import { CardEditDialog } from './card-edit-dialog';
@@ -172,8 +174,11 @@ export function CardsView() {
   return (
     <PageContainer>
       <div className='flex h-full flex-1 flex-col space-y-5'>
-        <div className='flex items-center justify-between pr-6'>
-          <h1 className='text-3xl font-bold tracking-tight'>Хэрэглэгч</h1>
+        <div className='flex flex-wrap items-center justify-between gap-3 pr-6'>
+          <div className='flex items-center gap-4'>
+            <h1 className='text-3xl font-bold tracking-tight'>Хэрэглэгч</h1>
+            <ResidentTabs active='card' />
+          </div>
           <div className='flex items-center gap-2'>
             {selectedIds.size > 0 && canPerformAction('canDeleteClients') && (
               <Button

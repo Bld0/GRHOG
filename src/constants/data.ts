@@ -32,24 +32,15 @@ export const navItems: NavItem[] = [
     requiresRole: 'VIEWER' // All roles can view bins
   },
   {
-    title: 'Хаяг',
+    // Нэг цэс, дотроо Хаяг / Карт гэсэн хоёр таб. Хаяг нь үндсэн нэгж тул
+    // анхдагчаар түүн рүү ордог — мөр бүр нэг өрх, дарвал түүний картууд.
+    title: 'Хэрэглэгч',
     url: '/dashboard/address',
     icon: 'home',
-    shortcut: ['a', 'a'],
-    isActive: false,
-    items: [], // No child items
-    requiresRole: 'VIEWER' // Бүх дүр хаягийн жагсаалт харна
-  },
-  {
-    // Мөр бүр нэг КАРТ. Нэг өрх олон карттай байж болох тул "Хаяг" цэсний
-    // тоотой давхцахгүй — нэр нь хүн, тоо нь карт.
-    title: 'Хэрэглэгч',
-    url: '/dashboard/card',
-    icon: 'card',
     shortcut: ['r', 'r'],
     isActive: false,
     items: [], // No child items
-    requiresRole: 'VIEWER' // All roles can view cards
+    requiresRole: 'VIEWER' // Бүх дүр харна
   },
   {
     title: 'Ашиглалтын түүх',
