@@ -34,6 +34,18 @@ import { CardDeleteDialog } from '@/features/card/components/card-delete-dialog'
 
 import { AddressFormDialog } from './address-form-dialog';
 
+const USAGE_PAGE_SIZE = 20;
+
+interface AddressUsage {
+  id: number;
+  createdAt: string;
+  cardId: string | null;
+  clientName: string | null;
+  binId: string | null;
+  binName: string | null;
+  storageLevelPercent: number | null;
+}
+
 interface AddressCard {
   id: number;
   name: string | null;
@@ -65,6 +77,11 @@ export function AddressDetailView({ addressId }: { addressId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [usage, setUsage] = useState<AddressUsage[]>([]);
+  const [usagePage, setUsagePage] = useState(0);
+  const [usageTotal, setUsageTotal] = useState(0);
+  const [usageLoading, setUsageLoading] = useState(true);
+
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<EditableCard | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -90,6 +107,27 @@ export function AddressDetailView({ addressId }: { addressId: string }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  /** Өрхийн бүх картын уншилт нэг урсгалд, сүүлийнх нь эхэнд. */
+  const loadUsage = useCallback(async () => {
+    setUsageLoading(true);
+    try {
+      const response = await apiClient.fetchWithAuth(
+        `/api/addresses/${addressId}/usage?page=${usagePage}&size=${USAGE_PAGE_SIZE}`
+      );
+      const json = response.ok ? await response.json() : null;
+      setUsage(Array.isArray(json?.content) ? json.content : []);
+      setUsageTotal(json?.totalElements ?? 0);
+    } catch {
+      setUsage([]);
+    } finally {
+      setUsageLoading(false);
+    }
+  }, [addressId, usagePage]);
+
+  useEffect(() => {
+    loadUsage();
+  }, [loadUsage]);
 
   // Картын жагсаалтын хуудастай ижил цонхнуудыг дахин ашиглана — засварын
   // дүрэм (хаягийн талбар засагдвал хаяг нь дахин тодорхойлогдох) нэг л газарт.
@@ -257,6 +295,91 @@ export function AddressDetailView({ addressId }: { addressId: string }) {
         </Card>
       </div>
 
+      {/* Хэрэглээний түүх: карт тус бүрийн түүх картын хуудсан дээр бий,
+          энд өрхийн нэгдсэн зураг — хэн, хэзээ, аль сав руу хаясан нь. */}
+      <Card className='mt-4'>
+        <CardHeader>
+          <CardTitle>Хэрэглээний түүх</CardTitle>
+          <CardDescription>
+            {usageTotal} уншилт — энэ хаягийн бүх карт
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Огноо</TableHead>
+                <TableHead>Хэн</TableHead>
+                <TableHead>Карт</TableHead>
+                <TableHead>Сав</TableHead>
+                <TableHead className='text-right'>Дүүргэлт</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {usageLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className='text-muted-foreground'>
+                    Уншиж байна...
+                  </TableCell>
+                </TableRow>
+              ) : usage.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className='text-muted-foreground'>
+                    Уншилт бүртгэгдээгүй байна.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                usage.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell className='whitespace-nowrap'>
+                      {new Date(row.createdAt).toLocaleString('mn-MN')}
+                    </TableCell>
+                    <TableCell>{row.clientName || '—'}</TableCell>
+                    <TableCell className='font-mono'>
+                      {row.cardId || '—'}
+                    </TableCell>
+                    <TableCell>{row.binName || row.binId || '—'}</TableCell>
+                    <TableCell className='text-right tabular-nums'>
+                      {row.storageLevelPercent != null
+                        ? `${Math.round(row.storageLevelPercent)}%`
+                        : '—'}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+
+          {usageTotal > USAGE_PAGE_SIZE && (
+            <div className='flex items-center justify-between pt-4'>
+              <div className='text-muted-foreground text-sm'>
+                {usagePage + 1}/{Math.ceil(usageTotal / USAGE_PAGE_SIZE)}-р хуудас
+              </div>
+              <div className='flex gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  disabled={usagePage === 0}
+                  onClick={() => setUsagePage((p) => Math.max(0, p - 1))}
+                >
+                  Өмнөх
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  disabled={
+                    (usagePage + 1) * USAGE_PAGE_SIZE >= usageTotal
+                  }
+                  onClick={() => setUsagePage((p) => p + 1)}
+                >
+                  Дараах
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <AddressFormDialog
         open={formOpen}
         onOpenChange={setFormOpen}
@@ -270,6 +393,7 @@ export function AddressDetailView({ addressId }: { addressId: string }) {
         onSaved={() => {
           setEditing(null);
           load();
+          loadUsage();
         }}
       />
 
