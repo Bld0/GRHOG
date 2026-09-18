@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { IconArrowLeft, IconExternalLink } from '@tabler/icons-react';
 
 import PageContainer from '@/components/layout/page-container';
@@ -32,6 +33,7 @@ import {
 } from '@/features/card/components/card-edit-dialog';
 import { CardDeleteDialog } from '@/features/card/components/card-delete-dialog';
 
+import { AddressDeleteDialog } from './address-delete-dialog';
 import { AddressFormDialog } from './address-form-dialog';
 
 const USAGE_PAGE_SIZE = 20;
@@ -71,6 +73,7 @@ interface AddressCard {
  * шилжинэ — нэвтрэлтийн бүтэн түүх тэнд аль хэдийн бий, түүнийг энд давтахгүй.
  */
 export function AddressDetailView({ addressId }: { addressId: string }) {
+  const router = useRouter();
   const { canPerformAction } = useRolePermissions();
   const [address, setAddress] = useState<AddressOption | null>(null);
   const [cards, setCards] = useState<AddressCard[]>([]);
@@ -85,6 +88,7 @@ export function AddressDetailView({ addressId }: { addressId: string }) {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<EditableCard | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -193,6 +197,22 @@ export function AddressDetailView({ addressId }: { addressId: string }) {
                 onCreated={load}
               />
             )}
+            {canPerformAction('canDeleteClients') && address && (
+              <Button
+                variant='outline'
+                size='sm'
+                className='text-destructive'
+                disabled={cards.length > 0 || loading}
+                title={
+                  cards.length > 0
+                    ? 'Эхлээд энэ хаягийн картуудыг устгах эсвэл өөр хаяг руу шилжүүлнэ үү'
+                    : undefined
+                }
+                onClick={() => setConfirmDelete(true)}
+              >
+                Хаяг устгах
+              </Button>
+            )}
           </div>
         </div>
 
@@ -200,8 +220,8 @@ export function AddressDetailView({ addressId }: { addressId: string }) {
           <CardHeader>
             <CardTitle>Бүртгэлтэй карт</CardTitle>
             <CardDescription>
-              {cards.length} карт • {usedCards} нь уншуулсан • нийт {totalAccess}{' '}
-              нэвтрэлт
+              {cards.length} карт • {usedCards} нь уншуулсан • нийт{' '}
+              {totalAccess} нэвтрэлт
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -262,7 +282,9 @@ export function AddressDetailView({ addressId }: { addressId: string }) {
                       </TableCell>
                       <TableCell>
                         {card.cardUsedAt
-                          ? new Date(card.cardUsedAt).toLocaleDateString('mn-MN')
+                          ? new Date(card.cardUsedAt).toLocaleDateString(
+                              'mn-MN'
+                            )
                           : 'Хэзээ ч'}
                       </TableCell>
                       <TableCell className='text-right whitespace-nowrap'>
@@ -353,7 +375,8 @@ export function AddressDetailView({ addressId }: { addressId: string }) {
           {usageTotal > USAGE_PAGE_SIZE && (
             <div className='flex items-center justify-between pt-4'>
               <div className='text-muted-foreground text-sm'>
-                {usagePage + 1}/{Math.ceil(usageTotal / USAGE_PAGE_SIZE)}-р хуудас
+                {usagePage + 1}/{Math.ceil(usageTotal / USAGE_PAGE_SIZE)}-р
+                хуудас
               </div>
               <div className='flex gap-2'>
                 <Button
@@ -367,9 +390,7 @@ export function AddressDetailView({ addressId }: { addressId: string }) {
                 <Button
                   variant='outline'
                   size='sm'
-                  disabled={
-                    (usagePage + 1) * USAGE_PAGE_SIZE >= usageTotal
-                  }
+                  disabled={(usagePage + 1) * USAGE_PAGE_SIZE >= usageTotal}
                   onClick={() => setUsagePage((p) => p + 1)}
                 >
                   Дараах
@@ -395,6 +416,12 @@ export function AddressDetailView({ addressId }: { addressId: string }) {
           load();
           loadUsage();
         }}
+      />
+
+      <AddressDeleteDialog
+        address={confirmDelete ? address : null}
+        onClose={() => setConfirmDelete(false)}
+        onDeleted={() => router.push('/dashboard/address')}
       />
 
       <CardDeleteDialog

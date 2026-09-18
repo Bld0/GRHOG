@@ -35,6 +35,7 @@ import { useRolePermissions } from '@/hooks/use-role-permissions';
 import { apiClient } from '@/lib/api-client';
 import { AddressOption, DISTRICTS } from '@/features/address/types';
 
+import { AddressDeleteDialog } from './address-delete-dialog';
 import { AddressFormDialog } from './address-form-dialog';
 import { ResidentTabs } from './resident-tabs';
 
@@ -63,6 +64,7 @@ export function AddressView() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AddressOption | null>(null);
+  const [deleting, setDeleting] = useState<AddressOption | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -234,7 +236,9 @@ export function AddressView() {
                     <TableRow
                       key={row.id}
                       className='cursor-pointer'
-                      onClick={() => router.push(`/dashboard/address/${row.id}`)}
+                      onClick={() =>
+                        router.push(`/dashboard/address/${row.id}`)
+                      }
                     >
                       <TableCell>{row.district}</TableCell>
                       <TableCell>{row.khoroo}</TableCell>
@@ -262,6 +266,27 @@ export function AddressView() {
                             Засах
                           </Button>
                         )}
+                        {/* Карттай хаяг устахгүй (backend 406 буцаана) —
+                            товчийг нь хааж, шалтгааныг `title`-д бичнэ. */}
+                        {canPerformAction('canDeleteClients') && (
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            className='text-destructive'
+                            disabled={row.cardCount > 0}
+                            title={
+                              row.cardCount > 0
+                                ? 'Эхлээд энэ хаягийн картуудыг устгах эсвэл өөр хаяг руу шилжүүлнэ үү'
+                                : undefined
+                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleting(row);
+                            }}
+                          >
+                            Устгах
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
@@ -287,6 +312,11 @@ export function AddressView() {
         onSaved={load}
       />
 
+      <AddressDeleteDialog
+        address={deleting}
+        onClose={() => setDeleting(null)}
+        onDeleted={load}
+      />
     </PageContainer>
   );
 }
