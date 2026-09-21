@@ -42,7 +42,7 @@ import { useBinUsagesByLocation } from '@/hooks/use-api-data';
 import { PaginationParams } from '@/hooks/use-pagination';
 
 const formatDate = (value: string | null) =>
-  value ? new Date(value).toLocaleString('mn-MN') : '-';
+  value ? new Date(value).toLocaleString('mn-MN', { hour12: false }) : '-';
 
 /**
  * Ашиглалт хороо + байршлаар бүлэглэсэн таб.

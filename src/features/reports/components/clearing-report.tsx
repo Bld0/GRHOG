@@ -137,7 +137,7 @@ export function ClearingReport({ filters }: { filters: ReportFilters }) {
 
   const totalPages = Math.max(1, Math.ceil(totalDetails / PAGE_SIZE));
   const formatDateTime = (value: string | null | undefined) =>
-    value ? new Date(value).toLocaleString('mn-MN') : '—';
+    value ? new Date(value).toLocaleString('mn-MN', { hour12: false }) : '—';
   const formatPercent = (value: number | null | undefined) =>
     value == null || value < 0 ? '—' : `${value.toFixed(1)}%`;
 

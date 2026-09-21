@@ -178,7 +178,9 @@ export function BinsTable({
                 </TableCell>
                 <TableCell>
                   {row.clearedAt
-                    ? new Date(row.clearedAt).toLocaleString('mn-MN')
+                    ? new Date(row.clearedAt).toLocaleString('mn-MN', {
+                        hour12: false
+                      })
                     : '-'}
                 </TableCell>
                 <ProgressCell value={row.storageLevelBeforeClear} />

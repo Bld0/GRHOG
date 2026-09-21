@@ -43,7 +43,11 @@ import {
 } from '../types';
 
 /** Тоолж харуулах эрэмбийн сонголт — бүгд клиент талд, backend sortBy авдаггүй. */
-type SortOption = 'default' | 'failurePercent' | 'totalMessages' | 'lastSensorOkAt';
+type SortOption =
+  | 'default'
+  | 'failurePercent'
+  | 'totalMessages'
+  | 'lastSensorOkAt';
 
 function StatusBadge({ status }: { status: SensorHealthRow['status'] }) {
   return (
@@ -101,8 +105,12 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
       case 'lastSensorOkAt':
         // Хамгийн удаан ажилладаагүй нь эхэнд — null (хэзээ ч ажиллаагүй) хамгийн түрүүнд.
         return copy.sort((a, b) => {
-          const aTime = a.lastSensorOkAt ? new Date(a.lastSensorOkAt).getTime() : -Infinity;
-          const bTime = b.lastSensorOkAt ? new Date(b.lastSensorOkAt).getTime() : -Infinity;
+          const aTime = a.lastSensorOkAt
+            ? new Date(a.lastSensorOkAt).getTime()
+            : -Infinity;
+          const bTime = b.lastSensorOkAt
+            ? new Date(b.lastSensorOkAt).getTime()
+            : -Infinity;
           return aTime - bTime;
         });
       case 'failurePercent':
@@ -154,7 +162,7 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
 
   // 24 цагийн формат — mn-MN locale биш toLocaleString() бол AM/PM гарна.
   const formatDateTime = (value: string | null) =>
-    value ? new Date(value).toLocaleString('mn-MN') : '—';
+    value ? new Date(value).toLocaleString('mn-MN', { hour12: false }) : '—';
 
   return (
     <div className='space-y-6'>
@@ -202,8 +210,8 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
               <span className='font-medium text-red-600 dark:text-red-400'>
                 Сохор
               </span>{' '}
-              савыг хоослосон эсэхийг систем мэдэхгүй тул хоослолтын тайланд
-              огт харагдахгүй. Мэдрэгчийг нь засах шаардлагатай.
+              савыг хоослосон эсэхийг систем мэдэхгүй тул хоослолтын тайланд огт
+              харагдахгүй. Мэдрэгчийг нь засах шаардлагатай.
             </p>
             <p>
               <span className='font-medium text-amber-600 dark:text-amber-400'>

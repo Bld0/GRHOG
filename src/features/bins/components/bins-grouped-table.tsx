@@ -66,7 +66,7 @@ export function BinsGroupedTable({
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleString('mn-MN');
+    return new Date(dateString).toLocaleString('mn-MN', { hour12: false });
   };
 
   return (
@@ -232,14 +232,10 @@ export function BinsGroupedTable({
                             router.push(`/dashboard/bins/${bin.id}`)
                           }
                         >
-                          <TableCell
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <TableCell onClick={(e) => e.stopPropagation()}>
                             <Checkbox
                               checked={selectedBins.has(bin.id)}
-                              onCheckedChange={() =>
-                                onToggleSelectBin(bin.id)
-                              }
+                              onCheckedChange={() => onToggleSelectBin(bin.id)}
                             />
                           </TableCell>
                           <TableCell></TableCell>
@@ -271,9 +267,7 @@ export function BinsGroupedTable({
                                 : 'Идэвхгүй'}
                             </Badge>
                           </TableCell>
-                          <TableCell className='text-center'>
-                            -
-                          </TableCell>
+                          <TableCell className='text-center'>-</TableCell>
                           <TableCell>
                             <div className='flex items-center justify-center space-x-2'>
                               <Progress
@@ -281,10 +275,7 @@ export function BinsGroupedTable({
                                 className='h-2 w-16'
                               />
                               <span className='text-sm font-medium'>
-                                {(bin.storageLevelPercent || 0).toFixed(
-                                  0
-                                )}
-                                %
+                                {(bin.storageLevelPercent || 0).toFixed(0)}%
                               </span>
                               <span className='text-gray-400'>/</span>
                               <span className='text-sm'>
@@ -295,10 +286,7 @@ export function BinsGroupedTable({
                           <TableCell>
                             <div className='flex items-center justify-center'>
                               <span className='text-sm font-medium'>
-                                {(bin.batteryLevelPercent || 0).toFixed(
-                                  0
-                                )}
-                                %
+                                {(bin.batteryLevelPercent || 0).toFixed(0)}%
                               </span>
                             </div>
                           </TableCell>

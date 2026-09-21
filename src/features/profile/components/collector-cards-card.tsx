@@ -322,7 +322,7 @@ export function CollectorCardsCard() {
   };
 
   const formatDate = (value: string | null) =>
-    value ? new Date(value).toLocaleString('mn-MN') : '-';
+    value ? new Date(value).toLocaleString('mn-MN', { hour12: false }) : '-';
 
   return (
     <Card>

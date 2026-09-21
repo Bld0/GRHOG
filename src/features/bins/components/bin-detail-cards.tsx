@@ -26,7 +26,8 @@ const LeafletMap = dynamic(() => import('@/components/leaflet-map'), {
   )
 });
 
-const localDateTime = (date: Date) => date.toLocaleString('mn-MN');
+const localDateTime = (date: Date) =>
+  date.toLocaleString('mn-MN', { hour12: false });
 
 /** Дүүргэлт, батерей, ашиглалтын гурван нэгдсэн үзүүлэлт. */
 export function BinStatusCards({ bin }: { bin: BinDetail }) {
@@ -109,7 +110,9 @@ export function BinTechnicalDetails({ bin }: { bin: BinDetail }) {
           <DetailRow
             label='Сүүлийн хоослох:'
             value={
-              bin.clearedAt ? localDateTime(bin.clearedAt) : 'Хоослолт хийгдээгүй'
+              bin.clearedAt
+                ? localDateTime(bin.clearedAt)
+                : 'Хоослолт хийгдээгүй'
             }
           />
           <DetailRow label='Координат:' value={coordinates} copy mono small />
@@ -198,7 +201,9 @@ function DetailRow({
 }) {
   const base = small ? 'text-muted-foreground text-xs' : 'text-sm font-medium';
   const className = [
-    copy ? 'hover:bg-muted/30 cursor-pointer rounded px-2 py-1 transition-colors' : '',
+    copy
+      ? 'hover:bg-muted/30 cursor-pointer rounded px-2 py-1 transition-colors'
+      : '',
     mono ? 'font-mono' : '',
     base
   ]
@@ -215,9 +220,7 @@ function DetailRow({
             copy
               ? () => {
                   navigator.clipboard.writeText(copyValue ?? value);
-                  toast.success(
-                    `${label.replace(':', '')} хуулагдлаа`
-                  );
+                  toast.success(`${label.replace(':', '')} хуулагдлаа`);
                 }
               : undefined
           }

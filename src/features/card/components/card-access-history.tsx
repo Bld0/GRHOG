@@ -164,7 +164,8 @@ export function CardAccessHistory({
                       <TableCell>
                         {at.toLocaleTimeString('mn-MN', {
                           hour: '2-digit',
-                          minute: '2-digit'
+                          minute: '2-digit',
+                          hour12: false
                         })}
                       </TableCell>
                       <TableCell className='font-mono text-sm'>

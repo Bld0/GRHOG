@@ -14,7 +14,8 @@ import { Separator } from '@/components/ui/separator';
 import type { AccessHistoryItem, CardDetail } from './use-card-detail';
 import { countRecent } from './use-card-detail';
 
-const localDateTime = (date: Date) => date.toLocaleString('mn-MN');
+const localDateTime = (date: Date) =>
+  date.toLocaleString('mn-MN', { hour12: false });
 
 /** Картын дээрх дөрвөн нэгдсэн үзүүлэлт. */
 export function CardDetailStats({
@@ -70,7 +71,9 @@ export function CardDetailStats({
       <StatCard
         title='Сүүлийн нэвтрэлт'
         icon={<IconClock className='text-muted-foreground h-4 w-4' />}
-        value={card.lastAccess ? localDateTime(card.lastAccess) : 'Нэвтрэлт байхгүй'}
+        value={
+          card.lastAccess ? localDateTime(card.lastAccess) : 'Нэвтрэлт байхгүй'
+        }
         small
       />
     </div>
@@ -120,7 +123,11 @@ export function CardPersonalDetails({
           />
           <DetailRow
             label='Тоот:'
-            value={card.apartmentNumber ? String(card.apartmentNumber) : 'Тодорхойгүй'}
+            value={
+              card.apartmentNumber
+                ? String(card.apartmentNumber)
+                : 'Тодорхойгүй'
+            }
           />
           <DetailRow label='Төрөл:' value={card.type || 'Тодорхойгүй'} />
           <DetailRow
@@ -130,7 +137,9 @@ export function CardPersonalDetails({
           />
           <DetailRow
             label='Бүртгэгдсэн огноо:'
-            value={card.createdAt ? localDateTime(card.createdAt) : 'Тодорхойгүй'}
+            value={
+              card.createdAt ? localDateTime(card.createdAt) : 'Тодорхойгүй'
+            }
             last
           />
         </CardContent>
@@ -222,7 +231,7 @@ function DetailRow({
         <span
           className={`text-sm font-medium${
             copy
-              ? ' hover:bg-muted/30 cursor-pointer rounded px-2 py-1 transition-colors'
+              ? 'hover:bg-muted/30 cursor-pointer rounded px-2 py-1 transition-colors'
               : ''
           }`}
           onClick={

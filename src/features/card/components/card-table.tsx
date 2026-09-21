@@ -55,8 +55,7 @@ const COLUMNS: Array<{
   { field: 'phone', label: 'Утасны дугаар', type: 'text' }
 ];
 
-const HEAD_CLASS =
-  'relative text-center sticky top-0 z-10 bg-background';
+const HEAD_CLASS = 'relative text-center sticky top-0 z-10 bg-background';
 
 interface CardTableProps {
   rows: CardRow[];
@@ -90,11 +89,11 @@ export function CardTable({
     router.push(`/dashboard/card/${row.cardId}`);
 
   return (
-    <div className='flex-1 overflow-auto rounded-md border relative'>
+    <div className='relative flex-1 overflow-auto rounded-md border'>
       <Table className='w-full'>
         <TableHeader>
           <TableRow>
-            <TableHead className='w-[50px] text-center sticky top-0 z-10 bg-background'>
+            <TableHead className='bg-background sticky top-0 z-10 w-[50px] text-center'>
               <Checkbox
                 checked={rows.length > 0 && selectedIds.size === rows.length}
                 onCheckedChange={onToggleAll}
@@ -114,7 +113,7 @@ export function CardTable({
                 />
               </TableHead>
             ))}
-            <TableHead className='text-center sticky top-0 z-10 bg-background'>
+            <TableHead className='bg-background sticky top-0 z-10 text-center'>
               Үйлдэл
             </TableHead>
           </TableRow>
@@ -204,7 +203,10 @@ export function CardTable({
           ))}
           {rows.length === 0 && (
             <TableRow>
-              <TableCell colSpan={COLUMNS.length + 2} className='py-8 text-center'>
+              <TableCell
+                colSpan={COLUMNS.length + 2}
+                className='py-8 text-center'
+              >
                 <div className='flex flex-col items-center gap-2'>
                   <IconSearch className='text-muted-foreground h-8 w-8' />
                   <p className='text-muted-foreground'>
@@ -231,7 +233,7 @@ function PlainCell({
 }) {
   return (
     <TableCell>
-      <div className={`text-center text-sm${bold ? ' font-medium' : ''}`}>
+      <div className={`text-center text-sm${bold ? 'font-medium' : ''}`}>
         {value || '-'}
       </div>
     </TableCell>
@@ -244,7 +246,7 @@ function DateCell({ value }: { value: Date | null }) {
       <div className='flex items-center gap-2 text-center'>
         <IconCalendar className='text-muted-foreground h-4 w-4' />
         <span className='text-sm'>
-          {value ? value.toLocaleString('mn-MN') : '-'}
+          {value ? value.toLocaleString('mn-MN', { hour12: false }) : '-'}
         </span>
       </div>
     </TableCell>

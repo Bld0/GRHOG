@@ -259,7 +259,7 @@ export function MaintenanceView() {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const formatDateTime = (value: string | null) =>
-    value ? new Date(value).toLocaleString('mn-MN') : '—';
+    value ? new Date(value).toLocaleString('mn-MN', { hour12: false }) : '—';
 
   if (authLoading) {
     return null;

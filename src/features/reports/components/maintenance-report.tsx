@@ -112,7 +112,7 @@ export function MaintenanceReport({ filters }: { filters: ReportFilters }) {
 
   const totalPages = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
   const formatDateTime = (value: string | null) =>
-    value ? new Date(value).toLocaleString('mn-MN') : '—';
+    value ? new Date(value).toLocaleString('mn-MN', { hour12: false }) : '—';
   const formatMoney = (value: number | null | undefined) =>
     value == null ? '—' : `${value.toLocaleString('mn-MN')}₮`;
 

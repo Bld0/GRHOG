@@ -315,91 +315,95 @@ export function AddressDetailView({ addressId }: { addressId: string }) {
             </Table>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Хэрэглээний түүх: карт тус бүрийн түүх картын хуудсан дээр бий,
-          энд өрхийн нэгдсэн зураг — хэн, хэзээ, аль сав руу хаясан нь. */}
-      <Card className='mt-4'>
-        <CardHeader>
-          <CardTitle>Хэрэглээний түүх</CardTitle>
-          <CardDescription>
-            {usageTotal} уншилт — энэ хаягийн бүх карт
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Огноо</TableHead>
-                <TableHead>Хэн</TableHead>
-                <TableHead>Карт</TableHead>
-                <TableHead>Сав</TableHead>
-                <TableHead className='text-right'>Дүүргэлт</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {usageLoading ? (
+        {/* Хэрэглээний түүх: карт тус бүрийн түүх картын хуудсан дээр бий,
+            энд өрхийн нэгдсэн зураг — хэн, хэзээ, аль сав руу хаясан нь.
+            PageContainer нь мөрийн flex тул энэ Card дээрх баганын дотор
+            байх ёстой — гадна нь байвал хажууд нь зэрэгцэнэ. */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Хэрэглээний түүх</CardTitle>
+            <CardDescription>
+              {usageTotal} уншилт — энэ хаягийн бүх карт
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className='text-muted-foreground'>
-                    Уншиж байна...
-                  </TableCell>
+                  <TableHead>Огноо</TableHead>
+                  <TableHead>Хэн</TableHead>
+                  <TableHead>Карт</TableHead>
+                  <TableHead>Сав</TableHead>
+                  <TableHead className='text-right'>Дүүргэлт</TableHead>
                 </TableRow>
-              ) : usage.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className='text-muted-foreground'>
-                    Уншилт бүртгэгдээгүй байна.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                usage.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className='whitespace-nowrap'>
-                      {new Date(row.createdAt).toLocaleString('mn-MN')}
-                    </TableCell>
-                    <TableCell>{row.clientName || '—'}</TableCell>
-                    <TableCell className='font-mono'>
-                      {row.cardId || '—'}
-                    </TableCell>
-                    <TableCell>{row.binName || row.binId || '—'}</TableCell>
-                    <TableCell className='text-right tabular-nums'>
-                      {row.storageLevelPercent != null
-                        ? `${Math.round(row.storageLevelPercent)}%`
-                        : '—'}
+              </TableHeader>
+              <TableBody>
+                {usageLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className='text-muted-foreground'>
+                      Уншиж байна...
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : usage.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className='text-muted-foreground'>
+                      Уншилт бүртгэгдээгүй байна.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  usage.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell className='whitespace-nowrap'>
+                        {new Date(row.createdAt).toLocaleString('mn-MN', {
+                          hour12: false
+                        })}
+                      </TableCell>
+                      <TableCell>{row.clientName || '—'}</TableCell>
+                      <TableCell className='font-mono'>
+                        {row.cardId || '—'}
+                      </TableCell>
+                      <TableCell>{row.binName || row.binId || '—'}</TableCell>
+                      <TableCell className='text-right tabular-nums'>
+                        {row.storageLevelPercent != null
+                          ? `${Math.round(row.storageLevelPercent)}%`
+                          : '—'}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
 
-          {usageTotal > USAGE_PAGE_SIZE && (
-            <div className='flex items-center justify-between pt-4'>
-              <div className='text-muted-foreground text-sm'>
-                {usagePage + 1}/{Math.ceil(usageTotal / USAGE_PAGE_SIZE)}-р
-                хуудас
+            {usageTotal > USAGE_PAGE_SIZE && (
+              <div className='flex items-center justify-between pt-4'>
+                <div className='text-muted-foreground text-sm'>
+                  {usagePage + 1}/{Math.ceil(usageTotal / USAGE_PAGE_SIZE)}-р
+                  хуудас
+                </div>
+                <div className='flex gap-2'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    disabled={usagePage === 0}
+                    onClick={() => setUsagePage((p) => Math.max(0, p - 1))}
+                  >
+                    Өмнөх
+                  </Button>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    disabled={(usagePage + 1) * USAGE_PAGE_SIZE >= usageTotal}
+                    onClick={() => setUsagePage((p) => p + 1)}
+                  >
+                    Дараах
+                  </Button>
+                </div>
               </div>
-              <div className='flex gap-2'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  disabled={usagePage === 0}
-                  onClick={() => setUsagePage((p) => Math.max(0, p - 1))}
-                >
-                  Өмнөх
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  disabled={(usagePage + 1) * USAGE_PAGE_SIZE >= usageTotal}
-                  onClick={() => setUsagePage((p) => p + 1)}
-                >
-                  Дараах
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <AddressFormDialog
         open={formOpen}
