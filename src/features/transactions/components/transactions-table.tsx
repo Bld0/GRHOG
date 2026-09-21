@@ -39,6 +39,11 @@ export interface TransactionRow {
   clientType: string;
   clientPhone: string;
   clientAddress: string;
+  /** Картын бүтэцтэй хаяг (backend). Хоосон бол clientAddress-аас задална. */
+  district: string | null;
+  khoroo: number | null;
+  streetBuilding: string | null;
+  apartmentNumber: string | null;
   binId: string;
   binName: string;
   binLocation: string;
@@ -50,14 +55,14 @@ const COLUMNS: Array<{
   field: string;
   label: string;
   type: 'text' | 'number' | 'date';
-  /** backend-д байхгүй талбал — шүүх/эрэмбэлэх боломжгүй. */
-  plain?: boolean;
+  /** Client-ээс ирдэг тул шүүж болно, эрэмбэлэх backend дэмжлэггүй. */
+  noSort?: boolean;
 }> = [
   { field: 'createdAt', label: 'Огноо цаг', type: 'date' },
-  { field: 'district', label: 'Дүүрэг', type: 'text', plain: true },
-  { field: 'khoroo', label: 'Хороо', type: 'text', plain: true },
-  { field: 'streetBuilding', label: 'Байр', type: 'text', plain: true },
-  { field: 'apartmentNumber', label: 'Тоот', type: 'text', plain: true },
+  { field: 'district', label: 'Дүүрэг', type: 'text', noSort: true },
+  { field: 'khoroo', label: 'Хороо', type: 'number', noSort: true },
+  { field: 'streetBuilding', label: 'Байр', type: 'text', noSort: true },
+  { field: 'apartmentNumber', label: 'Тоот', type: 'text', noSort: true },
   { field: 'clientType', label: 'Төрөл', type: 'text' },
   { field: 'clientName', label: 'Нэр', type: 'text' },
   { field: 'binName', label: 'Сав', type: 'text' },
@@ -102,26 +107,31 @@ export function TransactionsTable({
           <TableRow>
             {COLUMNS.map((column) => (
               <TableHead key={column.field} className='relative text-center'>
-                {column.plain ? (
-                  column.label
-                ) : (
-                  <TableHeaderFilter
-                    field={column.field}
-                    label={column.label}
-                    type={column.type}
-                    currentSort={sortConfig}
-                    activeFilters={activeFilters}
-                    onSort={onSort}
-                    onFilterChange={onFilterChange}
-                  />
-                )}
+                <TableHeaderFilter
+                  field={column.field}
+                  label={column.label}
+                  type={column.type}
+                  sortable={!column.noSort}
+                  currentSort={sortConfig}
+                  activeFilters={activeFilters}
+                  onSort={onSort}
+                  onFilterChange={onFilterChange}
+                />
               </TableHead>
             ))}
           </TableRow>
         </TableHeader>
         <TableBody>
           {rows.map((row) => {
-            const addr = parseAddress(row.clientAddress);
+            // Backend-ийн бүтэцтэй хаяг эхэнд; байхгүй бол хуучин мөрийн
+            // чөлөөт бичвэрээс задална.
+            const parsed = parseAddress(row.clientAddress);
+            const addr = {
+              district: row.district ?? parsed.district,
+              khoroo: row.khoroo != null ? String(row.khoroo) : parsed.khoroo,
+              streetBuilding: row.streetBuilding ?? parsed.streetBuilding,
+              apartmentNumber: row.apartmentNumber ?? parsed.apartmentNumber
+            };
             return (
               <TableRow key={row.id}>
                 <IconCell

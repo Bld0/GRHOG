@@ -211,6 +211,11 @@ export interface BinUsage {
   clientType: string | null;
   clientPhone: string | null;
   clientAddress: string | null;
+  // Картын эдүгээгийн бүтэцтэй хаяг — backend хуудас бүрд Client-ээс залгана.
+  district?: string | null;
+  khoroo?: number | null;
+  streetBuilding?: string | null;
+  apartmentNumber?: string | null;
   createdAt: string;
   batteryLevel: string | null;
   storageLevel: number;
