@@ -21,8 +21,8 @@ export function ResidentTabs({ active }: { active: 'address' | 'card' }) {
       }
     >
       <TabsList>
-        <TabsTrigger value='address'>Хаяг</TabsTrigger>
         <TabsTrigger value='card'>Карт</TabsTrigger>
+        <TabsTrigger value='address'>Хаяг</TabsTrigger>
       </TabsList>
     </Tabs>
   );
