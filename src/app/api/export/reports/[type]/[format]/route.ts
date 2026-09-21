@@ -1,3 +1,4 @@
+import { getBackendUrl } from '@/config/api';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -14,8 +15,13 @@ export async function GET(
 ) {
   const { type, format } = await context.params;
 
-  if (!['client-activity', 'clearings', 'battery', 'maintenance'].includes(type)) {
-    return NextResponse.json({ error: 'Тайлангийн төрөл буруу' }, { status: 400 });
+  if (
+    !['client-activity', 'clearings', 'battery', 'maintenance'].includes(type)
+  ) {
+    return NextResponse.json(
+      { error: 'Тайлангийн төрөл буруу' },
+      { status: 400 }
+    );
   }
   if (!['excel', 'pdf'].includes(format)) {
     return NextResponse.json({ error: 'Файлын формат буруу' }, { status: 400 });
@@ -34,12 +40,7 @@ export async function GET(
     // Same scheme-normalization as next.config.ts's rewrite destination:
     // BACKEND_URL has been observed set without a scheme, which makes fetch()
     // throw "Failed to parse URL".
-    const rawBackendUrl = (
-      process.env.BACKEND_URL || 'http://device.grhog.mn'
-    ).replace(/\/$/, '');
-    const backendUrl = /^https?:\/\//.test(rawBackendUrl)
-      ? rawBackendUrl
-      : `https://${rawBackendUrl}`;
+    const backendUrl = getBackendUrl();
 
     const response = await fetch(
       `${backendUrl}/export/reports/${type}/${format}${query ? `?${query}` : ''}`,
