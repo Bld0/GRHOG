@@ -36,38 +36,38 @@ export function defaultOperatorsFor(type: FilterFieldType): FilterOperator[] {
   switch (type) {
     case 'text':
       return [
-        { value: 'is', label: 'is' },
-        { value: 'is_not', label: 'is not' },
-        { value: 'contains', label: 'contains' },
-        { value: 'starts_with', label: 'starts with' },
-        { value: 'ends_with', label: 'ends with' },
+        { value: 'is', label: 'тэнцүү' },
+        { value: 'is_not', label: 'тэнцүү биш' },
+        { value: 'contains', label: 'агуулсан' },
+        { value: 'starts_with', label: 'эхэлсэн' },
+        { value: 'ends_with', label: 'төгссөн' },
         { value: 'is_empty', label: 'хоосон' }
       ];
     case 'number':
       return [
-        { value: 'is', label: 'is' },
-        { value: 'is_not', label: 'is not' },
-        { value: 'greater_than', label: 'is greater than' },
-        { value: 'less_than', label: 'is less than' },
-        { value: 'between', label: 'is between' },
+        { value: 'is', label: 'тэнцүү' },
+        { value: 'is_not', label: 'тэнцүү биш' },
+        { value: 'greater_than', label: 'их' },
+        { value: 'less_than', label: 'бага' },
+        { value: 'between', label: 'хооронд' },
         { value: 'is_empty', label: 'хоосон' }
       ];
     case 'boolean':
       return [
-        { value: 'is', label: 'is' },
-        { value: 'is_not', label: 'is not' }
+        { value: 'is', label: 'тэнцүү' },
+        { value: 'is_not', label: 'тэнцүү биш' }
       ];
     case 'date':
       return [
-        { value: 'is', label: 'is' },
-        { value: 'is_not', label: 'is not' },
-        { value: 'before', label: 'is before' },
-        { value: 'after', label: 'is after' },
-        { value: 'between', label: 'is between' },
+        { value: 'is', label: 'тэнцүү' },
+        { value: 'is_not', label: 'тэнцүү биш' },
+        { value: 'before', label: 'өмнө' },
+        { value: 'after', label: 'дараа' },
+        { value: 'between', label: 'хооронд' },
         { value: 'is_empty', label: 'хоосон' }
       ];
     default:
-      return [{ value: 'is', label: 'is' }];
+      return [{ value: 'is', label: 'тэнцүү' }];
   }
 }
 
@@ -97,7 +97,7 @@ interface BuildArgs {
 export function buildFilter(args: BuildArgs): ActiveFilter | null {
   const { field, label, type, operator, operators } = args;
   const operatorLabel =
-    operators.find((op) => op.value === operator)?.label ?? 'is';
+    operators.find((op) => op.value === operator)?.label ?? 'тэнцүү';
 
   // "хоосон" нь утга шаарддаггүй цорын ганц оператор.
   if (operator === 'is_empty') {
@@ -142,7 +142,7 @@ function buildValue(
     if (!value.trim() || !value2?.trim()) return null;
     return {
       value: { min: parseFloat(value), max: parseFloat(value2) },
-      label: `${label} is between ${value} and ${value2}`
+      label: `${label} ${value}-${value2} хооронд`
     };
   }
 
@@ -159,14 +159,14 @@ function buildDate(
     if (!date || !date2) return null;
     return {
       value: { start: isoDay(date), end: isoDay(date2) },
-      label: `${label} is between ${format(date, 'MMM dd, yyyy')} and ${format(date2, 'MMM dd, yyyy')}`
+      label: `${label} ${format(date, 'yyyy.MM.dd')}-${format(date2, 'yyyy.MM.dd')} хооронд`
     };
   }
 
   if (!date) return null;
   return {
     value: isoDay(date),
-    label: `${label} ${operatorLabel} ${format(date, 'MMM dd, yyyy')}`
+    label: `${label} ${format(date, 'yyyy.MM.dd')} ${operatorLabel}`
   };
 }
 

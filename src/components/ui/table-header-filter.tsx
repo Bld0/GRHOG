@@ -275,7 +275,7 @@ export function TableHeaderFilter({
                 onClick={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
               >
-                <SelectValue placeholder='Хувьсагч' />
+                <SelectValue placeholder='Нөхцөл' />
               </SelectTrigger>
               <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
                 {operators.map((op) => (
@@ -393,13 +393,13 @@ function FilterInputs({
     return (
       <div className='grid grid-cols-2 gap-2'>
         <Input
-          placeholder='Min'
+          placeholder='Хамгийн бага'
           value={value}
           onChange={(e) => onValueChange(e.target.value)}
           type='number'
         />
         <Input
-          placeholder='Max'
+          placeholder='Хамгийн их'
           value={value2}
           onChange={(e) => onValueChange(e.target.value, true)}
           type='number'
@@ -453,7 +453,7 @@ function DatePicker({
         >
           <IconCalendar className='mr-1 h-3 w-3' />
           {date
-            ? format(date, longFormat ? 'MMM dd, yyyy' : 'MMM dd')
+            ? format(date, longFormat ? 'yyyy.MM.dd' : 'MM.dd')
             : placeholder}
         </Button>
       </PopoverTrigger>
