@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       headers.Authorization = authHeader;
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const url = `${backendUrl}${API_CONFIG.ENDPOINTS.CLIENTS}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await fetch(url, {
       method: 'GET',
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const response = await fetch(`${backendUrl}${API_CONFIG.ENDPOINTS.CLIENTS}`, {
       method: 'POST',
       headers: {

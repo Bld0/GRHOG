@@ -9,7 +9,7 @@ import { withSentryConfig } from '@sentry/nextjs';
 const rawBackendUrl = (
   process.env.BACKEND_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
-  'https://grhog-api-production-0161.up.railway.app'
+  'https://api.grhog.mn'
 ).replace(/\/$/, '');
 const BACKEND_URL = /^https?:\/\//.test(rawBackendUrl)
   ? rawBackendUrl
@@ -65,7 +65,7 @@ const baseConfig: NextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.com https://*.clerkstage.dev https://*.clerk.accounts.dev; script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.com https://*.clerkstage.dev https://*.clerk.accounts.dev; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; connect-src 'self' https: http: ws: wss: http://device.grhog.mn https://*.clerk.com https://*.clerkstage.dev https://*.clerk.accounts.dev; worker-src 'self' blob: https://*.clerk.com https://*.clerkstage.dev https://*.clerk.accounts.dev; font-src 'self' data:; object-src 'none'; media-src 'self'; frame-src 'self' https://*.clerk.com https://*.clerkstage.dev https://*.clerk.accounts.dev;"
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.com https://*.clerkstage.dev https://*.clerk.accounts.dev; script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.com https://*.clerkstage.dev https://*.clerk.accounts.dev; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; connect-src 'self' https: http: ws: wss: https://api.grhog.mn https://*.clerk.com https://*.clerkstage.dev https://*.clerk.accounts.dev; worker-src 'self' blob: https://*.clerk.com https://*.clerkstage.dev https://*.clerk.accounts.dev; font-src 'self' data:; object-src 'none'; media-src 'self'; frame-src 'self' https://*.clerk.com https://*.clerkstage.dev https://*.clerk.accounts.dev;"
           },
           {
             key: 'X-Content-Type-Options',

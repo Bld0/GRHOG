@@ -17,7 +17,7 @@ export async function GET(
       headers.Authorization = authHeader;
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const url = `${backendUrl}${API_CONFIG.ENDPOINTS.USERS}/${id}`;
     const response = await fetch(url, {
       method: 'GET',
@@ -71,7 +71,7 @@ export async function PUT(
       headers.Authorization = authHeader;
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const url = `${backendUrl}${API_CONFIG.ENDPOINTS.USERS}/${id}`;
     const response = await fetch(url, {
       method: 'PUT',
@@ -124,7 +124,7 @@ export async function DELETE(
       headers.Authorization = authHeader;
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const url = `${backendUrl}${API_CONFIG.ENDPOINTS.USERS}/${id}`;
     const response = await fetch(url, {
       method: 'DELETE',

@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       console.log('No authorization header found in request');
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const url = `${backendUrl}${API_CONFIG.ENDPOINTS.BIN_USAGES}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     console.log('Calling backend URL:', url);
     

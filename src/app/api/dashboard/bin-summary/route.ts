@@ -4,7 +4,7 @@ import { API_CONFIG } from '@/config/api';
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const response = await fetch(`${backendUrl}${API_CONFIG.ENDPOINTS.DASHBOARD.BIN_SUMMARY}`, {
       method: 'GET',
       headers: {

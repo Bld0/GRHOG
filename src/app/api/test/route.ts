@@ -4,7 +4,7 @@ import { API_CONFIG } from '@/config/api';
 export async function GET() {
   try {
     // Use the backend URL directly since this is a server-side API route
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const response = await fetch(`${backendUrl}${API_CONFIG.ENDPOINTS.TEST}`, {
       method: 'GET',
       headers: {

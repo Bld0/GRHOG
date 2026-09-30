@@ -3,7 +3,7 @@
  */
 
 export const getApiUrl = (endpoint: string): string => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://device.grhog.mn';
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.grhog.mn';
   
   // If we're in the browser and the page is HTTPS, try to use HTTPS first
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {

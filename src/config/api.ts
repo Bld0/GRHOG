@@ -11,7 +11,7 @@ export const API_CONFIG = {
     }
     return (
       process.env.BACKEND_URL ||
-      'https://grhog-api-production-0161.up.railway.app'
+      'https://api.grhog.mn'
     ).replace(/\/$/, '');
   })(),
 
@@ -100,7 +100,7 @@ export const getBackendUrl = (): string => {
   const raw = (
     process.env.BACKEND_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
-    'https://grhog-api-production-0161.up.railway.app'
+    'https://api.grhog.mn'
   ).replace(/\/$/, '');
   return /^https?:\/\//.test(raw) ? raw : `https://${raw}`;
 };

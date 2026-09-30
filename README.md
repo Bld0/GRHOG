@@ -89,7 +89,7 @@ interface UserConfig {
 
 - Node.js 18+ 
 - npm, yarn, or pnpm
-- Backend API running on `http://device.grhog.mn`
+- Backend API running on `https://api.grhog.mn`
 
 ### Installation
 
@@ -116,7 +116,7 @@ interface UserConfig {
    Update `.env.local` with your configuration:
    ```env
    # For development with local backend
-   NEXT_PUBLIC_API_BASE_URL=http://device.grhog.mn
+   NEXT_PUBLIC_API_BASE_URL=https://api.grhog.mn
    
    # For production with HTTP backend (uses proxy to avoid mixed content)
    NEXT_PUBLIC_API_BASE_URL=/api/proxy
@@ -166,7 +166,7 @@ This project includes a solution for HTTPS frontend making requests to HTTP back
 ### How It Works
 
 1. Frontend makes requests to `/api/proxy/endpoint`
-2. Next.js API route forwards request to `http://device.grhog.mn/endpoint`
+2. Next.js API route forwards request to `https://api.grhog.mn/endpoint`
 3. Response is returned to frontend
 4. No mixed content issues since all frontend requests are to same domain
 
@@ -314,7 +314,7 @@ All API requests automatically include JWT authentication headers.
 
 ```bash
 # Test login with default admin credentials
-curl -X POST http://device.grhog.mn/auth/signin \
+curl -X POST https://api.grhog.mn/auth/signin \
   -H "Content-Type: application/json" \
   -d '{"username": "admin", "password": "pass#1s"}'
 ```

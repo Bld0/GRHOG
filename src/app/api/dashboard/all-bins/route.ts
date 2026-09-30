@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     // Prefer dashboard/all-bins if available, otherwise fallback to bins
     const endpoint = API_CONFIG.ENDPOINTS.DASHBOARD.ALL_BINS ?? '/bins';
     const response = await fetch(`${backendUrl}${endpoint}`, {

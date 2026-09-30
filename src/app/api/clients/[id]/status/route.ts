@@ -18,7 +18,7 @@ export async function PUT(
       headers.Authorization = authHeader;
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const response = await fetch(`${backendUrl}${API_CONFIG.ENDPOINTS.CLIENT_ACTIVITY}/${id}/status`, {
       method: 'PUT',
       headers,

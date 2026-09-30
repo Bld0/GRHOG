@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       console.log('No authorization header found in request');
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const url = `${backendUrl}${API_CONFIG.ENDPOINTS.BINS}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await fetch(url, {
       method: 'GET',
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const response = await fetch(`${backendUrl}${API_CONFIG.ENDPOINTS.BINS}`, {
       method: 'POST',
       headers: {      

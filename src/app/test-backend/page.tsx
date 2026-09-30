@@ -126,7 +126,7 @@ export default function TestBackendPage() {
             <h4 className="font-semibold mb-2">If you get connection errors:</h4>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
               <li>Make sure the backend server is running on port 8989</li>
-              <li>Check if the backend is accessible at http://device.grhog.mn</li>
+              <li>Check if the backend is accessible at https://api.grhog.mn</li>
               <li>Verify the API_CONFIG.BASE_URL is correct</li>
               <li>Check browser console for CORS errors</li>
             </ul>

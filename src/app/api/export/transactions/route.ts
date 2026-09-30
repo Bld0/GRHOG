@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     // getBackendUrl нь схемгүй BACKEND_URL-ыг засаж, амьд Railway хост руу
-    // унана — өмнөх `http://device.grhog.mn` нь DNS-д байхгүй тул fetch унаж,
+    // унана — өмнөх `https://api.grhog.mn` нь DNS-д байхгүй тул fetch унаж,
     // экспорт бүр 500 болдог байв.
     const backendUrl = getBackendUrl();
     const url = `${backendUrl}/export/transactions/excel${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;

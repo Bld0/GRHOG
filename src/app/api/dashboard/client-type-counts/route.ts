@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const params = url.search;
-  const backendUrl = `${process.env.BACKEND_URL || 'http://device.grhog.mn'}/dashboard/client-type-counts${params}`;
+  const backendUrl = `${process.env.BACKEND_URL || 'https://api.grhog.mn'}/dashboard/client-type-counts${params}`;
 
   const headers: Record<string, string> = {};
   const auth = req.headers.get('authorization');

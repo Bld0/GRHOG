@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       headers.Authorization = authHeader;
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const url = `${backendUrl}${API_CONFIG.ENDPOINTS.CLEARINGS}?${queryParams.toString()}`;
     const response = await fetch(url, {
       method: 'GET',

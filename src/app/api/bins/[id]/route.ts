@@ -21,7 +21,7 @@ export async function GET(
       console.log('No authorization header found in request');
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const fullUrl = `${backendUrl}${API_CONFIG.ENDPOINTS.BINS}/${id}`;
     console.log('Fetching from backend URL:', fullUrl);
     
@@ -72,7 +72,7 @@ export async function PUT(
     }
     
     // Call the backend API to update the bin
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const response = await fetch(`${backendUrl}${API_CONFIG.ENDPOINTS.BINS}/${id}`, {
       method: 'PUT',
       headers,
@@ -118,7 +118,7 @@ export async function DELETE(
     }
     
     // Call the backend API to delete the bin
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const response = await fetch(`${backendUrl}${API_CONFIG.ENDPOINTS.BINS}/${id}`, {
       method: 'DELETE',
       headers,

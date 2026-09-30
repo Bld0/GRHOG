@@ -23,7 +23,7 @@ export async function GET(
       console.log('No authorization header found in request');
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const response = await fetch(
       `${backendUrl}${API_CONFIG.ENDPOINTS.CLIENT_ACTIVITY}/${id}/activity`,
       {

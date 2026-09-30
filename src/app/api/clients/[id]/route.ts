@@ -24,7 +24,7 @@ export async function PUT(
       console.log('No authorization header found in request');
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     console.log('Calling backend endpoint:', `${backendUrl}/users/clients/${id}`);
     const response = await fetch(`${backendUrl}/users/clients/${id}`, {
       method: 'PUT',

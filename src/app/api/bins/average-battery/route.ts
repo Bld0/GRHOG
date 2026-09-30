@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Use the backend URL directly since this is a server-side API route
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const response = await fetch(`${backendUrl}${API_CONFIG.ENDPOINTS.STATISTICS.BINS.AVERAGE_BATTERY}`, {
       method: 'GET',
       headers,

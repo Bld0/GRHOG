@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const params = request.nextUrl.searchParams;
 
     const qs = params.toString();
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     // Backend expects /dashboard/khoroo-usage
     const target = `${backendUrl}/dashboard/khoroo-usage${qs ? `?${qs}` : ''}`;
 

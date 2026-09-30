@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://device.grhog.mn';
+const BACKEND_BASE_URL = process.env.BACKEND_URL || 'https://api.grhog.mn';
 
 export async function GET(
   request: NextRequest,

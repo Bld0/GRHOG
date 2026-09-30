@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
       headers.Authorization = authHeader;
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://device.grhog.mn';
+    const backendUrl = process.env.BACKEND_URL || 'https://api.grhog.mn';
     const response = await fetch(`${backendUrl}${API_CONFIG.ENDPOINTS.ANALYTICS.CLEARING_EFFICIENCY}`, {
       method: 'GET',
       headers,
