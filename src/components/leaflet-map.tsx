@@ -5,14 +5,6 @@ import { MapContainer, TileLayer, Marker, useMapEvents, Popup, CircleMarker } fr
 import L from 'leaflet';
 import { normalizeStorageLevel } from '@/lib/utils';
 
-// Fix for default markers in Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
 interface Location {
   lat: number;
   lng: number;
@@ -151,7 +143,11 @@ export default function LeafletMap({
 }: LeafletMapProps) {
   const [map, setMap] = useState<L.Map | null>(null);
 
-  const isValidCoord = selectedLocation && (selectedLocation.lat !== 0 || selectedLocation.lng !== 0);
+  const isValidCoord =
+    selectedLocation &&
+    Number.isFinite(selectedLocation.lat) &&
+    Number.isFinite(selectedLocation.lng) &&
+    (selectedLocation.lat !== 0 || selectedLocation.lng !== 0);
 
   const center: [number, number] = isValidCoord
     ? [selectedLocation.lat, selectedLocation.lng]
@@ -159,14 +155,16 @@ export default function LeafletMap({
 
   // Fit bounds when multiple locations are provided
   useEffect(() => {
-    if (!isMapAlive(map) || multipleLocations.length <= 1) return;
+    if (!isMapAlive(map) || multipleLocations.length === 0) return;
     try {
       const bounds = L.latLngBounds(
         multipleLocations.map(loc => [loc.lat, loc.lng])
       );
       // animate: false applies the move synchronously, avoiding the deferred
       // animation frame that crashes if the map is removed mid-transition.
-      map.fitBounds(bounds, { padding: [20, 20], animate: false });
+      // maxZoom: ганц сав (эсвэл нэг цэгт давхцсан савнууд) дээр хамгийн их
+      // томруулалт руу үсрэхгүй.
+      map.fitBounds(bounds, { padding: [20, 20], animate: false, maxZoom: 16 });
     } catch {
       // map was torn down between the guard and the call -> ignore
     }
@@ -191,8 +189,9 @@ export default function LeafletMap({
       }
     };
 
-    // Only attempt when there are no multiple locations to fit (single or none)
-    if ((multipleLocations?.length ?? 0) <= 1 && !selectedLocation) {
+    // Only attempt when there is nothing to show and the user is picking a
+    // point — a read-only map must not ask for the location permission.
+    if (multipleLocations.length === 0 && !selectedLocation && !readOnly) {
       if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
           (pos) => safeSetView(pos.coords.latitude, pos.coords.longitude, Math.max(13, zoom)),
@@ -209,10 +208,12 @@ export default function LeafletMap({
     return () => {
       cancelled = true;
     };
-  }, [map, multipleLocations, selectedLocation, zoom]);
+  }, [map, multipleLocations, selectedLocation, zoom, readOnly]);
 
   return (
-    <div className={`w-full rounded-lg border border-gray-300 overflow-hidden`} style={{ height }}>
+    // isolate: Leaflet-ийн pane/control-ууд z-index 400–1000-тай. Тусдаа stacking
+    // context үүсгэхгүй бол хуудасны зураг dialog (z-50) дээгүүр гарч ирнэ.
+    <div className={`isolate w-full rounded-lg border border-gray-300 overflow-hidden`} style={{ height }}>
       <MapContainer
         center={center}
         zoom={zoom}
@@ -312,7 +313,8 @@ export default function LeafletMap({
         {showHeatmap && multipleLocations.length > 0 && (
           multipleLocations.map((location, index) => {
             if (location.fillLevel === undefined) return null;
-            
+            const level = normalizeStorageLevel(location.fillLevel);
+
             const getHeatmapColor = (level: number) => {
               if (level >= 90) return '#dc2626';
               if (level >= 70) return '#f59e0b';
@@ -323,10 +325,10 @@ export default function LeafletMap({
               <CircleMarker
                 key={`heatmap-${location.id || index}`}
                 center={[location.lat, location.lng]}
-                radius={Math.max(5, location.fillLevel / 10)}
+                radius={Math.max(5, level / 10)}
                 pathOptions={{
-                  color: getHeatmapColor(location.fillLevel),
-                  fillColor: getHeatmapColor(location.fillLevel),
+                  color: getHeatmapColor(level),
+                  fillColor: getHeatmapColor(level),
                   fillOpacity: 0.3,
                   weight: 2
                 }}

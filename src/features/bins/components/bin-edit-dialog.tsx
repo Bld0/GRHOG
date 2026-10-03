@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { IconCurrentLocation, IconMapPin } from '@tabler/icons-react';
 import { toast } from 'sonner';
@@ -40,6 +40,7 @@ async function reverseGeocode(
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=mn,en`
     );
+    if (!response.ok) return null;
     const data = await response.json();
     return data?.display_name || null;
   } catch (error) {
@@ -59,9 +60,30 @@ export function BinEditDialog({ bin, onClose, onSaved }: BinEditDialogProps) {
   const [editingBin, setEditingBin] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Хамгийн сүүлд сонгосон цэгийн дугаар — хоцорч ирсэн хаягийн хариу шинэ
+  // сонголтыг (эсвэл өөр савыг) дарж бичихээс сэргийлнэ.
+  const pickSeq = useRef(0);
+
   useEffect(() => {
+    pickSeq.current++;
     setEditingBin(bin ? { ...bin } : null);
   }, [bin]);
+
+  const pickLocation = async (lat: number, lng: number) => {
+    const seq = ++pickSeq.current;
+    setEditingBin((prev: any) => ({
+      ...prev,
+      coordinates: { lat, lng },
+      latitude: lat.toString(),
+      longitude: lng.toString(),
+      location: 'Байршил тодорхойгүй (ачааллаж байна...)'
+    }));
+    const address = await reverseGeocode(lat, lng);
+    if (seq !== pickSeq.current) return;
+    setEditingBin((prev: any) =>
+      prev ? { ...prev, location: address || 'Байршил тодорхойгүй' } : prev
+    );
+  };
 
   const save = async () => {
     if (!editingBin?.id) return;
@@ -131,30 +153,13 @@ export function BinEditDialog({ bin, onClose, onSaved }: BinEditDialogProps) {
                     type='button'
                     variant='outline'
                     size='sm'
-                    onClick={async () => {
-                      if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                          async (position) => {
-                            const lat = position.coords.latitude;
-                            const lng = position.coords.longitude;
-                            setEditingBin((prev: any) => ({
-                              ...prev,
-                              coordinates: { lat, lng },
-                              latitude: lat.toString(),
-                              longitude: lng.toString(),
-                              location:
-                                'Байршил тодорхойгүй (ачааллаж байна...)'
-                            }));
-                            const address = await reverseGeocode(lat, lng);
-                            if (address) {
-                              setEditingBin((prev: any) => ({
-                                ...prev,
-                                location: address
-                              }));
-                            }
-                          }
-                        );
-                      }
+                    onClick={() => {
+                      navigator.geolocation?.getCurrentPosition((position) =>
+                        pickLocation(
+                          position.coords.latitude,
+                          position.coords.longitude
+                        )
+                      );
                     }}
                     className='flex items-center gap-2'
                   >
@@ -164,22 +169,7 @@ export function BinEditDialog({ bin, onClose, onSaved }: BinEditDialogProps) {
                 </div>
                 <LeafletMap
                   selectedLocation={editingBin.coordinates}
-                  onLocationSelect={async (lat, lng) => {
-                    setEditingBin((prev: any) => ({
-                      ...prev,
-                      coordinates: { lat, lng },
-                      latitude: lat.toString(),
-                      longitude: lng.toString(),
-                      location: 'Байршил тодорхойгүй (ачааллаж байна...)'
-                    }));
-                    const address = await reverseGeocode(lat, lng);
-                    if (address) {
-                      setEditingBin((prev: any) => ({
-                        ...prev,
-                        location: address
-                      }));
-                    }
-                  }}
+                  onLocationSelect={pickLocation}
                   readOnly={false}
                   height='300px'
                   zoom={15}
