@@ -49,6 +49,9 @@ type SortOption =
   | 'totalMessages'
   | 'lastSensorOkAt';
 
+/** Төлөвийн шүүлт — ABNORMAL нь BLIND + INTERMITTENT. */
+type StatusFilter = 'ALL' | 'ABNORMAL' | SensorHealthRow['status'];
+
 function StatusBadge({ status }: { status: SensorHealthRow['status'] }) {
   return (
     <Badge
@@ -73,6 +76,7 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
   const [rows, setRows] = useState<SensorHealthRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortOption>('default');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
 
   const fetchAll = useCallback(async () => {
     setIsLoading(true);
@@ -98,7 +102,13 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
   }, [fetchAll]);
 
   const sortedRows = useMemo(() => {
-    const copy = [...rows];
+    const copy = rows.filter((r) =>
+      statusFilter === 'ALL'
+        ? true
+        : statusFilter === 'ABNORMAL'
+          ? r.status !== 'HEALTHY'
+          : r.status === statusFilter
+    );
     switch (sortBy) {
       case 'totalMessages':
         return copy.sort((a, b) => b.totalMessages - a.totalMessages);
@@ -116,7 +126,7 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
       case 'failurePercent':
         return copy.sort((a, b) => b.failurePercent - a.failurePercent);
       default:
-        // Аюулын дараалал: Сохор → Завсардсан → Эрүүл, тус бүрийн дотор алдааны хувиар буурахаар.
+        // Аюулын дараалал: Хэмжилтгүй → Тасалдалтай → Хэвийн, тус бүрийн дотор алдааны хувиар буурахаар.
         return copy.sort((a, b) => {
           const rank = { BLIND: 0, INTERMITTENT: 1, HEALTHY: 2 };
           if (rank[a.status] !== rank[b.status]) {
@@ -125,7 +135,7 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
           return b.failurePercent - a.failurePercent;
         });
     }
-  }, [rows, sortBy]);
+  }, [rows, sortBy, statusFilter]);
 
   const counts = useMemo(
     () => ({
@@ -138,21 +148,24 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
 
   const stats = [
     {
-      title: 'Сохор',
+      status: 'BLIND' as const,
+      title: 'Хэмжилтгүй',
       value: counts.BLIND,
       hint: '6 цагийн турш хүчинтэй хэмжилт өгөөгүй — юу ч харагдахгүй байна',
       icon: IconEyeOff,
       tone: 'text-red-600 dark:text-red-400'
     },
     {
-      title: 'Завсардсан',
+      status: 'INTERMITTENT' as const,
+      title: 'Тасалдалтай',
       value: counts.INTERMITTENT,
       hint: 'Алдаа 10%-иас дээш — хэмжилт заримдаа алга болдог',
       icon: IconAlertTriangle,
       tone: 'text-amber-600 dark:text-amber-400'
     },
     {
-      title: 'Эрүүл',
+      status: 'HEALTHY' as const,
+      title: 'Хэвийн',
       value: counts.HEALTHY,
       hint: 'Хэмжилт тогтмол ирж байна',
       icon: IconCircleCheck,
@@ -168,7 +181,26 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
     <div className='space-y-6'>
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
         {stats.map((stat) => (
-          <Card key={stat.title}>
+          <Card
+            key={stat.title}
+            role='button'
+            tabIndex={0}
+            title='Дарж энэ төлөвөөр шүүнэ'
+            onClick={() =>
+              setStatusFilter((f) => (f === stat.status ? 'ALL' : stat.status))
+            }
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setStatusFilter((f) =>
+                  f === stat.status ? 'ALL' : stat.status
+                );
+              }
+            }}
+            className={`hover:bg-muted/50 cursor-pointer transition-colors ${
+              statusFilter === stat.status ? 'ring-primary ring-2' : ''
+            }`}
+          >
             <CardHeader className='flex flex-row items-center justify-between pb-2'>
               <CardTitle className='text-muted-foreground text-sm font-medium'>
                 {stat.title}
@@ -191,7 +223,7 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
         ))}
 
         {/* Гурван тооны ард заавар. Тоо өөрөө юу гэсэн үг болохоо хэлдэггүй:
-            "Сохор 13" гэдгийг уншиж чадахгүй хүнд энэ тайлан утгагүй бөгөөд
+            "Хэмжилтгүй 13" гэдгийг уншиж чадахгүй хүнд энэ тайлан утгагүй бөгөөд
             бүр аюултай — хоослолтын тоо бүрэн мэт харагдуулна. */}
         <Card className='bg-muted/40'>
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
@@ -208,14 +240,14 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
             </p>
             <p>
               <span className='font-medium text-red-600 dark:text-red-400'>
-                Сохор
+                Хэмжилтгүй
               </span>{' '}
               савыг хоослосон эсэхийг систем мэдэхгүй тул хоослолтын тайланд огт
               харагдахгүй. Мэдрэгчийг нь засах шаардлагатай.
             </p>
             <p>
               <span className='font-medium text-amber-600 dark:text-amber-400'>
-                Завсардсан
+                Тасалдалтай
               </span>{' '}
               савны мэдээлэл ирдэг ч тасалддаг тул дүүргэлт, хоослолт хожимдож
               шинэчлэгдэнэ.
@@ -234,32 +266,59 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
             <div>
               <CardTitle>Мэдрэгчийн эрүүл мэнд</CardTitle>
               <CardDescription>
-                &quot;Сохор&quot; гэдэг нь сав мессеж илгээж байгаа хэдий ч 6
-                цагийн турш хүчинтэй хэмжилт өгөөгүй гэсэн үг — сав хоослогдсон
-                эсэхийг мэдэх боломжгүй болно. Мөр дээр дарж савны дэлгэрэнгүйг
-                харна.
+                &quot;Хэмжилтгүй&quot; гэдэг нь сав мессеж илгээж байгаа хэдий ч
+                6 цагийн турш хүчинтэй хэмжилт өгөөгүй гэсэн үг — сав
+                хоослогдсон эсэхийг мэдэх боломжгүй болно. Мөр дээр дарж савны
+                дэлгэрэнгүйг харна.
               </CardDescription>
             </div>
-            <Select
-              value={sortBy}
-              onValueChange={(value) => setSortBy(value as SortOption)}
-            >
-              <SelectTrigger className='w-full lg:w-64'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='default'>Хамгийн аюултай эхэнд</SelectItem>
-                <SelectItem value='failurePercent'>
-                  Алдааны хувь өндөр эхэнд
-                </SelectItem>
-                <SelectItem value='totalMessages'>
-                  Нийт мессеж ихтэй эхэнд
-                </SelectItem>
-                <SelectItem value='lastSensorOkAt'>
-                  Хамгийн удаан ажиллаагүй эхэнд
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <div className='flex flex-col gap-2 sm:flex-row'>
+              <Select
+                value={statusFilter}
+                onValueChange={(value) =>
+                  setStatusFilter(value as StatusFilter)
+                }
+              >
+                <SelectTrigger className='w-full lg:w-56'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='ALL'>Бүгд ({rows.length})</SelectItem>
+                  <SelectItem value='ABNORMAL'>
+                    Хэвийн бус ({counts.BLIND + counts.INTERMITTENT})
+                  </SelectItem>
+                  <SelectItem value='BLIND'>
+                    {SENSOR_STATUS_LABEL.BLIND} ({counts.BLIND})
+                  </SelectItem>
+                  <SelectItem value='INTERMITTENT'>
+                    {SENSOR_STATUS_LABEL.INTERMITTENT} ({counts.INTERMITTENT})
+                  </SelectItem>
+                  <SelectItem value='HEALTHY'>
+                    {SENSOR_STATUS_LABEL.HEALTHY} ({counts.HEALTHY})
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={sortBy}
+                onValueChange={(value) => setSortBy(value as SortOption)}
+              >
+                <SelectTrigger className='w-full lg:w-64'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='default'>Хамгийн аюултай эхэнд</SelectItem>
+                  <SelectItem value='failurePercent'>
+                    Алдааны хувь өндөр эхэнд
+                  </SelectItem>
+                  <SelectItem value='totalMessages'>
+                    Нийт мессеж ихтэй эхэнд
+                  </SelectItem>
+                  <SelectItem value='lastSensorOkAt'>
+                    Хамгийн удаан ажиллаагүй эхэнд
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -271,7 +330,9 @@ export function SensorHealthReport({ filters }: { filters: ReportFilters }) {
             </div>
           ) : sortedRows.length === 0 ? (
             <div className='text-muted-foreground py-8 text-center text-sm'>
-              Сонгосон хугацаанд мэдрэгчийн мэдээлэл бүртгэгдээгүй байна.
+              {rows.length === 0
+                ? 'Сонгосон хугацаанд мэдрэгчийн мэдээлэл бүртгэгдээгүй байна.'
+                : 'Сонгосон төлөвт тохирох мэдрэгч алга.'}
             </div>
           ) : (
             <div className='overflow-x-auto'>

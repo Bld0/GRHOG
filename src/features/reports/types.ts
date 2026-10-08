@@ -311,7 +311,7 @@ export interface MaintenanceReport {
 // ---------------- Мэдрэгчийн эрүүл мэнд ----------------
 
 /**
- * BLIND — 6 цагийн турш хүчинтэй хэмжилтгүй (мэдрэгч "сохор");
+ * BLIND — 6 цагийн турш хүчинтэй хэмжилтгүй (мэдрэгч хэмжилтгүй);
  * INTERMITTENT — алдаа 10%-иас дээш; HEALTHY — бусад бүх тохиолдол.
  * Ангилалыг backend тооцдог, frontend зөвхөн шошго/өнгө буулгана.
  */
@@ -334,9 +334,9 @@ export interface SensorHealthRow {
 }
 
 export const SENSOR_STATUS_LABEL: Record<SensorStatus, string> = {
-  BLIND: 'Сохор',
-  INTERMITTENT: 'Завсардсан',
-  HEALTHY: 'Эрүүл'
+  BLIND: 'Хэмжилтгүй',
+  INTERMITTENT: 'Тасалдалтай',
+  HEALTHY: 'Хэвийн'
 };
 
 /** clearing-report.tsx-ийн STATUS_STYLE-тэй ижил хэв маяг — outline badge дээр
