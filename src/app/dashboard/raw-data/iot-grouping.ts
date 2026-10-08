@@ -32,6 +32,8 @@ export type Slot =
       at: string;
       parsed: boolean;
       status?: IotRow['status'];
+      /** Мэдрэгч уншаагүй (`sensorReadOk:false`) үеийн errorCode. */
+      sensorError?: string;
     }
   | { received: false };
 
@@ -120,6 +122,7 @@ interface Ev {
   value: string;
   cardId?: string;
   status: IotRow['status'];
+  sensorError?: string;
 }
 
 function toEv(row: IotRow): Ev | null {
@@ -131,6 +134,8 @@ function toEv(row: IotRow): Ev | null {
   const atMs = parseTime(row.received_at);
   let value = '';
   let cardId: string | undefined;
+  const sensorError =
+    obj?.sensorReadOk === false ? String(obj.errorCode ?? 'SENSOR_FAIL') : undefined;
   if (kind === 'battery') value = obj?.battery_Level != null ? String(obj.battery_Level) : '';
   else if (kind === 'storage') value = obj?.storageLevel != null ? String(obj.storageLevel) : '';
   else {
@@ -146,7 +151,8 @@ function toEv(row: IotRow): Ev | null {
     parsed: row.parsed === true || row.parsed === 1,
     value,
     cardId,
-    status: row.status ?? null
+    status: row.status ?? null,
+    sensorError
   };
 }
 
@@ -157,7 +163,8 @@ function slot(e: Ev): Slot {
     id: e.id,
     at: e.at,
     parsed: e.parsed,
-    status: e.status
+    status: e.status,
+    sensorError: e.sensorError
   };
 }
 
@@ -211,12 +218,20 @@ export function groupReads(
 
   for (const ev of evs) {
     const bin = ev.binId;
-    if (ev.kind === 'battery') {
-      pendingBat[bin] = ev;
-      continue;
-    }
-    if (ev.kind === 'storage') {
-      pendingSto[bin] = ev;
+    if (ev.kind === 'battery' || ev.kind === 'storage') {
+      // Шинэ firmware (2026-10) дараалал: battery → card → storage. Card-аас
+      // хойш ирсэн telemetry-г тухайн card-ийн уншуулалтад шууд холбоно.
+      const cur = current[bin];
+      if (
+        cur &&
+        !cur.read[ev.kind].received &&
+        (ev.atMs - cur.cardMs) / 1000 <= corrSec
+      ) {
+        cur.read[ev.kind] = slot(ev);
+        continue;
+      }
+      // Хуучин дараалал (battery → storage → card): дараагийн card-ийг хүлээнэ.
+      (ev.kind === 'battery' ? pendingBat : pendingSto)[bin] = ev;
       continue;
     }
     // card

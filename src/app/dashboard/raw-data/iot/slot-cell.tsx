@@ -4,6 +4,15 @@ import { Icons } from '@/components/icons';
 import type { Slot } from '../iot-grouping';
 
 export function SlotCell({ slot, label }: { slot: Slot; label: string }) {
+  if (slot.received && slot.sensorError) {
+    // Хүсэлт ирсэн ч мэдрэгч уншаагүй — "ирээгүй"-гээс ялгаж харуулна.
+    return (
+      <div className='flex items-center gap-1.5 text-red-500' title='Мэдрэгч уншаагүй (sensorReadOk:false)'>
+        <Icons.check className='h-3.5 w-3.5 shrink-0 text-green-500' />
+        <span className='font-mono text-sm'>{slot.sensorError}</span>
+      </div>
+    );
+  }
   if (slot.received) {
     return (
       <div className='flex items-center gap-1.5'>
