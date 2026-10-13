@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
+
 import { apiClient } from '@/lib/api-client';
+
+const WS_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+const REFRESH_MS = 30_000;
 
 /** Дэлгэрэнгүй дэлгэцэд хэрэглэх савны хэлбэр. */
 export interface BinDetail {
@@ -40,8 +47,10 @@ export function useBinDetail(id: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  // silent: ард нь шинэчлэх — skeleton харуулахгүй, түр зуурын алдаагаар
+  // аль хэдийн харагдаж буй савыг "Алдаа гарлаа" болгохгүй.
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [binResponse, clearingsResponse] = await Promise.all([
         apiClient.fetchWithAuth(`/api/bins/${id}`),
@@ -49,6 +58,7 @@ export function useBinDetail(id: string) {
       ]);
 
       if (!binResponse.ok) {
+        if (silent) return;
         setError(binResponse.status === 404 ? 'Сав олдсонгүй' : 'Алдаа гарлаа');
         return;
       }
@@ -91,6 +101,7 @@ export function useBinDetail(id: string) {
           : new Date(raw.createdAt)
       });
     } catch (err) {
+      if (silent) return;
       setError(err instanceof Error ? err.message : 'Алдаа гарлаа');
     } finally {
       setLoading(false);
@@ -101,5 +112,40 @@ export function useBinDetail(id: string) {
     load();
   }, [load]);
 
-  return { bin, clearings, loading, error, refetch: load };
+  // Хуудас нэг удаа л татдаг байсан тул нээлттэй үлдсэн таб шинэ заалтыг
+  // (жнь. 100% → 48%) гар аргаар сэргээх хүртэл харуулдаггүй байв.
+  useEffect(() => {
+    const visible = () => document.visibilityState === 'visible';
+    const id = setInterval(() => {
+      if (visible()) load(true);
+    }, REFRESH_MS);
+    const onVisible = () => {
+      if (visible()) load(true);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [load]);
+
+  // Backend IoT мөрийг commit хиймэгц `/topic/bins/{binId}` руу дохио цацна —
+  // дээрх polling нь WS тасарсан үеийн нөөц.
+  const binId = bin?.binId;
+  useEffect(() => {
+    if (!binId) return;
+    const client = new Client({
+      webSocketFactory: () => new SockJS(`${WS_URL}/ws`),
+      reconnectDelay: 5000,
+      onConnect: () => {
+        client.subscribe(`/topic/bins/${binId.toUpperCase()}`, () => load(true));
+      }
+    });
+    client.activate();
+    return () => {
+      client.deactivate();
+    };
+  }, [binId, load]);
+
+  return { bin, clearings, loading, error, refetch: () => load() };
 }
