@@ -55,13 +55,14 @@ type ApiResponse = {
   groupBy?: 'location' | 'bin';
 };
 
+// Дүүргийн сонголтгүй: хүсэлт үргэлж Чингэлтэйгээр шүүнэ.
+const district = 'Чингэлтэй';
+
 export function BarGraph() {
   const { isKhorooLeader } = useRolePermissions();
   const [range, setRange] = React.useState<
     '12month' | 'month' | 'week' | 'today'
   >('month');
-  const [district, setDistrict] = React.useState<string>('');
-  const [districts, setDistricts] = React.useState<string[]>([]);
   const [khoroo, setKhoroo] = React.useState<number | ''>('');
   const [khorooList, setKhorooList] = React.useState<number[]>([]);
   const [location, setLocation] = React.useState<string>('');
@@ -76,38 +77,9 @@ export function BarGraph() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Fetch available districts (from location-stats endpoint)
+  // Fetch khoroo list
   React.useEffect(() => {
     let mounted = true;
-    // fetch districts list from new endpoint that returns string[]
-    apiClient.fetchWithAuth(
-      buildApiUrl(
-        API_CONFIG.ENDPOINTS.DASHBOARD.GET_DISTRICT ?? '/dashboard/getDistrict'
-      )
-    )
-      .then((r) => r.json())
-      .then((json) => {
-        if (!mounted) return;
-        // endpoint returns an array of district strings
-        const locs = Array.isArray(json)
-          ? json.map((s: any) => String(s)).filter(Boolean)
-          : [];
-        setDistricts(locs);
-      })
-      .catch(() => {
-        // ignore - districts remain empty and user can type
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  // Fetch khoroo list when district changes
-  React.useEffect(() => {
-    let mounted = true;
-    setKhorooList([]);
-    setKhoroo('');
-    if (!district) return;
     apiClient
       .fetchWithAuth(
         buildApiUrl(
@@ -128,13 +100,13 @@ export function BarGraph() {
     return () => {
       mounted = false;
     };
-  }, [district]);
+  }, []);
 
   // Хороо солигдвол байршлын сонголт хуучирна
   React.useEffect(() => {
     setLocation('');
     setLocations([]);
-  }, [district, khoroo]);
+  }, [khoroo]);
 
   // Fetch khoroo usage when range or filters change
   React.useEffect(() => {
@@ -142,12 +114,15 @@ export function BarGraph() {
     setLoading(true);
     setError(null);
     const params = new URLSearchParams();
-    if (district) params.set('district', district);
+    params.set('district', district);
     if (range) params.set('range', range);
     if (khoroo !== '') params.set('khoroo', String(khoroo));
     if (location) params.set('location', location);
 
-    apiClient.fetchWithAuth(buildApiUrl(`/dashboard/khoroo-usage?${params.toString()}`))
+    apiClient
+      .fetchWithAuth(
+        buildApiUrl(`/dashboard/khoroo-usage?${params.toString()}`)
+      )
       .then(async (r) => {
         if (!r.ok) throw new Error(await r.text());
         return r.json();
@@ -195,7 +170,7 @@ export function BarGraph() {
     return () => {
       mounted = false;
     };
-  }, [range, district, khoroo, location]);
+  }, [range, khoroo, location]);
 
   // client-only guard (chart libs may reference window)
   const [isClient, setIsClient] = React.useState(false);
@@ -208,7 +183,9 @@ export function BarGraph() {
         <div className='flex flex-1 flex-col justify-center gap-1 px-6 !py-0'>
           <CardTitle>Хорооны ашиглалт</CardTitle>
           <CardDescription>
-            <span className='@[540px]/card:hidden'>Хугацаа ба дүүрэг</span>
+            <span className='@[540px]/card:hidden'>
+              Хугацаа, хороо, байршил
+            </span>
           </CardDescription>
         </div>
         <div className='flex items-center gap-2 px-4 py-3'>
@@ -230,32 +207,12 @@ export function BarGraph() {
             </button>
           ))}
 
-          {/* district select or input */}
           <div className='ml-3 flex items-center gap-2'>
             {/* Дарга ганц дүүрэг/хороо хардаг — шүүлтүүрийн оронд статик
                 шошго (pie-graph, reports-view-тэй ижил зарчим). */}
             {isKhorooLeader ? (
               <LeaderAreaBadge />
             ) : (
-              <div className='flex items-center gap-2'>
-            <label className='sr-only'>District</label>
-            <Select
-              value={district === '' ? '__all' : district}
-              onValueChange={(v) => setDistrict(v === '__all' ? '' : v)}
-            >
-              <SelectTrigger className='w-[180px] rounded border px-2 py-1 text-sm'>
-                <SelectValue placeholder='Бүх дүүрэг' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='__all'>Бүх дүүрэг</SelectItem>
-                {districts.map((d) => (
-                  <SelectItem key={d} value={d}>
-                    {d}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {district && (
               <Select
                 value={khoroo === '' ? '__all' : String(khoroo)}
                 onValueChange={(v) => setKhoroo(v === '__all' ? '' : Number(v))}
@@ -273,26 +230,24 @@ export function BarGraph() {
                 </SelectContent>
               </Select>
             )}
-              </div>
-            )}
-            {(location || locations.length > 0) && (
-              <Select
-                value={location === '' ? '__all' : location}
-                onValueChange={(v) => setLocation(v === '__all' ? '' : v)}
-              >
-                <SelectTrigger className='w-[180px] rounded border px-2 py-1 text-sm'>
-                  <SelectValue placeholder='Бүх байршил' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='__all'>Бүх байршил</SelectItem>
-                  {locations.map((l) => (
-                    <SelectItem key={l} value={l}>
-                      {l}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            {/* Хороо сонгоогүй үед идэвхгүй (дарга өөрийн хороотой) */}
+            <Select
+              value={location === '' ? '__all' : location}
+              onValueChange={(v) => setLocation(v === '__all' ? '' : v)}
+              disabled={!isKhorooLeader && khoroo === ''}
+            >
+              <SelectTrigger className='w-[180px] rounded border px-2 py-1 text-sm'>
+                <SelectValue placeholder='Бүх байршил' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='__all'>Бүх байршил</SelectItem>
+                {locations.map((l) => (
+                  <SelectItem key={l} value={l}>
+                    {l}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </CardHeader>
@@ -340,9 +295,7 @@ export function BarGraph() {
                       className='w-[160px]'
                       nameKey='value'
                       labelFormatter={(value) =>
-                        groupBy === 'khoroo'
-                          ? `Хороо ${value}`
-                          : String(value)
+                        groupBy === 'khoroo' ? `Хороо ${value}` : String(value)
                       }
                       formatter={(value, name, props) => {
                         const row = props?.payload ?? {};
