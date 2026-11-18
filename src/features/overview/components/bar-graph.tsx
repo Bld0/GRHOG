@@ -52,6 +52,7 @@ type ApiResponse = {
   range?: string;
   type?: Record<string, number[]>;
   district?: string;
+  groupBy?: 'location' | 'bin';
 };
 
 export function BarGraph() {
@@ -61,6 +62,14 @@ export function BarGraph() {
   >('month');
   const [district, setDistrict] = React.useState<string>('');
   const [districts, setDistricts] = React.useState<string[]>([]);
+  const [khoroo, setKhoroo] = React.useState<number | ''>('');
+  const [khorooList, setKhorooList] = React.useState<number[]>([]);
+  const [location, setLocation] = React.useState<string>('');
+  // Байршлын сонголтууд = хороогоор задалсан хариуны label-ууд
+  const [locations, setLocations] = React.useState<string[]>([]);
+  const [groupBy, setGroupBy] = React.useState<'khoroo' | 'location' | 'bin'>(
+    'khoroo'
+  );
   const [data, setData] = React.useState<
     Array<{ name: string; value: number }>
   >([]);
@@ -93,7 +102,41 @@ export function BarGraph() {
     };
   }, []);
 
-  // Fetch khoroo usage when range or district changes
+  // Fetch khoroo list when district changes
+  React.useEffect(() => {
+    let mounted = true;
+    setKhorooList([]);
+    setKhoroo('');
+    if (!district) return;
+    apiClient
+      .fetchWithAuth(
+        buildApiUrl(
+          API_CONFIG.ENDPOINTS.DASHBOARD.GET_KHOROO +
+            `?district=${encodeURIComponent(district)}`
+        )
+      )
+      .then((r) => r.json())
+      .then((json) => {
+        if (!mounted) return;
+        setKhorooList(
+          Array.isArray(json)
+            ? json.map((n: any) => Number(n)).filter((x) => !Number.isNaN(x))
+            : []
+        );
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, [district]);
+
+  // Хороо солигдвол байршлын сонголт хуучирна
+  React.useEffect(() => {
+    setLocation('');
+    setLocations([]);
+  }, [district, khoroo]);
+
+  // Fetch khoroo usage when range or filters change
   React.useEffect(() => {
     let mounted = true;
     setLoading(true);
@@ -101,6 +144,8 @@ export function BarGraph() {
     const params = new URLSearchParams();
     if (district) params.set('district', district);
     if (range) params.set('range', range);
+    if (khoroo !== '') params.set('khoroo', String(khoroo));
+    if (location) params.set('location', location);
 
     apiClient.fetchWithAuth(buildApiUrl(`/dashboard/khoroo-usage?${params.toString()}`))
       .then(async (r) => {
@@ -111,6 +156,8 @@ export function BarGraph() {
         if (!mounted) return;
         const labels = Array.isArray(json.labels) ? json.labels : [];
         const values = Array.isArray(json.data) ? json.data : [];
+        setGroupBy(json.groupBy ?? 'khoroo');
+        if (json.groupBy === 'location') setLocations(labels);
 
         // chartData үүсгэх - tooltip-д ашиглах
         const chartData = labels.map((label, idx) => {
@@ -134,7 +181,6 @@ export function BarGraph() {
           type: chartData // Tooltip-д ашиглах бүх өгөгдөл
         }));
 
-        console.log('Khoroo usage data:', mapped);
         setData(mapped);
       })
       .catch((err) => {
@@ -149,7 +195,7 @@ export function BarGraph() {
     return () => {
       mounted = false;
     };
-  }, [range, district]);
+  }, [range, district, khoroo, location]);
 
   // client-only guard (chart libs may reference window)
   const [isClient, setIsClient] = React.useState(false);
@@ -185,13 +231,13 @@ export function BarGraph() {
           ))}
 
           {/* district select or input */}
-          <div className='ml-3'>
+          <div className='ml-3 flex items-center gap-2'>
             {/* Дарга ганц дүүрэг/хороо хардаг — шүүлтүүрийн оронд статик
                 шошго (pie-graph, reports-view-тэй ижил зарчим). */}
             {isKhorooLeader ? (
               <LeaderAreaBadge />
             ) : (
-              <>
+              <div className='flex items-center gap-2'>
             <label className='sr-only'>District</label>
             <Select
               value={district === '' ? '__all' : district}
@@ -209,7 +255,43 @@ export function BarGraph() {
                 ))}
               </SelectContent>
             </Select>
-              </>
+            {district && (
+              <Select
+                value={khoroo === '' ? '__all' : String(khoroo)}
+                onValueChange={(v) => setKhoroo(v === '__all' ? '' : Number(v))}
+              >
+                <SelectTrigger className='w-[130px] rounded border px-2 py-1 text-sm'>
+                  <SelectValue placeholder='Бүх хороо' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='__all'>Бүх хороо</SelectItem>
+                  {khorooList.map((k) => (
+                    <SelectItem key={k} value={String(k)}>
+                      {k}-р хороо
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+              </div>
+            )}
+            {(location || locations.length > 0) && (
+              <Select
+                value={location === '' ? '__all' : location}
+                onValueChange={(v) => setLocation(v === '__all' ? '' : v)}
+              >
+                <SelectTrigger className='w-[180px] rounded border px-2 py-1 text-sm'>
+                  <SelectValue placeholder='Бүх байршил' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='__all'>Бүх байршил</SelectItem>
+                  {locations.map((l) => (
+                    <SelectItem key={l} value={l}>
+                      {l}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
         </div>
@@ -257,7 +339,11 @@ export function BarGraph() {
                     <ChartTooltipContent
                       className='w-[160px]'
                       nameKey='value'
-                      labelFormatter={(value) => String('Хороо ' + value)}
+                      labelFormatter={(value) =>
+                        groupBy === 'khoroo'
+                          ? `Хороо ${value}`
+                          : String(value)
+                      }
                       formatter={(value, name, props) => {
                         const row = props?.payload ?? {};
 
