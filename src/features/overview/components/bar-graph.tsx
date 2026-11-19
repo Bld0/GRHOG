@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/chart';
 import { BarGraphSkeleton } from './bar-graph-skeleton';
 import { UsageHeatmap } from './usage-heatmap';
+import { UsageTrend, TREND_PERIODS, type TrendPeriod } from './usage-trend';
 import { LeaderAreaBadge } from '@/components/layout/leader-area-badge';
 import { useRolePermissions } from '@/hooks/use-role-permissions';
 
@@ -64,10 +65,13 @@ export function BarGraph() {
   const [range, setRange] = React.useState<
     '12month' | 'month' | 'week' | 'today'
   >('month');
-  const [view, setView] = React.useState<'bar' | 'heatmap'>('bar');
+  const [view, setView] = React.useState<'trend' | 'bar' | 'heatmap'>('trend');
+  const [trendPeriod, setTrendPeriod] = React.useState<TrendPeriod>('week');
   const [khoroo, setKhoroo] = React.useState<number | ''>('');
   const [khorooList, setKhorooList] = React.useState<number[]>([]);
   const [location, setLocation] = React.useState<string>('');
+  // Байршил сонгоход хариу сав тус бүрээр ирдэг — сав шүүх нь client талд
+  const [bin, setBin] = React.useState<string>('');
   // Байршлын сонголтууд = хороогоор задалсан хариуны label-ууд
   const [locations, setLocations] = React.useState<string[]>([]);
   const [groupBy, setGroupBy] = React.useState<'khoroo' | 'location' | 'bin'>(
@@ -109,6 +113,8 @@ export function BarGraph() {
     setLocation('');
     setLocations([]);
   }, [khoroo]);
+
+  React.useEffect(() => setBin(''), [khoroo, location]);
 
   // Fetch khoroo usage when range or filters change
   React.useEffect(() => {
@@ -179,6 +185,9 @@ export function BarGraph() {
   React.useEffect(() => setIsClient(true), []);
   if (!isClient) return null;
 
+  const bins = groupBy === 'bin' ? data.map((d) => d.name) : [];
+  const shown = bin ? data.filter((d) => d.name === bin) : data;
+
   return (
     <Card className='@container/card !pt-3'>
       <CardHeader className='flex flex-col items-stretch space-y-0 border-b !p-0 sm:flex-row'>
@@ -186,7 +195,7 @@ export function BarGraph() {
           <div className='flex items-center gap-3'>
             <CardTitle>Хорооны ашиглалт</CardTitle>
             <div className='flex rounded border text-xs'>
-              {(['bar', 'heatmap'] as const).map((v) => (
+              {(['trend', 'bar', 'heatmap'] as const).map((v) => (
                 <button
                   key={v}
                   data-active={view === v}
@@ -197,7 +206,11 @@ export function BarGraph() {
                   }}
                   className='data-[active=true]:bg-primary/10 px-2 py-1'
                 >
-                  {v === 'bar' ? 'График' : 'Heatmap'}
+                  {v === 'trend'
+                    ? 'Өсөлт/бууралт'
+                    : v === 'bar'
+                      ? 'График'
+                      : 'Heatmap'}
                 </button>
               ))}
             </div>
@@ -209,75 +222,114 @@ export function BarGraph() {
           </CardDescription>
         </div>
         <div className='flex items-center gap-2 px-4 py-3'>
+          {view === 'trend' &&
+            TREND_PERIODS.map((p) => (
+              <button
+                key={p.value}
+                data-active={trendPeriod === p.value}
+                onClick={() => setTrendPeriod(p.value)}
+                className='data-[active=true]:bg-primary/5 hover:bg-primary/5 relative rounded px-3 py-2 text-sm'
+              >
+                {p.label}
+              </button>
+            ))}
           {/* range buttons */}
-          {(view === 'heatmap'
-            ? (['12month', 'month', 'week'] as const)
-            : (['12month', 'month', 'week', 'today'] as const)
-          ).map((r) => (
-            <button
-              key={r}
-              data-active={range === r}
-              onClick={() => setRange(r)}
-              className='data-[active=true]:bg-primary/5 hover:bg-primary/5 relative rounded px-3 py-2 text-sm'
-            >
-              {r === '12month'
-                ? '12 сар'
-                : r === 'month'
-                  ? 'Сар'
-                  : r === 'week'
-                    ? '7 хоног'
-                    : 'Өнөөдөр'}
-            </button>
-          ))}
-
-          <div className='ml-3 flex items-center gap-2'>
-            {/* Дарга ганц дүүрэг/хороо хардаг — шүүлтүүрийн оронд статик
+          {view !== 'trend' &&
+            (view === 'heatmap'
+              ? (['12month', 'month', 'week'] as const)
+              : (['12month', 'month', 'week', 'today'] as const)
+            ).map((r) => (
+              <button
+                key={r}
+                data-active={range === r}
+                onClick={() => setRange(r)}
+                className='data-[active=true]:bg-primary/5 hover:bg-primary/5 relative rounded px-3 py-2 text-sm'
+              >
+                {r === '12month'
+                  ? '12 сар'
+                  : r === 'month'
+                    ? 'Сар'
+                    : r === 'week'
+                      ? '7 хоног'
+                      : 'Өнөөдөр'}
+              </button>
+            ))}
+          {view !== 'trend' && (
+            <div className='ml-3 flex items-center gap-2'>
+              {/* Дарга ганц дүүрэг/хороо хардаг — шүүлтүүрийн оронд статик
                 шошго (pie-graph, reports-view-тэй ижил зарчим). */}
-            {isKhorooLeader ? (
-              <LeaderAreaBadge />
-            ) : (
-              <Select
-                value={khoroo === '' ? '__all' : String(khoroo)}
-                onValueChange={(v) => setKhoroo(v === '__all' ? '' : Number(v))}
-              >
-                <SelectTrigger className='w-[130px] rounded border px-2 py-1 text-sm'>
-                  <SelectValue placeholder='Бүх хороо' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='__all'>Бүх хороо</SelectItem>
-                  {khorooList.map((k) => (
-                    <SelectItem key={k} value={String(k)}>
-                      {k}-р хороо
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {/* Хороо сонгоогүй үед идэвхгүй (дарга өөрийн хороотой) */}
-            {view === 'bar' && (
-              <Select
-                value={location === '' ? '__all' : location}
-                onValueChange={(v) => setLocation(v === '__all' ? '' : v)}
-                disabled={!isKhorooLeader && khoroo === ''}
-              >
-                <SelectTrigger className='w-[180px] rounded border px-2 py-1 text-sm'>
-                  <SelectValue placeholder='Бүх байршил' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='__all'>Бүх байршил</SelectItem>
-                  {locations.map((l) => (
-                    <SelectItem key={l} value={l}>
-                      {l}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
+              {isKhorooLeader ? (
+                <LeaderAreaBadge />
+              ) : (
+                <Select
+                  value={khoroo === '' ? '__all' : String(khoroo)}
+                  onValueChange={(v) =>
+                    setKhoroo(v === '__all' ? '' : Number(v))
+                  }
+                >
+                  <SelectTrigger className='w-[130px] rounded border px-2 py-1 text-sm'>
+                    <SelectValue placeholder='Бүх хороо' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__all'>Бүх хороо</SelectItem>
+                    {khorooList.map((k) => (
+                      <SelectItem key={k} value={String(k)}>
+                        {k}-р хороо
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {/* Хороо сонгоогүй үед идэвхгүй (дарга өөрийн хороотой) */}
+              {view === 'bar' && (
+                <Select
+                  value={location === '' ? '__all' : location}
+                  onValueChange={(v) => setLocation(v === '__all' ? '' : v)}
+                  disabled={!isKhorooLeader && khoroo === ''}
+                >
+                  <SelectTrigger className='w-[180px] rounded border px-2 py-1 text-sm'>
+                    <SelectValue placeholder='Бүх байршил' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__all'>Бүх байршил</SelectItem>
+                    {locations.map((l) => (
+                      <SelectItem key={l} value={l}>
+                        {l}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {view === 'bar' && location !== '' && (
+                <Select
+                  value={bin === '' ? '__all' : bin}
+                  onValueChange={(v) => setBin(v === '__all' ? '' : v)}
+                >
+                  <SelectTrigger className='w-[140px] rounded border px-2 py-1 text-sm'>
+                    <SelectValue placeholder='Бүх сав' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__all'>Бүх сав</SelectItem>
+                    {bins.map((b) => (
+                      <SelectItem key={b} value={b}>
+                        {b}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
-        {view === 'heatmap' && range !== 'today' ? (
+        {view === 'trend' ? (
+          <UsageTrend
+            district={district}
+            period={trendPeriod}
+            isLeader={isKhorooLeader}
+          />
+        ) : view === 'heatmap' && range !== 'today' ? (
           <UsageHeatmap district={district} range={range} khoroo={khoroo} />
         ) : (
           <ChartContainer
@@ -294,7 +346,7 @@ export function BarGraph() {
               </div>
             ) : (
               <ResponsiveContainer width='100%' height='100%'>
-                <BarChart data={data} margin={{ left: 12, right: 12 }}>
+                <BarChart data={shown} margin={{ left: 12, right: 12 }}>
                   <defs>
                     <linearGradient id='fillBar' x1='0' y1='0' x2='0' y2='1'>
                       <stop
