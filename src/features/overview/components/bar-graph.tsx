@@ -35,6 +35,7 @@ import {
 import { BarGraphSkeleton } from './bar-graph-skeleton';
 import { UsageHeatmap } from './usage-heatmap';
 import { UsageTrend, TREND_PERIODS, type TrendPeriod } from './usage-trend';
+import { IconMaximize, IconMinimize } from '@tabler/icons-react';
 import { LeaderAreaBadge } from '@/components/layout/leader-area-badge';
 import { useRolePermissions } from '@/hooks/use-role-permissions';
 
@@ -182,261 +183,296 @@ export function BarGraph() {
 
   // client-only guard (chart libs may reference window)
   const [isClient, setIsClient] = React.useState(false);
+  // Томруулах: браузерын Fullscreen API — Esc дарахад өөрөө буцна
+  const wrapRef = React.useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = React.useState(false);
+  React.useEffect(() => {
+    const onChange = () =>
+      setExpanded(document.fullscreenElement === wrapRef.current);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
   React.useEffect(() => setIsClient(true), []);
   if (!isClient) return null;
+
+  const toggleFullscreen = () =>
+    document.fullscreenElement
+      ? document.exitFullscreen()
+      : wrapRef.current?.requestFullscreen();
 
   const bins = groupBy === 'bin' ? data.map((d) => d.name) : [];
   const shown = bin ? data.filter((d) => d.name === bin) : data;
 
   return (
-    <Card className='@container/card !pt-3'>
-      <CardHeader className='flex flex-col items-stretch space-y-0 border-b !p-0 sm:flex-row'>
-        <div className='flex flex-1 flex-col justify-center gap-1 px-6 !py-0'>
-          <div className='flex items-center gap-3'>
-            <CardTitle>Хорооны ашиглалт</CardTitle>
-            <div className='flex rounded border text-xs'>
-              {(['trend', 'bar', 'heatmap'] as const).map((v) => (
+    <div
+      ref={wrapRef}
+      className={expanded ? 'bg-background overflow-auto p-6' : undefined}
+    >
+      <Card className='@container/card !pt-3'>
+        <CardHeader className='flex flex-col items-stretch space-y-0 border-b !p-0 sm:flex-row'>
+          <div className='flex flex-1 flex-col justify-center gap-1 px-6 !py-0'>
+            <div className='flex items-center gap-3'>
+              <CardTitle>Хорооны ашиглалт</CardTitle>
+              <div className='flex rounded border text-xs'>
+                {(['trend', 'bar', 'heatmap'] as const).map((v) => (
+                  <button
+                    key={v}
+                    data-active={view === v}
+                    onClick={() => {
+                      setView(v);
+                      // Heatmap өдөр/сараар задардаг тул "Өнөөдөр" байхгүй
+                      if (v === 'heatmap' && range === 'today')
+                        setRange('week');
+                    }}
+                    className='data-[active=true]:bg-primary/10 px-2 py-1'
+                  >
+                    {v === 'trend'
+                      ? 'Өсөлт/бууралт'
+                      : v === 'bar'
+                        ? 'График'
+                        : 'Heatmap'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <CardDescription>
+              <span className='@[540px]/card:hidden'>
+                Хугацаа, хороо, байршил
+              </span>
+            </CardDescription>
+          </div>
+          <div className='flex items-center gap-2 px-4 py-3'>
+            {view === 'trend' &&
+              TREND_PERIODS.map((p) => (
                 <button
-                  key={v}
-                  data-active={view === v}
-                  onClick={() => {
-                    setView(v);
-                    // Heatmap өдөр/сараар задардаг тул "Өнөөдөр" байхгүй
-                    if (v === 'heatmap' && range === 'today') setRange('week');
-                  }}
-                  className='data-[active=true]:bg-primary/10 px-2 py-1'
+                  key={p.value}
+                  data-active={trendPeriod === p.value}
+                  onClick={() => setTrendPeriod(p.value)}
+                  className='data-[active=true]:bg-primary/5 hover:bg-primary/5 relative rounded px-3 py-2 text-sm'
                 >
-                  {v === 'trend'
-                    ? 'Өсөлт/бууралт'
-                    : v === 'bar'
-                      ? 'График'
-                      : 'Heatmap'}
+                  {p.label}
                 </button>
               ))}
-            </div>
-          </div>
-          <CardDescription>
-            <span className='@[540px]/card:hidden'>
-              Хугацаа, хороо, байршил
-            </span>
-          </CardDescription>
-        </div>
-        <div className='flex items-center gap-2 px-4 py-3'>
-          {view === 'trend' &&
-            TREND_PERIODS.map((p) => (
-              <button
-                key={p.value}
-                data-active={trendPeriod === p.value}
-                onClick={() => setTrendPeriod(p.value)}
-                className='data-[active=true]:bg-primary/5 hover:bg-primary/5 relative rounded px-3 py-2 text-sm'
-              >
-                {p.label}
-              </button>
-            ))}
-          {/* range buttons */}
-          {view !== 'trend' &&
-            (view === 'heatmap'
-              ? (['12month', 'month', 'week'] as const)
-              : (['12month', 'month', 'week', 'today'] as const)
-            ).map((r) => (
-              <button
-                key={r}
-                data-active={range === r}
-                onClick={() => setRange(r)}
-                className='data-[active=true]:bg-primary/5 hover:bg-primary/5 relative rounded px-3 py-2 text-sm'
-              >
-                {r === '12month'
-                  ? '12 сар'
-                  : r === 'month'
-                    ? 'Сар'
-                    : r === 'week'
-                      ? '7 хоног'
-                      : 'Өнөөдөр'}
-              </button>
-            ))}
-          {view !== 'trend' && (
-            <div className='ml-3 flex items-center gap-2'>
-              {/* Дарга ганц дүүрэг/хороо хардаг — шүүлтүүрийн оронд статик
+            {/* range buttons */}
+            {view !== 'trend' &&
+              (view === 'heatmap'
+                ? (['12month', 'month', 'week'] as const)
+                : (['12month', 'month', 'week', 'today'] as const)
+              ).map((r) => (
+                <button
+                  key={r}
+                  data-active={range === r}
+                  onClick={() => setRange(r)}
+                  className='data-[active=true]:bg-primary/5 hover:bg-primary/5 relative rounded px-3 py-2 text-sm'
+                >
+                  {r === '12month'
+                    ? '12 сар'
+                    : r === 'month'
+                      ? 'Сар'
+                      : r === 'week'
+                        ? '7 хоног'
+                        : 'Өнөөдөр'}
+                </button>
+              ))}
+            {view !== 'trend' && (
+              <div className='ml-3 flex items-center gap-2'>
+                {/* Дарга ганц дүүрэг/хороо хардаг — шүүлтүүрийн оронд статик
                 шошго (pie-graph, reports-view-тэй ижил зарчим). */}
-              {isKhorooLeader ? (
-                <LeaderAreaBadge />
-              ) : (
-                <Select
-                  value={khoroo === '' ? '__all' : String(khoroo)}
-                  onValueChange={(v) =>
-                    setKhoroo(v === '__all' ? '' : Number(v))
-                  }
-                >
-                  <SelectTrigger className='w-[130px] rounded border px-2 py-1 text-sm'>
-                    <SelectValue placeholder='Бүх хороо' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='__all'>Бүх хороо</SelectItem>
-                    {khorooList.map((k) => (
-                      <SelectItem key={k} value={String(k)}>
-                        {k}-р хороо
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {/* Хороо сонгоогүй үед идэвхгүй (дарга өөрийн хороотой) */}
-              {view === 'bar' && (
-                <Select
-                  value={location === '' ? '__all' : location}
-                  onValueChange={(v) => setLocation(v === '__all' ? '' : v)}
-                  disabled={!isKhorooLeader && khoroo === ''}
-                >
-                  <SelectTrigger className='w-[180px] rounded border px-2 py-1 text-sm'>
-                    <SelectValue placeholder='Бүх байршил' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='__all'>Бүх байршил</SelectItem>
-                    {locations.map((l) => (
-                      <SelectItem key={l} value={l}>
-                        {l}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {view === 'bar' && location !== '' && (
-                <Select
-                  value={bin === '' ? '__all' : bin}
-                  onValueChange={(v) => setBin(v === '__all' ? '' : v)}
-                >
-                  <SelectTrigger className='w-[140px] rounded border px-2 py-1 text-sm'>
-                    <SelectValue placeholder='Бүх сав' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='__all'>Бүх сав</SelectItem>
-                    {bins.map((b) => (
-                      <SelectItem key={b} value={b}>
-                        {b}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
-        {view === 'trend' ? (
-          <UsageTrend
-            district={district}
-            period={trendPeriod}
-            isLeader={isKhorooLeader}
-          />
-        ) : view === 'heatmap' && range !== 'today' ? (
-          <UsageHeatmap district={district} range={range} khoroo={khoroo} />
-        ) : (
-          <ChartContainer
-            config={chartConfig}
-            className='aspect-auto h-[300px] w-full'
-          >
-            {loading ? (
-              <BarGraphSkeleton />
-            ) : error ? (
-              <div className='text-destructive p-4 text-sm'>Алдаа: {error}</div>
-            ) : data.length === 0 ? (
-              <div className='text-muted-foreground p-4 text-sm'>
-                Мэдээлэл олдсонгүй
-              </div>
-            ) : (
-              <ResponsiveContainer width='100%' height='100%'>
-                <BarChart data={shown} margin={{ left: 12, right: 12 }}>
-                  <defs>
-                    <linearGradient id='fillBar' x1='0' y1='0' x2='0' y2='1'>
-                      <stop
-                        offset='0%'
-                        stopColor={chartConfig.value.color}
-                        stopOpacity={0.8}
-                      />
-                      <stop
-                        offset='100%'
-                        stopColor={chartConfig.value.color}
-                        stopOpacity={0.2}
-                      />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey='name'
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                  />
-                  <ChartTooltip
-                    cursor={{ fill: chartConfig.value.color, opacity: 0.05 }}
-                    content={
-                      <ChartTooltipContent
-                        className='w-[160px]'
-                        nameKey='value'
-                        labelFormatter={(value) =>
-                          groupBy === 'khoroo'
-                            ? `Хороо ${value}`
-                            : String(value)
-                        }
-                        formatter={(value, name, props) => {
-                          const row = props?.payload ?? {};
-
-                          // type array-с data.name-тэй тэнцэх мэдээллийг олох
-                          if (row.type && Array.isArray(row.type)) {
-                            const matchedType = row.type.find(
-                              (item: any) => item.name === row.name
-                            );
-
-                            if (matchedType) {
-                              // 0-ээс их утгатай талбаруудыг шүүх
-                              const breakdown = Object.entries(matchedType)
-                                .filter(([k, v]) => {
-                                  // exclude name/total keys
-                                  if (k === 'name' || k === 'total')
-                                    return false;
-                                  // coerce/validate numeric value
-                                  const num =
-                                    typeof v === 'number'
-                                      ? v
-                                      : Number(v as any);
-                                  return !Number.isNaN(num) && num > 0;
-                                })
-                                .map(([k, v]) => `${k}: ${String(v)}`)
-                                .join(', ');
-
-                              return (
-                                <div className='space-y-1'>
-                                  <div className='font-semibold'>
-                                    Нийт: {matchedType.total}
-                                  </div>
-                                  {breakdown && (
-                                    <div className='text-muted-foreground text-xs'>
-                                      {breakdown}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            }
-                          }
-
-                          // Тохирох өгөгдөл олдоогүй бол энгийн утга харуулах
-                          return [`${value || 0}`];
-                        }}
-                      />
+                {isKhorooLeader ? (
+                  <LeaderAreaBadge />
+                ) : (
+                  <Select
+                    value={khoroo === '' ? '__all' : String(khoroo)}
+                    onValueChange={(v) =>
+                      setKhoroo(v === '__all' ? '' : Number(v))
                     }
-                  />
-                  <Bar
-                    dataKey='value'
-                    fill='url(#fillBar)'
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+                  >
+                    <SelectTrigger className='w-[130px] rounded border px-2 py-1 text-sm'>
+                      <SelectValue placeholder='Бүх хороо' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='__all'>Бүх хороо</SelectItem>
+                      {khorooList.map((k) => (
+                        <SelectItem key={k} value={String(k)}>
+                          {k}-р хороо
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {/* Хороо сонгоогүй үед идэвхгүй (дарга өөрийн хороотой) */}
+                {view === 'bar' && (
+                  <Select
+                    value={location === '' ? '__all' : location}
+                    onValueChange={(v) => setLocation(v === '__all' ? '' : v)}
+                    disabled={!isKhorooLeader && khoroo === ''}
+                  >
+                    <SelectTrigger className='w-[180px] rounded border px-2 py-1 text-sm'>
+                      <SelectValue placeholder='Бүх байршил' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='__all'>Бүх байршил</SelectItem>
+                      {locations.map((l) => (
+                        <SelectItem key={l} value={l}>
+                          {l}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {view === 'bar' && location !== '' && (
+                  <Select
+                    value={bin === '' ? '__all' : bin}
+                    onValueChange={(v) => setBin(v === '__all' ? '' : v)}
+                  >
+                    <SelectTrigger className='w-[140px] rounded border px-2 py-1 text-sm'>
+                      <SelectValue placeholder='Бүх сав' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='__all'>Бүх сав</SelectItem>
+                      {bins.map((b) => (
+                        <SelectItem key={b} value={b}>
+                          {b}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             )}
-          </ChartContainer>
-        )}
-      </CardContent>
-    </Card>
+            <button
+              onClick={toggleFullscreen}
+              title={expanded ? 'Жижигрүүлэх (Esc)' : 'Томруулах'}
+              aria-label={expanded ? 'Жижигрүүлэх' : 'Томруулах'}
+              className='hover:bg-primary/5 text-muted-foreground hover:text-foreground ml-1 rounded p-2'
+            >
+              {expanded ? (
+                <IconMinimize className='size-4' />
+              ) : (
+                <IconMaximize className='size-4' />
+              )}
+            </button>
+          </div>
+        </CardHeader>
+        <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
+          {view === 'trend' ? (
+            <UsageTrend
+              district={district}
+              period={trendPeriod}
+              isLeader={isKhorooLeader}
+              expanded={expanded}
+            />
+          ) : view === 'heatmap' && range !== 'today' ? (
+            <UsageHeatmap district={district} range={range} khoroo={khoroo} />
+          ) : (
+            <ChartContainer
+              config={chartConfig}
+              className={`aspect-auto w-full ${expanded ? 'h-[70vh]' : 'h-[300px]'}`}
+            >
+              {loading ? (
+                <BarGraphSkeleton />
+              ) : error ? (
+                <div className='text-destructive p-4 text-sm'>
+                  Алдаа: {error}
+                </div>
+              ) : data.length === 0 ? (
+                <div className='text-muted-foreground p-4 text-sm'>
+                  Мэдээлэл олдсонгүй
+                </div>
+              ) : (
+                <ResponsiveContainer width='100%' height='100%'>
+                  <BarChart data={shown} margin={{ left: 12, right: 12 }}>
+                    <defs>
+                      <linearGradient id='fillBar' x1='0' y1='0' x2='0' y2='1'>
+                        <stop
+                          offset='0%'
+                          stopColor={chartConfig.value.color}
+                          stopOpacity={0.8}
+                        />
+                        <stop
+                          offset='100%'
+                          stopColor={chartConfig.value.color}
+                          stopOpacity={0.2}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey='name'
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                    />
+                    <ChartTooltip
+                      cursor={{ fill: chartConfig.value.color, opacity: 0.05 }}
+                      content={
+                        <ChartTooltipContent
+                          className='w-[160px]'
+                          nameKey='value'
+                          labelFormatter={(value) =>
+                            groupBy === 'khoroo'
+                              ? `Хороо ${value}`
+                              : String(value)
+                          }
+                          formatter={(value, name, props) => {
+                            const row = props?.payload ?? {};
+
+                            // type array-с data.name-тэй тэнцэх мэдээллийг олох
+                            if (row.type && Array.isArray(row.type)) {
+                              const matchedType = row.type.find(
+                                (item: any) => item.name === row.name
+                              );
+
+                              if (matchedType) {
+                                // 0-ээс их утгатай талбаруудыг шүүх
+                                const breakdown = Object.entries(matchedType)
+                                  .filter(([k, v]) => {
+                                    // exclude name/total keys
+                                    if (k === 'name' || k === 'total')
+                                      return false;
+                                    // coerce/validate numeric value
+                                    const num =
+                                      typeof v === 'number'
+                                        ? v
+                                        : Number(v as any);
+                                    return !Number.isNaN(num) && num > 0;
+                                  })
+                                  .map(([k, v]) => `${k}: ${String(v)}`)
+                                  .join(', ');
+
+                                return (
+                                  <div className='space-y-1'>
+                                    <div className='font-semibold'>
+                                      Нийт: {matchedType.total}
+                                    </div>
+                                    {breakdown && (
+                                      <div className='text-muted-foreground text-xs'>
+                                        {breakdown}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              }
+                            }
+
+                            // Тохирох өгөгдөл олдоогүй бол энгийн утга харуулах
+                            return [`${value || 0}`];
+                          }}
+                        />
+                      }
+                    />
+                    <Bar
+                      dataKey='value'
+                      fill='url(#fillBar)'
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </ChartContainer>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

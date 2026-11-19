@@ -116,11 +116,13 @@ const minusDays = (iso: string, d: number) => {
 export function UsageTrend({
   district,
   period,
-  isLeader
+  isLeader,
+  expanded = false
 }: {
   district: string;
   period: TrendPeriod;
   isLeader: boolean;
+  expanded?: boolean;
 }) {
   const [khoroo, setKhoroo] = React.useState<number | ''>('');
   const [location, setLocation] = React.useState('');
@@ -249,7 +251,7 @@ export function UsageTrend({
             </span>
           </div>
         </div>
-        <div className='h-[200px]'>
+        <div className={expanded ? 'h-[50vh]' : 'h-[200px]'}>
           <ResponsiveContainer width='100%' height='100%'>
             <LineChart
               data={chartData}
